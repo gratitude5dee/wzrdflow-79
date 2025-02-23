@@ -1,14 +1,15 @@
 
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
 }
 
 // Base URL for fal.ai API
-const FAL_BASE_URL = 'https://rest.fal.ai/api/v1'
+const FAL_BASE_URL = 'https://fal.run/v1'
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -20,18 +21,19 @@ Deno.serve(async (req) => {
       throw new Error('FAL_KEY environment variable is not set')
     }
 
-    // Get the path from the URL (everything after /fal/)
-    const url = new URL(req.url)
-    const path = url.pathname.replace('/fal', '')
-    
-    // Forward the request to fal.ai
-    const response = await fetch(`${FAL_BASE_URL}${path}`, {
-      method: req.method,
+    const { modelId, input } = await req.json()
+    if (!modelId) {
+      throw new Error('modelId is required')
+    }
+
+    // Make request to fal.ai
+    const response = await fetch(`${FAL_BASE_URL}/${modelId}`, {
+      method: 'POST',
       headers: {
         'Authorization': `Key ${falKey}`,
         'Content-Type': 'application/json',
       },
-      body: req.method !== 'GET' ? await req.text() : undefined,
+      body: JSON.stringify(input),
     })
 
     const data = await response.json()
