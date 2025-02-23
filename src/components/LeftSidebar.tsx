@@ -1,4 +1,3 @@
-
 import { Search, ChevronDown, Plus, Camera } from 'lucide-react';
 import { useState } from 'react';
 import { useReactFlow } from 'reactflow';
@@ -16,7 +15,7 @@ interface Category {
 }
 
 const LeftSidebar = () => {
-  const { addNodes, addEdges, getNode } = useReactFlow();
+  const { addNodes } = useReactFlow();
   const [categories, setCategories] = useState<Category[]>([
     {
       name: 'SOURCES',
@@ -78,8 +77,6 @@ const LeftSidebar = () => {
   ]);
 
   const addNode = (type: string, label: string) => {
-    const falNode = getNode('fal-ai');
-    
     const newNode = {
       id: `${type}-${Date.now()}`,
       type,
@@ -88,16 +85,6 @@ const LeftSidebar = () => {
     };
     
     addNodes(newNode);
-
-    if (falNode) {
-      const newEdge = {
-        id: `${newNode.id}-fal-ai`,
-        source: newNode.id,
-        target: 'fal-ai',
-        type: 'custom'
-      };
-      addEdges(newEdge);
-    }
   };
 
   const handleItemClick = (itemName: string) => {

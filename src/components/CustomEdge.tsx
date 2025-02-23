@@ -9,7 +9,6 @@ const CustomEdge = ({
   sourcePosition,
   targetPosition,
   style = {},
-  markerEnd,
   data,
 }: EdgeProps) => {
   const [edgePath] = getBezierPath({
@@ -21,19 +20,18 @@ const CustomEdge = ({
     targetPosition,
   });
 
-  const customStyle = {
-    ...style,
-    strokeWidth: 2,
-    stroke: '#2DD4BF',
-    strokeDasharray: data?.dashed ? '5,5' : 'none',
-  };
-
   return (
-    <BaseEdge 
-      path={edgePath} 
-      markerEnd={markerEnd} 
-      style={customStyle} 
-    />
+    <>
+      <BaseEdge 
+        path={edgePath}
+        style={{
+          ...style,
+          strokeWidth: 2,
+          stroke: '#2DD4BF',
+          strokeDasharray: data?.dashed ? '5,5' : 'none',
+        }}
+      />
+    </>
   );
 };
 
