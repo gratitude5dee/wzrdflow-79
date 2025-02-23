@@ -13,6 +13,7 @@ import ReactFlow, {
   addEdge
 } from 'reactflow';
 import Header from '../components/Header';
+import LeftSidebar from '../components/LeftSidebar';
 import 'reactflow/dist/style.css';
 
 const initialNodes: Node[] = [
@@ -38,25 +39,28 @@ const Index = () => {
   return (
     <div className="w-screen h-screen bg-zinc-900">
       <Header />
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        className="bg-zinc-900"
-        minZoom={0.2}
-        maxZoom={4}
-        defaultViewport={{ x: 0, y: 0, zoom: 1.5 }}
-      >
-        <Background className="bg-zinc-900" />
-        <Controls className="fill-white stroke-white" />
-        <MiniMap className="!bg-zinc-800 !rounded-lg" />
-        <Panel position="top-left" className="bg-zinc-800/50 p-4 rounded-lg backdrop-blur">
-          <h1 className="text-2xl font-bold text-white mb-2">Flow Canvas</h1>
-          <p className="text-zinc-400">Start building your flow by dragging nodes</p>
-        </Panel>
-      </ReactFlow>
+      <div className="flex h-[calc(100vh-4rem)]">
+        <LeftSidebar />
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          className="bg-zinc-900 flex-1"
+          minZoom={0.2}
+          maxZoom={4}
+          defaultViewport={{ x: 0, y: 0, zoom: 1.5 }}
+        >
+          <Background className="bg-zinc-900" />
+          <Controls className="fill-white stroke-white" />
+          <MiniMap className="!bg-zinc-800 !rounded-lg" />
+          <Panel position="top-left" className="bg-zinc-800/50 p-4 rounded-lg backdrop-blur">
+            <h1 className="text-2xl font-bold text-white mb-2">Flow Canvas</h1>
+            <p className="text-zinc-400">Start building your flow by dragging nodes</p>
+          </Panel>
+        </ReactFlow>
+      </div>
     </div>
   );
 };
