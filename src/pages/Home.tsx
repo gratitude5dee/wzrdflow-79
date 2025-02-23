@@ -17,7 +17,7 @@ const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'all' | 'private' | 'public'>('all');
-  const [viewMode, setViewMode] = useState<'storyboard' | 'editor'>('storyboard');
+  const [viewMode, setViewMode] = useState<'studio' | 'storyboard' | 'editor'>('studio');
 
   const [projects] = useState<Project[]>([
     {
@@ -78,6 +78,16 @@ const Home = () => {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-semibold">Your projects</h1>
           <div className="flex bg-zinc-900 rounded-lg border border-zinc-800 p-0.5">
+            <button
+              onClick={() => setViewMode('studio')}
+              className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
+                viewMode === 'studio'
+                  ? 'bg-zinc-800 text-white'
+                  : 'text-zinc-400 hover:text-zinc-300'
+              }`}
+            >
+              Studio
+            </button>
             <button
               onClick={() => setViewMode('storyboard')}
               className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
