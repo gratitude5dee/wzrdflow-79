@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from 'react';
 import ReactFlow, {
   Background,
@@ -14,13 +13,15 @@ import ReactFlow, {
 import CustomEdge from './CustomEdge';
 import RightSidebar from './RightSidebar';
 import FlowControls from './flow/FlowControls';
+import ImagesToVideoNode from './nodes/ImagesToVideoNode';
 import { useWorkflow } from '@/hooks/useWorkflow';
 import { initialNodes, initialEdges } from '@/constants/flowConfig';
 import { useToast } from '@/components/ui/use-toast';
 import 'reactflow/dist/style.css';
 
-const edgeTypes = {
+const nodeTypes = {
   custom: CustomEdge,
+  imagesToVideo: ImagesToVideoNode,
 };
 
 const Canvas = () => {
@@ -77,6 +78,7 @@ const Canvas = () => {
           onConnect={onConnect}
           onNodeClick={onNodeClick}
           edgeTypes={edgeTypes}
+          nodeTypes={nodeTypes}
           fitView
           className="bg-zinc-900"
           minZoom={0.2}
@@ -87,7 +89,6 @@ const Canvas = () => {
           <Controls className="fill-white stroke-white" />
           <FlowControls onSave={handleSave} onLoad={handleLoad} />
           
-          {/* MiniMap positioned in the sidebar area */}
           <Panel position="top-right" className="!absolute !right-[-256px] !top-auto !bottom-4 !w-56 !mx-4">
             <MiniMap 
               className="!bg-zinc-800 rounded-lg border border-zinc-700"
