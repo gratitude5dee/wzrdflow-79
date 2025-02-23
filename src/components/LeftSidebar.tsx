@@ -96,7 +96,7 @@ const LeftSidebar = () => {
       </div>
 
       {/* Categories Section */}
-      <div className="flex-1 overflow-y-auto space-y-0.5 px-1.5 pb-4">
+      <div className="flex-1 overflow-y-auto space-y-0.5 px-1.5">
         {categories.map((category, index) => (
           <div key={category.name}>
             <button
