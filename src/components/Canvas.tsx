@@ -4,6 +4,7 @@ import ReactFlow, {
   Background,
   Controls,
   Panel,
+  MiniMap,
   useNodesState,
   useEdgesState,
   Node,
@@ -104,6 +105,18 @@ const Canvas = () => {
                 <span>Move Nodes</span>
               </div>
             </div>
+          </Panel>
+          
+          {/* MiniMap positioned in the sidebar area */}
+          <Panel position="top-right" className="!absolute !right-[-256px] !top-auto !bottom-4 !w-56 !mx-4">
+            <MiniMap 
+              className="!bg-zinc-800 rounded-lg border border-zinc-700"
+              maskColor="rgba(0, 0, 0, 0.5)"
+              nodeColor="#525252"
+              nodeStrokeColor="#404040"
+              nodeBorderRadius={4}
+              style={{ height: 120 }}
+            />
           </Panel>
         </ReactFlow>
       </div>
