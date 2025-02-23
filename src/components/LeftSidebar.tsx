@@ -77,14 +77,14 @@ const LeftSidebar = () => {
     },
   ]);
 
-  const addImagesToVideoNode = () => {
+  const addNode = (type: string, label: string) => {
     const falNode = getNode('fal-ai');
     
     const newNode = {
-      id: `images-to-video-${Date.now()}`,
-      type: 'imagesToVideo',
+      id: `${type}-${Date.now()}`,
+      type,
       position: { x: 50, y: 200 },
-      data: { label: 'Images to Video' },
+      data: { label },
     };
     
     addNodes(newNode);
@@ -97,6 +97,20 @@ const LeftSidebar = () => {
         type: 'custom'
       };
       addEdges(newEdge);
+    }
+  };
+
+  const handleItemClick = (itemName: string) => {
+    switch (itemName) {
+      case 'Images to Video':
+        addNode('imagesToVideo', 'Images to Video');
+        break;
+      case 'Text to Text':
+        addNode('textToText', 'Text to Text');
+        break;
+      case 'Text to Image':
+        addNode('textToImage', 'Text to Image');
+        break;
     }
   };
 
@@ -138,7 +152,7 @@ const LeftSidebar = () => {
                 {category.items.map((item) => (
                   <button
                     key={item.name}
-                    onClick={() => item.name === 'Images to Video' && addImagesToVideoNode()}
+                    onClick={() => handleItemClick(item.name)}
                     className="w-full flex items-center justify-between p-2 text-[13px] text-zinc-300 hover:bg-white/[0.04] rounded-lg transition-colors group"
                   >
                     <span className="flex items-center gap-2">

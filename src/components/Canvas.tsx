@@ -17,6 +17,8 @@ import CustomEdge from './CustomEdge';
 import RightSidebar from './RightSidebar';
 import FlowControls from './flow/FlowControls';
 import ImagesToVideoNode from './nodes/ImagesToVideoNode';
+import TextToTextNode from './nodes/TextToTextNode';
+import TextToImageNode from './nodes/TextToImageNode';
 import { useWorkflow } from '@/hooks/useWorkflow';
 import { initialNodes, initialEdges } from '@/constants/flowConfig';
 import { useToast } from '@/components/ui/use-toast';
@@ -24,6 +26,8 @@ import 'reactflow/dist/style.css';
 
 const nodeTypes: NodeTypes = {
   imagesToVideo: ImagesToVideoNode,
+  textToText: TextToTextNode,
+  textToImage: TextToImageNode,
 };
 
 const edgeTypes: EdgeTypes = {
