@@ -5,6 +5,7 @@ import { Header } from '@/components/home/Header';
 import { ViewModeSelector } from '@/components/home/ViewModeSelector';
 import { ProjectList } from '@/components/home/ProjectList';
 import type { Project } from '@/components/home/ProjectCard';
+import { Plus, MoreVertical } from 'lucide-react';
 
 const Home = () => {
   const navigate = useNavigate();
