@@ -9,7 +9,8 @@ import ReactFlow, {
   useEdgesState,
   Node,
   Edge,
-  Connection
+  Connection,
+  addEdge
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
