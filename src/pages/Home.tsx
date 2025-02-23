@@ -45,8 +45,8 @@ const Home = () => {
             <div className="flex items-center gap-8">
               {/* Logo */}
               <div className="flex items-center gap-2">
-                <img src="/logo.svg" alt="Flora" className="h-8 w-8" />
-                <span className="font-semibold">FLORA</span>
+                <img src="/logo.svg" alt="WZRD.tech" className="h-8 w-8" />
+                <span className="font-semibold">WZRD.tech</span>
                 <span className="px-1.5 py-0.5 text-[10px] bg-zinc-800 rounded text-zinc-400">BETA</span>
               </div>
 
