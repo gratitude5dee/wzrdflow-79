@@ -12,6 +12,7 @@ import ReactFlow, {
   Connection,
   addEdge
 } from 'reactflow';
+import Header from '../components/Header';
 import 'reactflow/dist/style.css';
 
 const initialNodes: Node[] = [
@@ -36,6 +37,7 @@ const Index = () => {
 
   return (
     <div className="w-screen h-screen bg-zinc-900">
+      <Header />
       <ReactFlow
         nodes={nodes}
         edges={edges}
