@@ -1,3 +1,4 @@
+
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'all' | 'private' | 'public'>('all');
+  const [viewMode, setViewMode] = useState<'storyboard' | 'editor'>('storyboard');
 
   const [projects] = useState<Project[]>([
     {
@@ -73,7 +75,31 @@ const Home = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-semibold mb-8">Your projects</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-semibold">Your projects</h1>
+          <div className="flex bg-zinc-900 rounded-lg border border-zinc-800 p-0.5">
+            <button
+              onClick={() => setViewMode('storyboard')}
+              className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
+                viewMode === 'storyboard'
+                  ? 'bg-zinc-800 text-white'
+                  : 'text-zinc-400 hover:text-zinc-300'
+              }`}
+            >
+              Storyboard
+            </button>
+            <button
+              onClick={() => setViewMode('editor')}
+              className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
+                viewMode === 'editor'
+                  ? 'bg-zinc-800 text-white'
+                  : 'text-zinc-400 hover:text-zinc-300'
+              }`}
+            >
+              Editor
+            </button>
+          </div>
+        </div>
 
         {/* Recent Projects */}
         <section className="mb-12">
