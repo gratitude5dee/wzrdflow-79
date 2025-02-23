@@ -3,25 +3,18 @@ import { Node, Edge } from 'reactflow';
 
 export const initialNodes: Node[] = [
   {
-    id: '1',
-    type: 'input',
-    data: { label: 'Start Node' },
-    position: { x: 250, y: 0 },
-  },
-  {
-    id: '2',
+    id: 'fal-ai',
     type: 'default',
-    data: { label: 'End Node' },
-    position: { x: 250, y: 100 },
-  },
+    data: { label: 'Fal AI' },
+    position: { x: 400, y: 200 },
+    style: {
+      background: 'rgba(0, 0, 0, 0.8)',
+      color: '#fff',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      borderRadius: '8px',
+      padding: '10px 20px',
+    }
+  }
 ];
 
-export const initialEdges: Edge[] = [
-  {
-    id: 'e1-2',
-    source: '1',
-    target: '2',
-    type: 'custom',
-    data: { dashed: true },
-  },
-];
+export const initialEdges: Edge[] = [];

@@ -1,5 +1,7 @@
+
 import { Search, ChevronDown, Plus, Camera } from 'lucide-react';
 import { useState } from 'react';
+import { useReactFlow } from 'reactflow';
 
 interface MenuItem {
   name: string;
@@ -14,6 +16,7 @@ interface Category {
 }
 
 const LeftSidebar = () => {
+  const { addNodes, addEdges, getNode } = useReactFlow();
   const [categories, setCategories] = useState<Category[]>([
     {
       name: 'SOURCES',
@@ -75,14 +78,26 @@ const LeftSidebar = () => {
   ]);
 
   const addImagesToVideoNode = () => {
+    const falNode = getNode('fal-ai');
+    
     const newNode = {
       id: `images-to-video-${Date.now()}`,
       type: 'imagesToVideo',
-      position: { x: 250, y: 100 },
+      position: { x: 50, y: 200 },
       data: { label: 'Images to Video' },
     };
     
-    console.log('Adding Images to Video node:', newNode);
+    addNodes(newNode);
+
+    if (falNode) {
+      const newEdge = {
+        id: `${newNode.id}-fal-ai`,
+        source: newNode.id,
+        target: 'fal-ai',
+        type: 'custom'
+      };
+      addEdges(newEdge);
+    }
   };
 
   const toggleCategory = (index: number) => {
