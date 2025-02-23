@@ -12,6 +12,7 @@ import ReactFlow, {
   Connection,
   addEdge,
 } from 'reactflow';
+import CustomEdge from './CustomEdge';
 import 'reactflow/dist/style.css';
 
 const initialNodes: Node[] = [
@@ -21,16 +22,34 @@ const initialNodes: Node[] = [
     data: { label: 'Start Node' },
     position: { x: 250, y: 0 },
   },
+  {
+    id: '2',
+    type: 'default',
+    data: { label: 'End Node' },
+    position: { x: 250, y: 100 },
+  },
 ];
 
-const initialEdges: Edge[] = [];
+const initialEdges: Edge[] = [
+  {
+    id: 'e1-2',
+    source: '1',
+    target: '2',
+    type: 'custom',
+    data: { dashed: true },
+  },
+];
+
+const edgeTypes = {
+  custom: CustomEdge,
+};
 
 const Canvas = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const onConnect = useCallback((connection: Connection) => {
-    setEdges((eds) => addEdge(connection, eds));
+    setEdges((eds) => addEdge({ ...connection, type: 'custom' }, eds));
   }, [setEdges]);
 
   return (
@@ -41,6 +60,7 @@ const Canvas = () => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        edgeTypes={edgeTypes}
         fitView
         className="bg-zinc-900"
         minZoom={0.2}
