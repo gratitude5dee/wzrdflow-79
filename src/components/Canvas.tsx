@@ -3,7 +3,6 @@ import { useCallback, useState } from 'react';
 import ReactFlow, {
   Background,
   Controls,
-  MiniMap,
   Panel,
   useNodesState,
   useEdgesState,
@@ -88,7 +87,6 @@ const Canvas = () => {
         >
           <Background color="#333" className="bg-zinc-900" />
           <Controls className="fill-white stroke-white" />
-          <MiniMap className="!bg-zinc-800 !rounded-lg" />
           
           {/* Navigation Instructions */}
           <Panel position="bottom-center" className="bg-zinc-800/50 p-3 rounded-lg backdrop-blur mb-4">

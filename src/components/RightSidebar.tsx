@@ -1,5 +1,6 @@
 
 import { Node } from 'reactflow';
+import { MiniMap } from 'reactflow';
 import PropertiesPanel from './PropertiesPanel';
 
 interface RightSidebarProps {
@@ -17,6 +18,16 @@ const RightSidebar = ({ selectedNode, onNodeChange }: RightSidebarProps) => {
         <PropertiesPanel 
           selectedNode={selectedNode} 
           onNodeChange={onNodeChange} 
+        />
+      </div>
+      <div className="p-4 border-t border-zinc-800">
+        <MiniMap 
+          className="!bg-zinc-800 rounded-lg border border-zinc-700"
+          maskColor="rgba(0, 0, 0, 0.5)"
+          nodeColor="#525252"
+          nodeStrokeColor="#404040"
+          nodeBorderRadius={4}
+          style={{ height: 120 }}
         />
       </div>
     </div>
