@@ -1,3 +1,4 @@
+
 import { useCallback, useState } from 'react';
 import ReactFlow, {
   Background,
@@ -9,6 +10,8 @@ import ReactFlow, {
   Node,
   Connection,
   addEdge,
+  EdgeTypes,
+  NodeTypes,
 } from 'reactflow';
 import CustomEdge from './CustomEdge';
 import RightSidebar from './RightSidebar';
@@ -19,9 +22,12 @@ import { initialNodes, initialEdges } from '@/constants/flowConfig';
 import { useToast } from '@/components/ui/use-toast';
 import 'reactflow/dist/style.css';
 
-const nodeTypes = {
-  custom: CustomEdge,
+const nodeTypes: NodeTypes = {
   imagesToVideo: ImagesToVideoNode,
+};
+
+const edgeTypes: EdgeTypes = {
+  custom: CustomEdge,
 };
 
 const Canvas = () => {
