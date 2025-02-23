@@ -96,9 +96,9 @@ const LeftSidebar = () => {
       </div>
 
       {/* Categories Section */}
-      <div className="flex-1 overflow-y-auto space-y-0.5 px-1.5 no-scrollbar">
+      <div className="flex-1 overflow-y-auto space-y-0.5 px-1.5 pb-4">
         {categories.map((category, index) => (
-          <div key={category.name} className="text-white">
+          <div key={category.name}>
             <button
               onClick={() => toggleCategory(index)}
               className="w-full flex items-center justify-between p-2 text-[11px] font-medium tracking-wider text-zinc-500 hover:text-zinc-400"
@@ -132,14 +132,14 @@ const LeftSidebar = () => {
             )}
           </div>
         ))}
+      </div>
 
-        {/* MacBook Pro Camera Section */}
-        <div className="mt-2 px-2">
-          <button className="w-full flex items-center gap-2 p-2 text-[13px] text-zinc-300 hover:bg-white/[0.04] rounded-lg transition-colors">
-            <Camera className="h-4 w-4 text-zinc-500" />
-            MacBook Pro Camera
-          </button>
-        </div>
+      {/* MacBook Pro Camera Section - Now properly positioned */}
+      <div className="px-3 py-2 border-t border-zinc-800/50">
+        <button className="w-full flex items-center gap-2 p-2 text-[13px] text-zinc-300 hover:bg-white/[0.04] rounded-lg transition-colors">
+          <Camera className="h-4 w-4 text-zinc-500" />
+          MacBook Pro Camera
+        </button>
       </div>
 
       {/* Footer */}
