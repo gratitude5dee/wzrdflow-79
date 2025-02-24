@@ -15,22 +15,12 @@ export const useFalClient = () => {
     const initializeFalClient = async () => {
       try {
         if (!user) {
-          toast({
-            title: "Authentication Required",
-            description: "Please log in to use the text generation feature.",
-            variant: "destructive",
-          });
           setIsError(true);
           return;
         }
 
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.access_token) {
-          toast({
-            title: "Authentication Error",
-            description: "Please log in again to use this feature.",
-            variant: "destructive",
-          });
           setIsError(true);
           return;
         }
@@ -46,11 +36,6 @@ export const useFalClient = () => {
 
         if (invokeError || !data?.value) {
           console.error('Error fetching FAL_KEY:', invokeError);
-          toast({
-            title: "Error",
-            description: "Failed to fetch FAL API key. Please contact support.",
-            variant: "destructive",
-          });
           setIsError(true);
           return;
         }
@@ -64,11 +49,6 @@ export const useFalClient = () => {
         setIsInitialized(true);
       } catch (err) {
         console.error('Failed to initialize fal.ai client:', err);
-        toast({
-          title: "Error",
-          description: "Failed to initialize Fal.ai client. Please try again.",
-          variant: "destructive",
-        });
         setIsError(true);
       }
     };

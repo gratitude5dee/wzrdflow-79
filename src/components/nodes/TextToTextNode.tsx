@@ -1,3 +1,4 @@
+
 import { memo, useState, useEffect } from 'react';
 import { Handle, Position } from 'reactflow';
 import { X, Loader2 } from 'lucide-react';
@@ -29,6 +30,16 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
   const [selectedModel, setSelectedModel] = useState<ModelType>(models[0].value);
   const { toast } = useToast();
   const { isInitialized, isError } = useFalClient();
+
+  useEffect(() => {
+    if (isError) {
+      toast({
+        title: "Authentication Required",
+        description: "Please ensure you're logged in and have set up your FAL_KEY.",
+        variant: "destructive",
+      });
+    }
+  }, [isError, toast]);
 
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
@@ -73,7 +84,6 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
           description: "Your FAL_KEY appears to be invalid. Please verify it and try again.",
           variant: "destructive",
         });
-        localStorage.removeItem('FAL_KEY');
       }
     } finally {
       setIsGenerating(false);
