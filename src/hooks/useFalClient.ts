@@ -35,49 +35,38 @@ export const useFalClient = () => {
           return;
         }
 
-        const falKey = localStorage.getItem('FAL_KEY');
-        if (!falKey) {
-          const { data, error: invokeError } = await supabase.functions.invoke('get-secret', {
-            body: { name: 'FAL_KEY' },
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-              apikey: process.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
-            }
-          });
-
-          if (invokeError) {
-            console.error('Error fetching FAL_KEY:', invokeError);
-            toast({
-              title: "Error",
-              description: "Failed to fetch FAL API key. Please try again.",
-              variant: "destructive",
-            });
-            setIsError(true);
-            return;
+        // Get FAL_KEY from Supabase function
+        const { data, error: invokeError } = await supabase.functions.invoke('get-secret', {
+          body: { name: 'FAL_KEY' },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: process.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
           }
+        });
 
-          if (data?.value) {
-            localStorage.setItem('FAL_KEY', data.value);
-            falApi.fal.config({
-              credentials: data.value
-            });
-            console.log('Fal.ai client initialized with secret');
-            setIsInitialized(true);
-            return;
-          }
-        } else {
-          falApi.fal.config({
-            credentials: falKey
+        if (invokeError || !data?.value) {
+          console.error('Error fetching FAL_KEY:', invokeError);
+          toast({
+            title: "Error",
+            description: "Failed to fetch FAL API key. Please contact support.",
+            variant: "destructive",
           });
-          console.log('Fal.ai client initialized from localStorage');
-          setIsInitialized(true);
+          setIsError(true);
+          return;
         }
+
+        // Configure the FAL client with the key from Supabase
+        falApi.fal.config({
+          credentials: data.value
+        });
+        
+        console.log('Fal.ai client initialized with Supabase secret');
+        setIsInitialized(true);
       } catch (err) {
         console.error('Failed to initialize fal.ai client:', err);
-        localStorage.removeItem('FAL_KEY');
         toast({
           title: "Error",
-          description: "Failed to initialize Fal.ai client. Please check your API key.",
+          description: "Failed to initialize Fal.ai client. Please try again.",
           variant: "destructive",
         });
         setIsError(true);
