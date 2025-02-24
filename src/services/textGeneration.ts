@@ -1,5 +1,5 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_URL } from "@/integrations/supabase/client";
 import { ModelType } from '@/types/modelTypes';
 
 export const generateText = async (prompt: string, selectedModel: ModelType) => {
@@ -11,7 +11,7 @@ export const generateText = async (prompt: string, selectedModel: ModelType) => 
 
   // Make a POST request to the Edge Function
   const response = await fetch(
-    `${supabase.config.url}/functions/v1/fal`,
+    `${SUPABASE_URL}/functions/v1/fal`,
     {
       method: 'POST',
       headers: {
