@@ -13,10 +13,17 @@ serve(async (req) => {
   }
 
   try {
+    // Check if request is authenticated
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      throw new Error('Missing authorization header');
+    }
+
     // Retrieve FAL_KEY from the environment
     const falKey = Deno.env.get('FAL_KEY');
     if (!falKey) {
-      throw new Error('FAL_KEY environment variable is not set');
+      console.error('FAL_KEY environment variable is not set');
+      throw new Error('Server configuration error');
     }
 
     // Parse the request body
@@ -24,6 +31,8 @@ serve(async (req) => {
     if (!requestId) {
       throw new Error('requestId is required');
     }
+
+    console.log('Checking status for request:', requestId);
 
     // Check status from fal.ai
     const response = await fetch(`https://fal.run/v1/queue/status/${requestId}`, {
@@ -33,22 +42,32 @@ serve(async (req) => {
       },
     });
 
+    const responseText = await response.text();
+    console.log('Fal.ai status response:', responseText);
+
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to check status from fal.ai');
+      let errorMessage;
+      try {
+        const error = JSON.parse(responseText);
+        errorMessage = error.message || error.error || 'Failed to check status from fal.ai';
+      } catch {
+        errorMessage = 'Failed to check status from fal.ai: ' + responseText;
+      }
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json();
+    const data = JSON.parse(responseText);
     
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (error) {
+    console.error('Edge function error:', error);
     return new Response(
       JSON.stringify({ error: error.message || 'Internal Server Error' }),
       { 
-        status: 500,
+        status: error.message === 'Missing authorization header' ? 401 : 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
