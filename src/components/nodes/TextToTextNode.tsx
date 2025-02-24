@@ -5,6 +5,13 @@ import { X, Loader2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import * as falApi from '@fal-ai/client';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TextToTextNodeProps {
   data: {
@@ -12,11 +19,19 @@ interface TextToTextNodeProps {
   };
 }
 
+const models = [
+  { value: 'google/gemini-flash-1.5', label: 'Gemini Flash 1.5 (Fast)' },
+  { value: 'google/gemini-pro', label: 'Gemini Pro (High Quality)' },
+  { value: 'anthropic/claude-3-sonnet', label: 'Claude 3 Sonnet' },
+  { value: 'anthropic/claude-3-opus', label: 'Claude 3 Opus (Best Quality)' },
+];
+
 const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
   const [prompt, setPrompt] = useState('');
   const [output, setOutput] = useState('');
   const [error, setError] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedModel, setSelectedModel] = useState(models[0].value);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -29,7 +44,7 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
       const result = await falApi.fal.subscribe('fal-ai/any-llm', {
         input: {
           prompt: prompt,
-          model: 'google/gemini-flash-1.5',
+          model: selectedModel,
         },
         logs: true,
         onQueueUpdate: (update) => {
@@ -58,6 +73,29 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
       </div>
 
       <div className="p-4 space-y-4">
+        <div className="space-y-2">
+          <label className="text-xs text-zinc-400">Model</label>
+          <Select
+            value={selectedModel}
+            onValueChange={setSelectedModel}
+          >
+            <SelectTrigger className="w-full bg-zinc-900 text-white border-zinc-800 focus:ring-0 focus:ring-offset-0 focus:border-teal-500">
+              <SelectValue placeholder="Select a model" />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-900 border-zinc-800">
+              {models.map((model) => (
+                <SelectItem
+                  key={model.value}
+                  value={model.value}
+                  className="text-white hover:bg-zinc-800 focus:bg-zinc-800 focus:text-white"
+                >
+                  {model.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="space-y-2">
           <label className="text-xs text-zinc-400">Prompt</label>
           <Textarea
