@@ -1,4 +1,3 @@
-
 import { memo, useState, useEffect } from 'react';
 import { Handle, Position } from 'reactflow';
 import { X, Loader2 } from 'lucide-react';
@@ -13,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from "@/integrations/supabase/client";
 
 interface TextToTextNodeProps {
   data: {
@@ -56,18 +56,23 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Initialize fal.ai client when component mounts
     const initializeFalClient = async () => {
       try {
         const falKey = localStorage.getItem('FAL_KEY');
         if (!falKey) {
-          // Try to get the key from Supabase secrets
-          const response = await fetch('/api/get-secret?name=FAL_KEY');
-          const data = await response.json();
-          if (data.value) {
-            localStorage.setItem('FAL_KEY', data.value);
+          const { data: { data: secretData, error: secretError } } = await supabase.functions.invoke('get-secret', {
+            body: { name: 'FAL_KEY' }
+          });
+
+          if (secretError) {
+            console.error('Error fetching FAL_KEY:', secretError);
+            throw new Error(secretError.message);
+          }
+
+          if (secretData?.value) {
+            localStorage.setItem('FAL_KEY', secretData.value);
             falApi.fal.config({
-              credentials: data.value
+              credentials: secretData.value
             });
             console.log('Fal.ai client initialized with secret');
             return;
@@ -88,7 +93,6 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
   }, []);
 
   useEffect(() => {
-    // Suppress ResizeObserver loop limit exceeded error
     const handleError = (event: ErrorEvent) => {
       if (event.message === 'ResizeObserver loop limit exceeded') {
         event.preventDefault();
@@ -119,7 +123,6 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
     }
 
     try {
-      // Configure the client with the current key before each request
       falApi.fal.config({
         credentials: falKey
       });
