@@ -19,22 +19,34 @@ serve(async (req) => {
       throw new Error('Missing authorization header');
     }
 
+    // Log the received request
+    console.log('Received headers:', Object.fromEntries(req.headers.entries()));
+
     // Retrieve FAL_KEY from the environment
     const falKey = Deno.env.get('FAL_KEY');
     if (!falKey) {
       console.error('FAL_KEY environment variable is not set');
-      throw new Error('Server configuration error');
+      throw new Error('Server configuration error: FAL_KEY not set');
     }
 
-    // Parse the request body
-    const { modelId, input } = await req.json();
-    if (!modelId) {
-      throw new Error('modelId is required');
+    // Parse and validate the request body
+    let modelId, input;
+    try {
+      const body = await req.json();
+      modelId = body.modelId;
+      input = body.input;
+      
+      if (!modelId) throw new Error('modelId is required');
+      if (!input) throw new Error('input is required');
+      
+      console.log('Request body:', { modelId, input });
+    } catch (e) {
+      console.error('Failed to parse request:', e);
+      throw new Error('Invalid request body');
     }
-
-    console.log('Sending request to fal.ai:', { modelId, input });
 
     // Submit request to fal.ai
+    console.log('Sending request to fal.ai...');
     const response = await fetch(`https://fal.run/v1/${modelId}`, {
       method: 'POST',
       headers: {
@@ -43,7 +55,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         ...input,
-        mode: 'queue', // Always use queue mode for image generation
+        mode: 'queue',
       }),
     });
 
@@ -56,25 +68,43 @@ serve(async (req) => {
         const error = JSON.parse(responseText);
         errorMessage = error.message || error.error || 'Failed to submit request to fal.ai';
       } catch {
-        errorMessage = 'Failed to submit request to fal.ai: ' + responseText;
+        errorMessage = `Failed to submit request to fal.ai (${response.status}): ${responseText}`;
       }
       throw new Error(errorMessage);
     }
 
-    const data = JSON.parse(responseText);
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Failed to parse fal.ai response:', e);
+      throw new Error('Invalid response from fal.ai');
+    }
     
-    return new Response(JSON.stringify({
+    console.log('Sending response:', {
       requestId: data.request_id,
       status: data.status,
-      result: data.result,
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
+      result: data.result
     });
+
+    return new Response(
+      JSON.stringify({
+        requestId: data.request_id,
+        status: data.status,
+        result: data.result,
+      }), 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    );
   } catch (error) {
     console.error('Edge function error:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'Internal Server Error' }),
+      JSON.stringify({ 
+        error: error.message || 'Internal Server Error',
+        timestamp: new Date().toISOString(),
+      }),
       { 
         status: error.message === 'Missing authorization header' ? 401 : 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
