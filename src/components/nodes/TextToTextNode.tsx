@@ -1,7 +1,10 @@
 
 import { memo, useState } from 'react';
 import { Handle, Position } from 'reactflow';
-import { X, CircleDashed } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { fal } from '@fal-ai/client';
 
 interface TextToTextNodeProps {
   data: {
@@ -10,18 +13,39 @@ interface TextToTextNodeProps {
 }
 
 const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
-  const [inputPrompt, setInputPrompt] = useState('');
-  const [outputText, setOutputText] = useState('');
+  const [prompt, setPrompt] = useState('');
+  const [output, setOutput] = useState('');
+  const [error, setError] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleGenerate = () => {
-    if (!inputPrompt) return;
+  const handleGenerate = async () => {
+    if (!prompt.trim()) return;
+    
     setIsGenerating(true);
-    // TODO: Implement actual text generation
-    setTimeout(() => {
-      setOutputText('Generated text will appear here...');
+    setError('');
+    setOutput('');
+
+    try {
+      const result = await fal.subscribe('fal-ai/any-llm', {
+        input: {
+          prompt: prompt,
+          model: 'google/gemini-flash-1.5',
+        },
+        logs: true,
+        onQueueUpdate: (update) => {
+          if (update.status === 'IN_PROGRESS') {
+            console.log(update.logs.map((log) => log.message));
+          }
+        },
+      });
+
+      setOutput(result.data.output || 'No output received.');
+    } catch (err) {
+      setError('Failed to generate text. Please try again.');
+      console.error(err);
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -36,9 +60,9 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
       <div className="p-4 space-y-4">
         <div className="space-y-2">
           <label className="text-xs text-zinc-400">Prompt</label>
-          <textarea
-            value={inputPrompt}
-            onChange={(e) => setInputPrompt(e.target.value)}
+          <Textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
             placeholder="Enter your prompt..."
             className="w-full h-24 bg-zinc-900 text-white text-sm px-3 py-2 rounded-lg resize-none focus:outline-none border border-zinc-800 focus:border-teal-500 transition-colors"
           />
@@ -46,27 +70,33 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
 
         <div className="space-y-2">
           <label className="text-xs text-zinc-400">Output</label>
-          <div className="w-full min-h-[200px] bg-zinc-900 text-white text-sm p-3 rounded-lg border border-zinc-800">
-            {outputText || 'Generated text will appear here...'}
+          <div className="w-full min-h-[200px] bg-zinc-900 text-white text-sm p-3 rounded-lg border border-zinc-800 overflow-y-auto">
+            {error ? (
+              <p className="text-red-400">{error}</p>
+            ) : output ? (
+              output
+            ) : (
+              'Generated text will appear here...'
+            )}
           </div>
         </div>
       </div>
 
       <div className="flex items-center justify-end p-4 bg-zinc-900/30">
-        <button
+        <Button
           onClick={handleGenerate}
-          disabled={!inputPrompt || isGenerating}
+          disabled={!prompt.trim() || isGenerating}
           className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isGenerating ? (
             <>
-              <CircleDashed className="w-4 h-4 animate-spin" />
-              <span>Generating (~10s)</span>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Generating...</span>
             </>
           ) : (
             'Generate'
           )}
-        </button>
+        </Button>
       </div>
 
       <Handle type="target" position={Position.Left} className="!bg-teal-500" />
