@@ -1,8 +1,6 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/home/Header';
-import { ViewModeSelector } from '@/components/home/ViewModeSelector';
 import { ProjectList } from '@/components/home/ProjectList';
 import type { Project } from '@/components/home/ProjectCard';
 import { Plus, MoreVertical } from 'lucide-react';
@@ -10,7 +8,6 @@ import { Plus, MoreVertical } from 'lucide-react';
 const Home = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'all' | 'private' | 'public'>('all');
-  const [viewMode, setViewMode] = useState<'studio' | 'storyboard' | 'editor'>('studio');
 
   const [projects] = useState<Project[]>([
     {
@@ -38,7 +35,6 @@ const Home = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-semibold">Your projects</h1>
-          <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
         </div>
 
         {/* Recent Projects */}
