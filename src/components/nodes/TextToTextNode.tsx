@@ -55,6 +55,16 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
   const [selectedModel, setSelectedModel] = useState<ModelType>(models[0].value);
   const { toast } = useToast();
 
+  // Set FAL key on component mount
+  useEffect(() => {
+    const falKey = localStorage.getItem('FAL_KEY');
+    if (falKey) {
+      falApi.fal.config({
+        credentials: falKey
+      });
+    }
+  }, []);
+
   useEffect(() => {
     // Suppress ResizeObserver loop limit exceeded error
     const handleError = (event: ErrorEvent) => {
@@ -74,14 +84,23 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
     setError('');
     setOutput('');
 
+    const falKey = localStorage.getItem('FAL_KEY');
+    if (!falKey) {
+      setError('FAL_KEY not found. Please add your API key in the settings.');
+      setIsGenerating(false);
+      toast({
+        title: "Authentication Required",
+        description: "Please set your FAL_KEY to use the text generation feature.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Configure the fal client with credentials if they exist in environment
-      const falKey = import.meta.env.VITE_FAL_KEY;
-      if (falKey) {
-        falApi.fal.config({
-          credentials: falKey
-        });
-      }
+      // Ensure the API key is configured before making the request
+      falApi.fal.config({
+        credentials: falKey
+      });
 
       const result = await falApi.fal.subscribe('fal-ai/any-llm', {
         input: {
@@ -106,9 +125,11 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
       if (err.status === 401) {
         toast({
           title: "Authentication Required",
-          description: "Please set your FAL_KEY to use the text generation feature.",
+          description: "Please verify your FAL_KEY is correct.",
           variant: "destructive",
         });
+        // Clear invalid key
+        localStorage.removeItem('FAL_KEY');
       }
     } finally {
       setIsGenerating(false);
