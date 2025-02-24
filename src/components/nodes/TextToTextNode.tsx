@@ -1,4 +1,3 @@
-
 import { memo, useState, useEffect } from 'react';
 import { Handle, Position } from 'reactflow';
 import { X, Loader2 } from 'lucide-react';
@@ -84,15 +83,11 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
 
         const falKey = localStorage.getItem('FAL_KEY');
         if (!falKey) {
-          // Add authorization and API key headers
-          const headers = new Headers({
-            'Authorization': `Bearer ${accessToken}`,
-            'apikey': supabase.supabaseKey
-          });
-
           const { data, error: invokeError } = await supabase.functions.invoke('get-secret', {
             body: { name: 'FAL_KEY' },
-            headers: headers
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            }
           });
 
           console.log('Supabase function response:', { data, error: invokeError });
