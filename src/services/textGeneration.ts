@@ -9,9 +9,12 @@ export const generateText = async (prompt: string, selectedModel: ModelType) => 
     throw new Error('Authentication required');
   }
 
+  // Get the Supabase URL from the client
+  const supabaseUrl = supabase.getClientUrl();
+
   // Make a POST request to the Edge Function
   const response = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fal`,
+    `${supabaseUrl}/functions/v1/fal`,
     {
       method: 'POST',
       headers: {
@@ -29,9 +32,17 @@ export const generateText = async (prompt: string, selectedModel: ModelType) => 
   );
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to generate text');
+    const errorText = await response.text();
+    let errorMessage;
+    try {
+      const error = JSON.parse(errorText);
+      errorMessage = error.error || 'Failed to generate text';
+    } catch (e) {
+      errorMessage = `Failed to generate text: ${errorText}`;
+    }
+    throw new Error(errorMessage);
   }
 
-  return response.json();
+  const data = await response.json();
+  return data;
 };
