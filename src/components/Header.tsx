@@ -3,8 +3,14 @@ import { Flower, Menu, LogOut, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
+import { ViewModeSelector } from '@/components/home/ViewModeSelector';
 
-const Header = () => {
+interface HeaderProps {
+  viewMode: 'studio' | 'storyboard' | 'editor';
+  setViewMode: (mode: 'studio' | 'storyboard' | 'editor') => void;
+}
+
+const Header = ({ viewMode, setViewMode }: HeaderProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -28,7 +34,7 @@ const Header = () => {
 
   return (
     <header className="w-full bg-zinc-900/50 backdrop-blur-sm border-b border-zinc-800 px-6 py-4 shadow-lg">
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-center">
         <div className="flex flex-col">
           <div className="flex items-center gap-4">
             <button 
@@ -45,6 +51,9 @@ const Header = () => {
           </div>
           <span className="text-sm text-zinc-400 mt-1">Starting Project 001</span>
         </div>
+
+        <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
+
         <div className="flex items-center gap-4">
           <button 
             onClick={handleLogout}
