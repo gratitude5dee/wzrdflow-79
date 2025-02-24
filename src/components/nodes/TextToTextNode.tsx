@@ -1,5 +1,5 @@
 
-import { memo, useState } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { Handle, Position } from 'reactflow';
 import { X, Loader2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,7 +19,13 @@ interface TextToTextNodeProps {
   };
 }
 
-const models = [
+type ModelType = 
+  | 'google/gemini-flash-1.5'
+  | 'google/gemini-pro'
+  | 'anthropic/claude-3-sonnet'
+  | 'anthropic/claude-3-opus';
+
+const models: { value: ModelType; label: string }[] = [
   { value: 'google/gemini-flash-1.5', label: 'Gemini Flash 1.5 (Fast)' },
   { value: 'google/gemini-pro', label: 'Gemini Pro (High Quality)' },
   { value: 'anthropic/claude-3-sonnet', label: 'Claude 3 Sonnet' },
@@ -31,7 +37,19 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
   const [output, setOutput] = useState('');
   const [error, setError] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedModel, setSelectedModel] = useState(models[0].value);
+  const [selectedModel, setSelectedModel] = useState<ModelType>(models[0].value);
+
+  useEffect(() => {
+    // Suppress ResizeObserver loop limit exceeded error
+    const handleError = (event: ErrorEvent) => {
+      if (event.message === 'ResizeObserver loop limit exceeded') {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -77,7 +95,7 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
           <label className="text-xs text-zinc-400">Model</label>
           <Select
             value={selectedModel}
-            onValueChange={setSelectedModel}
+            onValueChange={(value: ModelType) => setSelectedModel(value)}
           >
             <SelectTrigger className="w-full bg-zinc-900 text-white border-zinc-800 focus:ring-0 focus:ring-offset-0 focus:border-teal-500">
               <SelectValue placeholder="Select a model" />
