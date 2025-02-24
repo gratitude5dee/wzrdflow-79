@@ -55,14 +55,24 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
   const [selectedModel, setSelectedModel] = useState<ModelType>(models[0].value);
   const { toast } = useToast();
 
-  // Set FAL key on component mount
   useEffect(() => {
-    const falKey = localStorage.getItem('FAL_KEY');
-    if (falKey) {
-      falApi.fal.config({
-        credentials: falKey
-      });
-    }
+    // Initialize fal.ai client when component mounts
+    const initializeFalClient = () => {
+      const falKey = localStorage.getItem('FAL_KEY');
+      if (falKey) {
+        try {
+          falApi.fal.config({
+            credentials: falKey
+          });
+          console.log('Fal.ai client initialized successfully');
+        } catch (err) {
+          console.error('Failed to initialize fal.ai client:', err);
+          localStorage.removeItem('FAL_KEY'); // Remove invalid key
+        }
+      }
+    };
+
+    initializeFalClient();
   }, []);
 
   useEffect(() => {
@@ -97,11 +107,12 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
     }
 
     try {
-      // Ensure the API key is configured before making the request
+      // Configure the client with the current key before each request
       falApi.fal.config({
         credentials: falKey
       });
 
+      console.log('Making request with model:', selectedModel);
       const result = await falApi.fal.subscribe('fal-ai/any-llm', {
         input: {
           prompt: prompt,
@@ -110,25 +121,24 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
         logs: true,
         onQueueUpdate: (update) => {
           if (update.status === 'IN_PROGRESS') {
-            console.log(update.logs.map((log) => log.message));
+            console.log('Generation progress:', update.logs.map((log) => log.message));
           }
         },
       });
 
+      console.log('Generation result:', result);
       setOutput(result.data.output || 'No output received.');
     } catch (err: any) {
-      console.error('Error:', err);
+      console.error('Error during generation:', err);
       const errorMessage = err.body?.detail || err.message || 'Failed to generate text. Please try again.';
       setError(errorMessage);
       
-      // Show authentication error toast if needed
       if (err.status === 401) {
         toast({
-          title: "Authentication Required",
-          description: "Please verify your FAL_KEY is correct.",
+          title: "Authentication Failed",
+          description: "Your FAL_KEY appears to be invalid. Please verify it and try again.",
           variant: "destructive",
         });
-        // Clear invalid key
         localStorage.removeItem('FAL_KEY');
       }
     } finally {
