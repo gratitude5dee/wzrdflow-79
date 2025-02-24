@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/providers/AuthProvider";
 
 interface TextToTextNodeProps {
   data: {
@@ -54,10 +55,20 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelType>(models[0].value);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const initializeFalClient = async () => {
       try {
+        if (!user) {
+          toast({
+            title: "Authentication Required",
+            description: "Please log in to use the text generation feature.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         const falKey = localStorage.getItem('FAL_KEY');
         if (!falKey) {
           const { data, error: invokeError } = await supabase.functions.invoke('get-secret', {
@@ -102,7 +113,7 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
     };
 
     initializeFalClient();
-  }, [toast]);
+  }, [toast, user]);
 
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
