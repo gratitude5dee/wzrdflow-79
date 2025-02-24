@@ -60,19 +60,26 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
       try {
         const falKey = localStorage.getItem('FAL_KEY');
         if (!falKey) {
-          const { data: { data: secretData, error: secretError } } = await supabase.functions.invoke('get-secret', {
+          const { data, error: invokeError } = await supabase.functions.invoke('get-secret', {
             body: { name: 'FAL_KEY' }
           });
 
-          if (secretError) {
-            console.error('Error fetching FAL_KEY:', secretError);
-            throw new Error(secretError.message);
+          console.log('Supabase function response:', { data, error: invokeError });
+
+          if (invokeError) {
+            console.error('Error fetching FAL_KEY:', invokeError);
+            toast({
+              title: "Error",
+              description: "Failed to fetch FAL API key. Please try again.",
+              variant: "destructive",
+            });
+            return;
           }
 
-          if (secretData?.value) {
-            localStorage.setItem('FAL_KEY', secretData.value);
+          if (data?.value) {
+            localStorage.setItem('FAL_KEY', data.value);
             falApi.fal.config({
-              credentials: secretData.value
+              credentials: data.value
             });
             console.log('Fal.ai client initialized with secret');
             return;
@@ -86,11 +93,16 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
       } catch (err) {
         console.error('Failed to initialize fal.ai client:', err);
         localStorage.removeItem('FAL_KEY');
+        toast({
+          title: "Error",
+          description: "Failed to initialize Fal.ai client. Please check your API key.",
+          variant: "destructive",
+        });
       }
     };
 
     initializeFalClient();
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {

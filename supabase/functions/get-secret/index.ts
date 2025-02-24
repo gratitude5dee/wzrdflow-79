@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,15 +7,16 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const url = new URL(req.url);
-    const secretName = url.searchParams.get('name');
+    // Parse the request body
+    const { name } = await req.json();
 
-    if (!secretName) {
+    if (!name) {
       return new Response(
         JSON.stringify({ error: 'Secret name is required' }),
         {
@@ -27,7 +27,7 @@ serve(async (req) => {
     }
 
     // Get the secret value from Deno.env
-    const secretValue = Deno.env.get(secretName);
+    const secretValue = Deno.env.get(name);
 
     if (!secretValue) {
       return new Response(
@@ -39,8 +39,9 @@ serve(async (req) => {
       )
     }
 
+    // Return the secret value
     return new Response(
-      JSON.stringify({ value: secretValue }),
+      JSON.stringify({ data: { value: secretValue } }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
