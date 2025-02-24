@@ -4,7 +4,6 @@ import { Handle, Position } from 'reactflow';
 import { X, Loader2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import * as falApi from '@fal-ai/client';
 import {
   Select,
   SelectContent,
@@ -13,41 +12,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from '@/components/ui/use-toast';
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/providers/AuthProvider";
+import { models, ModelType } from '@/types/modelTypes';
+import { useFalClient } from '@/hooks/useFalClient';
+import { generateText } from '@/services/textGeneration';
 
 interface TextToTextNodeProps {
   data: {
     label?: string;
   };
 }
-
-type ModelType = 
-  | 'google/gemini-flash-1.5'
-  | 'anthropic/claude-3.5-sonnet'
-  | 'anthropic/claude-3-5-haiku'
-  | 'anthropic/claude-3-haiku'
-  | 'google/gemini-pro-1.5'
-  | 'google/gemini-flash-1.5-8b'
-  | 'meta-llama/llama-3.2-1b-instruct'
-  | 'meta-llama/llama-3.2-3b-instruct'
-  | 'meta-llama/llama-3.1-8b-instruct'
-  | 'meta-llama/llama-3.1-70b-instruct'
-  | 'openai/gpt-4o-mini';
-
-const models: { value: ModelType; label: string }[] = [
-  { value: 'google/gemini-flash-1.5', label: 'google/gemini-flash-1.5' },
-  { value: 'anthropic/claude-3.5-sonnet', label: 'anthropic/claude-3.5-sonnet' },
-  { value: 'anthropic/claude-3-5-haiku', label: 'anthropic/claude-3-5-haiku' },
-  { value: 'anthropic/claude-3-haiku', label: 'anthropic/claude-3-haiku' },
-  { value: 'google/gemini-pro-1.5', label: 'google/gemini-pro-1.5' },
-  { value: 'google/gemini-flash-1.5-8b', label: 'google/gemini-flash-1.5-8b' },
-  { value: 'meta-llama/llama-3.2-1b-instruct', label: 'meta-llama/llama-3.2-1b-instruct' },
-  { value: 'meta-llama/llama-3.2-3b-instruct', label: 'meta-llama/llama-3.2-3b-instruct' },
-  { value: 'meta-llama/llama-3.1-8b-instruct', label: 'meta-llama/llama-3.1-8b-instruct' },
-  { value: 'meta-llama/llama-3.1-70b-instruct', label: 'meta-llama/llama-3.1-70b-instruct' },
-  { value: 'openai/gpt-4o-mini', label: 'openai/gpt-4o-mini' },
-];
 
 const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
   const [prompt, setPrompt] = useState('');
@@ -56,79 +29,9 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelType>(models[0].value);
   const { toast } = useToast();
-  const { user } = useAuth();
 
-  useEffect(() => {
-    const initializeFalClient = async () => {
-      try {
-        if (!user) {
-          toast({
-            title: "Authentication Required",
-            description: "Please log in to use the text generation feature.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.access_token) {
-          toast({
-            title: "Authentication Error",
-            description: "Please log in again to use this feature.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        const falKey = localStorage.getItem('FAL_KEY');
-        if (!falKey) {
-          const { data, error: invokeError } = await supabase.functions.invoke('get-secret', {
-            body: { name: 'FAL_KEY' },
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-              apikey: process.env.VITE_SUPABASE_PUBLISHABLE_KEY
-            }
-          });
-
-          console.log('Supabase function response:', { data, error: invokeError });
-
-          if (invokeError) {
-            console.error('Error fetching FAL_KEY:', invokeError);
-            toast({
-              title: "Error",
-              description: "Failed to fetch FAL API key. Please try again.",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          if (data?.value) {
-            localStorage.setItem('FAL_KEY', data.value);
-            falApi.fal.config({
-              credentials: data.value
-            });
-            console.log('Fal.ai client initialized with secret');
-            return;
-          }
-        } else {
-          falApi.fal.config({
-            credentials: falKey
-          });
-          console.log('Fal.ai client initialized from localStorage');
-        }
-      } catch (err) {
-        console.error('Failed to initialize fal.ai client:', err);
-        localStorage.removeItem('FAL_KEY');
-        toast({
-          title: "Error",
-          description: "Failed to initialize Fal.ai client. Please check your API key.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    initializeFalClient();
-  }, [toast, user]);
+  // Initialize Fal client
+  useFalClient();
 
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
@@ -161,25 +64,7 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
     }
 
     try {
-      falApi.fal.config({
-        credentials: falKey
-      });
-
-      console.log('Making request with model:', selectedModel);
-      const result = await falApi.fal.subscribe('fal-ai/any-llm', {
-        input: {
-          prompt: prompt,
-          model: selectedModel,
-        },
-        logs: true,
-        onQueueUpdate: (update) => {
-          if (update.status === 'IN_PROGRESS') {
-            console.log('Generation progress:', update.logs.map((log) => log.message));
-          }
-        },
-      });
-
-      console.log('Generation result:', result);
+      const result = await generateText(prompt, selectedModel);
       setOutput(result.data.output || 'No output received.');
     } catch (err: any) {
       console.error('Error during generation:', err);
