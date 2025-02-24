@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useToast } from '@/components/ui/use-toast';
 
 interface TextToTextNodeProps {
   data: {
@@ -52,6 +53,7 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
   const [error, setError] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelType>(models[0].value);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Suppress ResizeObserver loop limit exceeded error
@@ -73,6 +75,14 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
     setOutput('');
 
     try {
+      // Configure the fal client with credentials if they exist in environment
+      const falKey = import.meta.env.VITE_FAL_KEY;
+      if (falKey) {
+        falApi.fal.config({
+          credentials: falKey
+        });
+      }
+
       const result = await falApi.fal.subscribe('fal-ai/any-llm', {
         input: {
           prompt: prompt,
@@ -87,9 +97,19 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
       });
 
       setOutput(result.data.output || 'No output received.');
-    } catch (err) {
-      setError('Failed to generate text. Please try again.');
-      console.error(err);
+    } catch (err: any) {
+      console.error('Error:', err);
+      const errorMessage = err.body?.detail || err.message || 'Failed to generate text. Please try again.';
+      setError(errorMessage);
+      
+      // Show authentication error toast if needed
+      if (err.status === 401) {
+        toast({
+          title: "Authentication Required",
+          description: "Please set your FAL_KEY to use the text generation feature.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsGenerating(false);
     }
