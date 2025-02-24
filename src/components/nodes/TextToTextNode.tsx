@@ -84,11 +84,15 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
 
         const falKey = localStorage.getItem('FAL_KEY');
         if (!falKey) {
+          // Add authorization and API key headers
+          const headers = new Headers({
+            'Authorization': `Bearer ${accessToken}`,
+            'apikey': supabase.supabaseKey
+          });
+
           const { data, error: invokeError } = await supabase.functions.invoke('get-secret', {
             body: { name: 'FAL_KEY' },
-            headers: {
-              Authorization: `Bearer ${accessToken}`
-            }
+            headers: headers
           });
 
           console.log('Supabase function response:', { data, error: invokeError });
