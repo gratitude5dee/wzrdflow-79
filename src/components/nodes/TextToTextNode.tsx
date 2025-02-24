@@ -1,3 +1,4 @@
+
 import { memo, useState, useEffect } from 'react';
 import { Handle, Position } from 'reactflow';
 import { X, Loader2 } from 'lucide-react';
@@ -69,10 +70,8 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
           return;
         }
 
-        const { data: sessionData } = await supabase.auth.getSession();
-        const accessToken = sessionData.session?.access_token;
-
-        if (!accessToken) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
           toast({
             title: "Authentication Error",
             description: "Please log in again to use this feature.",
@@ -86,7 +85,8 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
           const { data, error: invokeError } = await supabase.functions.invoke('get-secret', {
             body: { name: 'FAL_KEY' },
             headers: {
-              Authorization: `Bearer ${accessToken}`
+              Authorization: `Bearer ${session.access_token}`,
+              apikey: process.env.VITE_SUPABASE_PUBLISHABLE_KEY
             }
           });
 
