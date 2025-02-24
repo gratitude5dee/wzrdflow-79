@@ -9,8 +9,8 @@ export const generateText = async (prompt: string, selectedModel: ModelType) => 
     throw new Error('Authentication required');
   }
 
-  // Get the Supabase URL from the client
-  const supabaseUrl = supabase.getClientUrl();
+  // Get the Supabase URL from the client config
+  const supabaseUrl = supabase.config.url;
 
   // Make a POST request to the Edge Function
   const response = await fetch(
