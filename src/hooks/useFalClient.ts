@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import * as falApi from '@fal-ai/client';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/components/ui/use-toast';
@@ -8,6 +8,8 @@ import { useAuth } from "@/providers/AuthProvider";
 export const useFalClient = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     const initializeFalClient = async () => {
@@ -18,6 +20,7 @@ export const useFalClient = () => {
             description: "Please log in to use the text generation feature.",
             variant: "destructive",
           });
+          setIsError(true);
           return;
         }
 
@@ -28,6 +31,7 @@ export const useFalClient = () => {
             description: "Please log in again to use this feature.",
             variant: "destructive",
           });
+          setIsError(true);
           return;
         }
 
@@ -37,11 +41,9 @@ export const useFalClient = () => {
             body: { name: 'FAL_KEY' },
             headers: {
               Authorization: `Bearer ${session.access_token}`,
-              apikey: process.env.VITE_SUPABASE_PUBLISHABLE_KEY
+              apikey: process.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
             }
           });
-
-          console.log('Supabase function response:', { data, error: invokeError });
 
           if (invokeError) {
             console.error('Error fetching FAL_KEY:', invokeError);
@@ -50,6 +52,7 @@ export const useFalClient = () => {
               description: "Failed to fetch FAL API key. Please try again.",
               variant: "destructive",
             });
+            setIsError(true);
             return;
           }
 
@@ -59,6 +62,7 @@ export const useFalClient = () => {
               credentials: data.value
             });
             console.log('Fal.ai client initialized with secret');
+            setIsInitialized(true);
             return;
           }
         } else {
@@ -66,6 +70,7 @@ export const useFalClient = () => {
             credentials: falKey
           });
           console.log('Fal.ai client initialized from localStorage');
+          setIsInitialized(true);
         }
       } catch (err) {
         console.error('Failed to initialize fal.ai client:', err);
@@ -75,9 +80,12 @@ export const useFalClient = () => {
           description: "Failed to initialize Fal.ai client. Please check your API key.",
           variant: "destructive",
         });
+        setIsError(true);
       }
     };
 
     initializeFalClient();
   }, [toast, user]);
+
+  return { isInitialized, isError };
 };

@@ -1,4 +1,3 @@
-
 import { memo, useState, useEffect } from 'react';
 import { Handle, Position } from 'reactflow';
 import { X, Loader2 } from 'lucide-react';
@@ -29,9 +28,7 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelType>(models[0].value);
   const { toast } = useToast();
-
-  // Initialize Fal client
-  useFalClient();
+  const { isInitialized, isError } = useFalClient();
 
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
@@ -51,13 +48,12 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
     setError('');
     setOutput('');
 
-    const falKey = localStorage.getItem('FAL_KEY');
-    if (!falKey) {
-      setError('FAL_KEY not found. Please add your API key in the settings.');
+    if (!isInitialized || isError) {
+      setError('FAL client not properly initialized. Please check your API key settings.');
       setIsGenerating(false);
       toast({
         title: "Authentication Required",
-        description: "Please set your FAL_KEY to use the text generation feature.",
+        description: "Please ensure you're logged in and have set up your FAL_KEY.",
         variant: "destructive",
       });
       return;
