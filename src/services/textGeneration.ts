@@ -1,20 +1,37 @@
 
-import { fal } from '@fal-ai/client';
+import { supabase } from "@/integrations/supabase/client";
 import { ModelType } from '@/types/modelTypes';
 
 export const generateText = async (prompt: string, selectedModel: ModelType) => {
-  const result = await fal.subscribe('fal-ai/any-llm', {
-    input: {
-      prompt,
-      model: selectedModel
-    },
-    logs: true,
-    onQueueUpdate: (update) => {
-      if (update.status === 'IN_PROGRESS') {
-        console.log('Generation progress:', update.logs.map((log) => log.message));
-      }
+  // Get the Supabase session for authentication
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error('Authentication required');
+  }
+
+  // Make a POST request to the Edge Function
+  const response = await fetch(
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fal`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        modelId: 'fal-ai/any-llm',
+        input: {
+          prompt,
+          model: selectedModel,
+        },
+      }),
     }
-  });
-  
-  return result;
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to generate text');
+  }
+
+  return response.json();
 };
