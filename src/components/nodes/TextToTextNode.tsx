@@ -57,18 +57,30 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
 
   useEffect(() => {
     // Initialize fal.ai client when component mounts
-    const initializeFalClient = () => {
-      const falKey = localStorage.getItem('FAL_KEY');
-      if (falKey) {
-        try {
+    const initializeFalClient = async () => {
+      try {
+        const falKey = localStorage.getItem('FAL_KEY');
+        if (!falKey) {
+          // Try to get the key from Supabase secrets
+          const response = await fetch('/api/get-secret?name=FAL_KEY');
+          const data = await response.json();
+          if (data.value) {
+            localStorage.setItem('FAL_KEY', data.value);
+            falApi.fal.config({
+              credentials: data.value
+            });
+            console.log('Fal.ai client initialized with secret');
+            return;
+          }
+        } else {
           falApi.fal.config({
             credentials: falKey
           });
-          console.log('Fal.ai client initialized successfully');
-        } catch (err) {
-          console.error('Failed to initialize fal.ai client:', err);
-          localStorage.removeItem('FAL_KEY'); // Remove invalid key
+          console.log('Fal.ai client initialized from localStorage');
         }
+      } catch (err) {
+        console.error('Failed to initialize fal.ai client:', err);
+        localStorage.removeItem('FAL_KEY');
       }
     };
 
