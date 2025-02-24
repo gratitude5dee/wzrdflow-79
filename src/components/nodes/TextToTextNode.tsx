@@ -1,6 +1,6 @@
 
 import { memo, useState, useEffect } from 'react';
-import { Handle, Position } from 'reactflow';
+import { Handle, Position, useReactFlow } from 'reactflow';
 import { X, Loader2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -17,12 +17,13 @@ import { useFalClient } from '@/hooks/useFalClient';
 import { generateText } from '@/services/textGeneration';
 
 interface TextToTextNodeProps {
+  id?: string; // Add id prop
   data: {
     label?: string;
   };
 }
 
-const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
+const TextToTextNode = memo(({ id, data }: TextToTextNodeProps) => {
   const [prompt, setPrompt] = useState('');
   const [output, setOutput] = useState('');
   const [error, setError] = useState('');
@@ -30,6 +31,7 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
   const [selectedModel, setSelectedModel] = useState<ModelType>(models[0].value);
   const { toast } = useToast();
   const { isInitialized, isError } = useFalClient();
+  const { deleteElements } = useReactFlow(); // Add this hook to handle node deletion
 
   useEffect(() => {
     if (isError) {
@@ -51,6 +53,12 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
     window.addEventListener('error', handleError);
     return () => window.removeEventListener('error', handleError);
   }, []);
+
+  const handleDelete = () => {
+    if (id) {
+      deleteElements({ nodes: [{ id }] });
+    }
+  };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -94,7 +102,10 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
     <div className="w-[600px] bg-black/90 rounded-lg overflow-hidden">
       <div className="flex items-center justify-between p-4 bg-zinc-900/50">
         <h3 className="text-white font-medium">{data.label || 'Text to Text'}</h3>
-        <button className="text-zinc-400 hover:text-white">
+        <button 
+          onClick={handleDelete}
+          className="text-zinc-400 hover:text-white transition-colors"
+        >
           <X size={18} />
         </button>
       </div>
