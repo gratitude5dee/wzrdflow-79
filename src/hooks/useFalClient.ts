@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import * as falApi from '@fal-ai/client';
+import { fal } from '@fal-ai/client';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from "@/providers/AuthProvider";
@@ -41,7 +41,7 @@ export const useFalClient = () => {
         }
 
         // Configure the FAL client with the key from Supabase
-        falApi.fal.config({
+        fal.config({
           credentials: data.value
         });
         
