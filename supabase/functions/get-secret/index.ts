@@ -75,7 +75,7 @@ serve(async (req) => {
 
     // Return the secret value
     return new Response(
-      JSON.stringify({ data: { value: secretValue } }),
+      JSON.stringify({ value: secretValue }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
