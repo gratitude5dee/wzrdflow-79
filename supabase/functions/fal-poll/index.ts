@@ -58,7 +58,10 @@ serve(async (req) => {
 
     const data = JSON.parse(responseText);
     
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify({
+      status: data.status,
+      result: data.logs?.length ? data.logs[data.logs.length - 1]?.result : null,
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });

@@ -43,6 +43,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         ...input,
+        mode: 'queue', // Always use queue mode for image generation
       }),
     });
 
@@ -62,7 +63,11 @@ serve(async (req) => {
 
     const data = JSON.parse(responseText);
     
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify({
+      requestId: data.request_id,
+      status: data.status,
+      result: data.result,
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
