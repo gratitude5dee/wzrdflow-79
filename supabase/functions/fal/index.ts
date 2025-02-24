@@ -38,20 +38,17 @@ serve(async (req) => {
       }),
     });
 
-    const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.message || 'Failed to submit request to fal.ai');
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to submit request to fal.ai');
     }
 
-    // Return the request ID
-    return new Response(
-      JSON.stringify({ requestId: data.request_id }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
-
+    const data = await response.json();
+    
+    return new Response(JSON.stringify(data), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    });
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message || 'Internal Server Error' }),

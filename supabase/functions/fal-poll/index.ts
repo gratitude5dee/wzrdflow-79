@@ -33,23 +33,17 @@ serve(async (req) => {
       },
     });
 
-    const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.message || 'Failed to check status from fal.ai');
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to check status from fal.ai');
     }
 
-    // Return the status and result if available
-    return new Response(
-      JSON.stringify({
-        status: data.status,
-        result: data.result,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
-
+    const data = await response.json();
+    
+    return new Response(JSON.stringify(data), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    });
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message || 'Internal Server Error' }),
