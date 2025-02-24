@@ -20,32 +20,30 @@ serve(async (req) => {
     }
 
     // Parse the request body
-    const { modelId, input } = await req.json();
-    if (!modelId) {
-      throw new Error('modelId is required');
+    const { requestId } = await req.json();
+    if (!requestId) {
+      throw new Error('requestId is required');
     }
 
-    // Submit request to fal.ai with queue mode
-    const response = await fetch(`https://fal.run/v1/${modelId}`, {
-      method: 'POST',
+    // Check status from fal.ai
+    const response = await fetch(`https://fal.run/v1/queue/status/${requestId}`, {
+      method: 'GET',
       headers: {
         'Authorization': `Key ${falKey}`,
-        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        ...input,
-        mode: 'queue',
-      }),
     });
 
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.message || 'Failed to submit request to fal.ai');
+      throw new Error(data.message || 'Failed to check status from fal.ai');
     }
 
-    // Return the request ID
+    // Return the status and result if available
     return new Response(
-      JSON.stringify({ requestId: data.request_id }),
+      JSON.stringify({
+        status: data.status,
+        result: data.result,
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
