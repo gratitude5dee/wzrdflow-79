@@ -4,7 +4,7 @@ import { Handle, Position } from 'reactflow';
 import { X, Loader2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { fal } from '@fal-ai/client';
+import * as falApi from '@fal-ai/client';
 
 interface TextToTextNodeProps {
   data: {
@@ -26,7 +26,7 @@ const TextToTextNode = memo(({ data }: TextToTextNodeProps) => {
     setOutput('');
 
     try {
-      const result = await fal.subscribe('fal-ai/any-llm', {
+      const result = await falApi.fal.subscribe('fal-ai/any-llm', {
         input: {
           prompt: prompt,
           model: 'google/gemini-flash-1.5',
