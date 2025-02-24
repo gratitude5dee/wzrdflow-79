@@ -1,12 +1,11 @@
-
 import { memo, useState } from 'react';
 import { Handle, Position, useReactFlow } from 'reactflow';
 import { X, CircleDashed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
-import { SUPABASE_URL } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { SUPABASE_URL, supabase } from '@/integrations/supabase/client';
 
 interface TextToImageNodeProps {
   id?: string;
@@ -45,11 +44,16 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
     setError(null);
 
     try {
-      // First request to initiate generation
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Authentication required');
+      }
+
       const response = await fetch(`${SUPABASE_URL}/functions/v1/fal`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           modelId: 'fal-ai/ideogram/v2',
@@ -64,13 +68,20 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate image');
+        const errorText = await response.text();
+        let errorMessage;
+        try {
+          const error = JSON.parse(errorText);
+          errorMessage = error.error || 'Failed to generate image';
+        } catch (e) {
+          errorMessage = `Failed to generate image: ${errorText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
       
       if (data.requestId) {
-        // If we got a requestId, we need to poll for the result
         let attempts = 0;
         const maxAttempts = 30;
         
@@ -79,6 +90,7 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
             },
             body: JSON.stringify({
               requestId: data.requestId,
@@ -98,7 +110,6 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
             throw new Error('Image generation failed');
           }
 
-          // Wait 2 seconds before next poll
           await new Promise(resolve => setTimeout(resolve, 2000));
           attempts++;
         }
@@ -107,7 +118,6 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
           throw new Error('Generation timed out');
         }
       } else if (data.images?.[0]?.url) {
-        // Direct response with image
         setGeneratedImage(data.images[0].url);
       } else {
         throw new Error('No image URL received');
@@ -143,7 +153,6 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
       </div>
 
       <div className="p-4 space-y-4">
-        {/* Image Preview */}
         <div className="aspect-square bg-zinc-900 rounded-lg overflow-hidden">
           {generatedImage ? (
             <img 
@@ -162,7 +171,6 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
           )}
         </div>
 
-        {/* Settings Grid */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-xs text-zinc-400">Style</label>
@@ -193,7 +201,6 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
           </div>
         </div>
 
-        {/* Prompt Input */}
         <div className="space-y-2">
           <label className="text-xs text-zinc-400">Prompt</label>
           <Textarea
@@ -204,7 +211,6 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
           />
         </div>
 
-        {/* Negative Prompt Input */}
         <div className="space-y-2">
           <label className="text-xs text-zinc-400">Negative Prompt (Optional)</label>
           <Textarea
