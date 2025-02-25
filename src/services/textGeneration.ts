@@ -1,8 +1,7 @@
 
-import { supabase, SUPABASE_URL } from "@/integrations/supabase/client";
 import { ModelType } from '@/types/modelTypes';
 
-async function pollResult(requestId: string, session: any): Promise<any> {
+async function pollResult(requestId: string): Promise<any> {
   let attempts = 0;
   const maxAttempts = 30; // 30 attempts * 2 seconds = 60 seconds max wait
   
@@ -10,17 +9,17 @@ async function pollResult(requestId: string, session: any): Promise<any> {
     try {
       console.log('Polling for result, attempt:', attempts + 1);
       
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/fal-poll`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ requestId }),
-        }
-      );
+      const falKey = localStorage.getItem('falKey');
+      if (!falKey) {
+        throw new Error('FAL_KEY not found. Please set your API key first.');
+      }
+
+      const response = await fetch(`https://fal.run/v1/queue/status/${requestId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Key ${falKey}`,
+        },
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -32,7 +31,7 @@ async function pollResult(requestId: string, session: any): Promise<any> {
       console.log('Poll response:', data);
       
       if (data.status === 'COMPLETED') {
-        return data.result;
+        return data.logs?.[data.logs.length - 1]?.result || data.result;
       } else if (data.status === 'FAILED') {
         throw new Error('Generation failed');
       }
@@ -51,30 +50,26 @@ async function pollResult(requestId: string, session: any): Promise<any> {
 
 export const generateText = async (prompt: string, selectedModel: ModelType) => {
   try {
-    // Get the Supabase session for authentication
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      throw new Error('Authentication required');
+    const falKey = localStorage.getItem('falKey');
+    if (!falKey) {
+      throw new Error('FAL_KEY not found. Please set your API key first.');
     }
 
     console.log('Making initial request with:', { prompt, selectedModel });
 
-    // Make initial request to the Edge Function
+    // Make direct request to Fal.ai
     const response = await fetch(
-      `${SUPABASE_URL}/functions/v1/fal`,
+      `https://fal.run/v1/fal-ai/ideogram/v2`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Key ${falKey}`,
         },
         body: JSON.stringify({
-          modelId: 'fal-ai/ideogram/v2',
-          input: {
-            prompt,
-            model: selectedModel,
-            mode: 'queue',  // Explicitly set queue mode
-          },
+          prompt,
+          model: selectedModel,
+          mode: 'queue',
         }),
       }
     );
@@ -95,13 +90,14 @@ export const generateText = async (prompt: string, selectedModel: ModelType) => 
     const data = await response.json();
     console.log('Initial response:', data);
 
-    if (!data.requestId) {
+    const requestId = data.request_id;
+    if (!requestId) {
       console.error('No request ID received:', data);
       throw new Error('No request ID received');
     }
 
     // Poll for the result
-    return await pollResult(data.requestId, session);
+    return await pollResult(requestId);
   } catch (error) {
     console.error('Generation error:', error);
     throw error;
