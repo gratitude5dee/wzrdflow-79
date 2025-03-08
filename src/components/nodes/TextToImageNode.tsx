@@ -1,3 +1,4 @@
+
 import { memo, useState } from 'react';
 import { Handle, Position, useReactFlow } from 'reactflow';
 import { X, CircleDashed } from 'lucide-react';
@@ -49,7 +50,7 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
         throw new Error('Authentication required');
       }
 
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/fal`, {
+      const response = await fetch(`${supabase.authUrl}/functions/v1/fal`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +87,7 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
         const maxAttempts = 30;
         
         while (attempts < maxAttempts) {
-          const pollResponse = await fetch(`${SUPABASE_URL}/functions/v1/fal-poll`, {
+          const pollResponse = await fetch(`${supabase.authUrl}/functions/v1/fal-poll`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
