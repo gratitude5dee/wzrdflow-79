@@ -1,10 +1,8 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Settings, FileCode, Shirt, Mic2, Music } from 'lucide-react';
-import CodeRepoContainer from '@/components/code-repo/CodeRepoContainer';
 
 const StoryboardPage = () => {
   const [scenes, setScenes] = useState([1]); // Initial scene
@@ -118,10 +116,7 @@ const StoryboardPage = () => {
         <div className="mb-6 flex justify-between items-center">
           <h2 className="text-xl font-bold text-amber-500">SCENE 1</h2>
           
-          {/* Added the Code Repository component here */}
-          <div className="w-64 h-80">
-            <CodeRepoContainer />
-          </div>
+          {/* Removed the Code Repository component from here */}
         </div>
 
         <div className="flex flex-wrap gap-6">
