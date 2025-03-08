@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Settings } from 'lucide-react';
+import { Plus, Settings, FileCode, Shirt, Mic2, Music } from 'lucide-react';
+import CodeRepoContainer from '@/components/code-repo/CodeRepoContainer';
 
 const StoryboardPage = () => {
   const [scenes, setScenes] = useState([1]); // Initial scene
@@ -114,8 +115,13 @@ const StoryboardPage = () => {
 
       {/* Main content area */}
       <div className="flex-1 bg-zinc-900 overflow-y-auto p-6">
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-amber-500 mb-4">SCENE 1</h2>
+        <div className="mb-6 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-amber-500">SCENE 1</h2>
+          
+          {/* Added the Code Repository component here */}
+          <div className="w-64 h-80">
+            <CodeRepoContainer />
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-6">
@@ -181,6 +187,3 @@ const StoryboardPage = () => {
 };
 
 export default StoryboardPage;
-
-// Missing component imports that we'll need to create
-import { FileCode, Shirt, Mic2, Music } from 'lucide-react';
