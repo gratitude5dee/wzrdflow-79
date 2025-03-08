@@ -1,9 +1,10 @@
 
-import { Flower, Menu, LogOut, ArrowLeft } from 'lucide-react';
+import { Flower, Menu, LogOut, ArrowLeft, Settings, FileCode, Users, Music, Mic } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { ViewModeSelector } from '@/components/home/ViewModeSelector';
+import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
   viewMode: 'studio' | 'storyboard' | 'editor';
@@ -46,25 +47,64 @@ const Header = ({ viewMode, setViewMode }: HeaderProps) => {
             </button>
             <div className="flex items-center gap-2">
               <Flower className="w-6 h-6 text-teal-500" />
-              <h1 className="text-2xl font-bold text-white tracking-tight">WZRD.tech ALPHA</h1>
+              <h1 className="text-2xl font-bold text-amber-300 tracking-tight">WZRD.tech ALPHA</h1>
             </div>
           </div>
-          <span className="text-sm text-zinc-400 mt-1">Starting Project 001</span>
+          <span className="text-sm text-zinc-400 mt-1">Project 001</span>
         </div>
 
-        <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
+        {viewMode === 'storyboard' && (
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" size="sm" className="text-white hover:text-purple-400">
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </Button>
+            <Button variant="ghost" size="sm" className="text-white hover:text-purple-400">
+              <FileCode className="h-4 w-4 mr-2" />
+              Style
+            </Button>
+            <Button variant="ghost" size="sm" className="text-white hover:text-purple-400">
+              <Users className="h-4 w-4 mr-2" />
+              Cast
+            </Button>
+            <Button variant="ghost" size="sm" className="text-white hover:text-purple-400">
+              <Music className="h-4 w-4 mr-2" />
+              Soundtrack
+            </Button>
+            <Button variant="ghost" size="sm" className="text-white hover:text-purple-400">
+              <Mic className="h-4 w-4 mr-2" />
+              Voiceover
+            </Button>
+          </div>
+        )}
 
         <div className="flex items-center gap-4">
-          <button 
-            onClick={handleLogout}
-            className="text-white hover:text-teal-500 transition-colors flex items-center gap-2"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Sign Out</span>
-          </button>
-          <button className="text-white hover:text-teal-500 transition-colors">
-            <Menu className="w-6 h-6" />
-          </button>
+          <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
+
+          <div className="flex items-center gap-4 ml-4">
+            <Button 
+              variant="ghost" 
+              className="text-white hover:text-teal-500 transition-colors flex items-center gap-2"
+            >
+              <span>Preview</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="text-white hover:text-teal-500 transition-colors flex items-center gap-2"
+            >
+              <span>Share</span>
+            </Button>
+            <button 
+              onClick={handleLogout}
+              className="text-white hover:text-teal-500 transition-colors flex items-center gap-2"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Sign Out</span>
+            </button>
+            <button className="text-white hover:text-teal-500 transition-colors">
+              <Menu className="w-6 h-6" />
+            </button>
+          </div>
         </div>
       </div>
     </header>

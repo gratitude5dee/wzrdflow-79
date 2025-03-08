@@ -23,7 +23,7 @@ export const ViewModeSelector = ({ viewMode, setViewMode }: ViewModeSelectorProp
         onClick={() => setViewMode('storyboard')}
         className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
           viewMode === 'storyboard'
-            ? 'bg-zinc-800 text-white'
+            ? 'bg-purple-800/70 text-white'
             : 'text-zinc-400 hover:text-zinc-300'
         }`}
       >
