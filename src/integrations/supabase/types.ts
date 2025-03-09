@@ -220,6 +220,53 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_videos: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          project_id: string | null
+          share_id: string
+          thumbnail_url: string | null
+          title: string
+          user_id: string | null
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          project_id?: string | null
+          share_id: string
+          thumbnail_url?: string | null
+          title: string
+          user_id?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          project_id?: string | null
+          share_id?: string
+          thumbnail_url?: string | null
+          title?: string
+          user_id?: string | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_videos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shared_workflows: {
         Row: {
           created_at: string | null

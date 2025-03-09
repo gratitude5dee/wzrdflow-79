@@ -34,7 +34,7 @@ const App = () => {
               } />
               <Route path="/editor" element={
                 <ProtectedRoute>
-                  <Index />
+                  <Index viewMode="editor" />
                 </ProtectedRoute>
               } />
               <Route path="/shot-editor" element={

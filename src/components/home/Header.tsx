@@ -7,6 +7,7 @@ export const Header = () => {
   const navigate = useNavigate();
 
   const handleCreateProject = () => {
+    // Navigate to the editor route that will display the VideoEditor component
     navigate('/editor');
   };
 

@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 const VideoEditor = () => {
   const { 
@@ -30,6 +31,7 @@ const VideoEditor = () => {
     setProjectName
   } = useVideoEditor();
   
+  const navigate = useNavigate();
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [userAuthenticated, setUserAuthenticated] = useState<boolean | null>(null);
 
@@ -95,6 +97,8 @@ const VideoEditor = () => {
       setProjectName(project.title);
       
       toast.success("New project created");
+      
+      // Stay on the current page as we're already in the editor
     } catch (error) {
       console.error('Error creating default project:', error);
       toast.error("Failed to create project");
@@ -110,7 +114,7 @@ const VideoEditor = () => {
         <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
         <p className="text-center mb-6">Please log in to use the video editor.</p>
         <Button
-          onClick={() => window.location.href = '/login'}
+          onClick={() => navigate('/login')}
         >
           Go to Login
         </Button>
