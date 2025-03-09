@@ -14,17 +14,15 @@ const ShotEditor = ({ viewMode, setViewMode }: ShotEditorProps) => {
   const params = useParams();
   const projectId = params.projectId;
   
-  // This is an example of how you could integrate with your external state
-  // If you're not using redux, adapt this to your state management solution
-  /*
-  const { project } = useYourExistingStateHook();
-  
-  // Set up synchronization between your existing state and the video editor state
+  // Use the integration to sync the state
   useSyncVideoEditorState({
-    projectId: project?.id || null,
-    projectName: project?.name || 'Untitled Project',
+    projectId: projectId || null,
+    projectName: 'Untitled Project',
+    onMediaItemsChange: (mediaItems) => {
+      // Here you would connect to your external state management
+      console.log('Media items changed:', mediaItems);
+    }
   });
-  */
 
   return (
     <div className="flex flex-col h-screen bg-[#0A0D16]">

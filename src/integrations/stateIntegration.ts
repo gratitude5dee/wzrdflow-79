@@ -65,9 +65,14 @@ export function useSyncVideoEditorState(options: {
   // Subscribe to media items changes and notify external state
   useEffect(() => {
     if (onMediaItemsChange) {
+      // Fix: useVideoEditorStore.subscribe takes a selector function and a listener
       const unsubscribe = useVideoEditorStore.subscribe(
         (state) => state.mediaItems,
-        onMediaItemsChange
+        (mediaItems) => {
+          if (onMediaItemsChange) {
+            onMediaItemsChange(mediaItems);
+          }
+        }
       );
       
       return unsubscribe;
