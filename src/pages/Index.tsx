@@ -25,11 +25,11 @@ const Index = () => {
         )}
         
         {viewMode === 'storyboard' && (
-          <StoryboardPage />
+          <StoryboardPage viewMode={viewMode} setViewMode={setViewMode} />
         )}
         
         {viewMode === 'editor' && (
-          <ShotEditor />
+          <ShotEditor viewMode={viewMode} setViewMode={setViewMode} />
         )}
         
         <BottomStatusBar />

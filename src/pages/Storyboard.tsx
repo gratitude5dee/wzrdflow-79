@@ -8,7 +8,12 @@ import StoryboardHeader from '@/components/storyboard/StoryboardHeader';
 import StoryboardSidebar from '@/components/storyboard/StoryboardSidebar';
 import ShotsRow from '@/components/storyboard/ShotsRow';
 
-const StoryboardPage = () => {
+interface StoryboardPageProps {
+  viewMode: 'studio' | 'storyboard' | 'editor';
+  setViewMode: (mode: 'studio' | 'storyboard' | 'editor') => void;
+}
+
+const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
   const [scenes, setScenes] = useState([1]); // Initial scene
   
   const addScene = () => {
@@ -18,7 +23,7 @@ const StoryboardPage = () => {
   return (
     <div className="flex flex-col h-screen bg-[#0A0D16]">
       {/* Header */}
-      <StoryboardHeader />
+      <StoryboardHeader viewMode={viewMode} setViewMode={setViewMode} />
       
       {/* Main content with resizable panels */}
       <ResizablePanelGroup direction="horizontal" className="flex-grow">
