@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useVideoEditor } from '@/providers/VideoEditorProvider';
 import { Button } from '@/components/ui/button';
-import { Settings, Save, Upload, FileText, Scissors, Copy, Undo, Redo, Plus } from 'lucide-react';
+import { Settings, Save, Upload, FileText, Scissors, Copy, Undo, Redo, Plus, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { shareVideo } from '@/utils/shareVideo';
 
 const ToolbarPanel = () => {
   const { 
@@ -32,6 +33,11 @@ const ToolbarPanel = () => {
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareTitle, setShareTitle] = useState('');
+  const [shareDescription, setShareDescription] = useState('');
+  const [shareUrl, setShareUrl] = useState('');
 
   // Function to save project name
   const handleSaveProject = async () => {
@@ -93,7 +99,7 @@ const ToolbarPanel = () => {
       const { project } = await response.json();
       
       // Navigate to the new project (or reload)
-      window.location.href = `/editor/${project.id}`;
+      window.location.href = `/shot-editor`;
       
       toast.success("Project created successfully");
       setIsNewProjectDialogOpen(false);
@@ -102,6 +108,39 @@ const ToolbarPanel = () => {
       toast.error("Failed to create project");
     } finally {
       setIsCreatingProject(false);
+    }
+  };
+
+  // Function to share project
+  const handleShareProject = async () => {
+    if (!projectId) {
+      toast.error("No project to share");
+      return;
+    }
+
+    try {
+      setIsSharing(true);
+      
+      const shareId = await shareVideo({
+        title: shareTitle || projectName,
+        description: shareDescription,
+        projectId: projectId,
+        // Add videoUrl and thumbnailUrl as needed
+      });
+      
+      // Create shareable URL
+      const shareableUrl = `${window.location.origin}/shared/${shareId}`;
+      setShareUrl(shareableUrl);
+      
+      // Copy to clipboard
+      await navigator.clipboard.writeText(shareableUrl);
+      toast.success("Share link copied to clipboard");
+      
+    } catch (error) {
+      console.error('Error sharing project:', error);
+      toast.error("Failed to share project");
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -191,6 +230,83 @@ const ToolbarPanel = () => {
           <FileText className="h-4 w-4 mr-2" />
           Export
         </Button>
+        
+        <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+          <DialogTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-white hover:bg-[#1D2130] h-8"
+              disabled={!projectId}
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Share Project</DialogTitle>
+              <DialogDescription>
+                Create a shareable link for your project
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="share-title">Title</Label>
+                <Input
+                  id="share-title"
+                  value={shareTitle}
+                  onChange={(e) => setShareTitle(e.target.value)}
+                  placeholder={projectName}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="share-description">Description (optional)</Label>
+                <Textarea
+                  id="share-description"
+                  value={shareDescription}
+                  onChange={(e) => setShareDescription(e.target.value)}
+                  placeholder="Project description"
+                />
+              </div>
+              {shareUrl && (
+                <div className="grid gap-2">
+                  <Label htmlFor="share-url">Share Link</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="share-url"
+                      value={shareUrl}
+                      readOnly
+                      className="flex-1"
+                    />
+                    <Button
+                      onClick={() => {
+                        navigator.clipboard.writeText(shareUrl);
+                        toast.success("Link copied to clipboard");
+                      }}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setShareDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleShareProject}
+                disabled={isSharing}
+              >
+                {isSharing ? 'Sharing...' : (shareUrl ? 'Copy Link' : 'Share Project')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
       
       <div className="flex items-center space-x-2">
