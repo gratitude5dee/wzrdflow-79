@@ -20,7 +20,7 @@ const StoryboardHeader = () => {
 
   return (
     <header className="w-full bg-[#0A0D16] border-b border-[#1D2130] px-6 py-3 shadow-lg sticky top-0 z-10">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center">
         <div className="flex items-center space-x-4">
           {/* WZRD.STUDIO text removed */}
           
@@ -44,10 +44,8 @@ const StoryboardHeader = () => {
             <Mic className="h-4 w-4 mr-2" />
             Voiceover
           </Button>
-        </div>
         
-        <div className="flex items-center gap-3">
-          <div className="flex bg-[#121524] rounded-md overflow-hidden p-1 border border-[#1D2130]">
+          <div className="flex bg-[#121524] rounded-md overflow-hidden p-1 border border-[#1D2130] ml-4">
             <motion.button 
               className={`px-6 py-1.5 text-sm rounded ${activeTab === 'storyboard' ? 'bg-purple-600 text-white shadow-glow-purple' : 'text-white/70 hover:text-white'}`}
               onClick={() => handleTabChange('storyboard')}
@@ -66,32 +64,34 @@ const StoryboardHeader = () => {
             </motion.button>
           </div>
           
-          <Button 
-            variant="ghost" 
-            className="bg-transparent hover:bg-[#1D2130] border border-[#1D2130] text-white glow-button-subtle"
-          >
-            <Undo className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="bg-transparent hover:bg-[#1D2130] border border-[#1D2130] text-white glow-button-subtle"
-          >
-            <Redo className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="bg-[#1D2130] hover:bg-[#262B3D] text-white gap-2 glow-button"
-          >
-            <Play className="w-4 h-4" />
-            <span>Preview</span>
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="bg-[#1D2130] hover:bg-[#262B3D] text-white gap-2 glow-button"
-          >
-            <Share className="w-4 h-4" />
-            <span>Share</span>
-          </Button>
+          <div className="flex items-center gap-3 ml-4">
+            <Button 
+              variant="ghost" 
+              className="bg-transparent hover:bg-[#1D2130] border border-[#1D2130] text-white glow-button-subtle"
+            >
+              <Undo className="w-4 h-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="bg-transparent hover:bg-[#1D2130] border border-[#1D2130] text-white glow-button-subtle"
+            >
+              <Redo className="w-4 h-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="bg-[#1D2130] hover:bg-[#262B3D] text-white gap-2 glow-button"
+            >
+              <Play className="w-4 h-4" />
+              <span>Preview</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="bg-[#1D2130] hover:bg-[#262B3D] text-white gap-2 glow-button"
+            >
+              <Share className="w-4 h-4" />
+              <span>Share</span>
+            </Button>
+          </div>
         </div>
       </div>
     </header>
