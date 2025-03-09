@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { ViewModeSelector } from '@/components/home/ViewModeSelector';
 
 interface HeaderProps {
   viewMode: 'studio' | 'storyboard' | 'editor';
@@ -38,6 +39,8 @@ const Header = ({ viewMode, setViewMode }: HeaderProps) => {
           <h1 className="text-xl font-bold text-yellow-300 tracking-tight mr-2">WZRD.STUDIO</h1>
           <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">ALPHA</span>
         </div>
+        
+        <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
 
         <div className="flex items-center gap-3">
           <Button 
