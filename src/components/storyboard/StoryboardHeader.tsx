@@ -16,9 +16,24 @@ const StoryboardHeader = ({ viewMode, setViewMode }: StoryboardHeaderProps) => {
 
   return (
     <header className="w-full bg-[#0A0D16] border-b border-[#1D2130] px-6 py-3 shadow-lg sticky top-0 z-10">
-      {/* Top row with view mode selector centered */}
-      <div className="flex justify-center mb-4">
+      {/* Top row with branding and view mode selector */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center">
+          <h1 className="text-xl font-bold text-yellow-300 tracking-tight mr-2">WZRD.STUDIO</h1>
+          <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">ALPHA</span>
+        </div>
+        
         <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
+        
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            className="bg-[#1D2130] hover:bg-[#262B3D] text-white"
+            onClick={() => navigate('/home')}
+          >
+            Back to Projects
+          </Button>
+        </div>
       </div>
       
       {/* Bottom row with other buttons */}
