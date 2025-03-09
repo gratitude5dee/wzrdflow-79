@@ -22,12 +22,7 @@ const StoryboardHeader = () => {
     <header className="w-full bg-[#0A0D16] border-b border-[#1D2130] px-6 py-3 shadow-lg sticky top-0 z-10">
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <div className="text-2xl font-bold text-yellow-400 mr-4 font-serif tracking-wider glow-text">
-            WZRD.STUDIO
-            <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded ml-2">
-              ALPHA
-            </span>
-          </div>
+          {/* WZRD.STUDIO text removed */}
           
           <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130] glow-button">
             <Settings className="h-4 w-4 mr-2" />
