@@ -16,6 +16,12 @@ const StoryboardHeader = ({ viewMode, setViewMode }: StoryboardHeaderProps) => {
 
   return (
     <header className="w-full bg-[#0A0D16] border-b border-[#1D2130] px-6 py-3 shadow-lg sticky top-0 z-10">
+      {/* Top row with view mode selector centered */}
+      <div className="flex justify-center mb-4">
+        <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
+      </div>
+      
+      {/* Bottom row with other buttons */}
       <div className="flex items-center justify-between">
         {/* Left section with navigation buttons */}
         <div className="flex items-center space-x-6">
@@ -39,11 +45,6 @@ const StoryboardHeader = ({ viewMode, setViewMode }: StoryboardHeaderProps) => {
             <Mic className="h-4 w-4 mr-2" />
             Voiceover
           </Button>
-        </div>
-        
-        {/* Center section with view mode selector */}
-        <div className="flex justify-center mx-4">
-          <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
         </div>
         
         {/* Right section with action buttons */}
