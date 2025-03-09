@@ -69,13 +69,6 @@ const StoryboardHeader = ({ viewMode, setViewMode }: StoryboardHeaderProps) => {
             <Share className="w-4 h-4" />
             <span>Share</span>
           </Button>
-          <Button 
-            variant="ghost" 
-            className="bg-[#1D2130] hover:bg-[#262B3D] text-white"
-            onClick={() => navigate('/home')}
-          >
-            Back to Projects
-          </Button>
         </div>
       </div>
     </header>
