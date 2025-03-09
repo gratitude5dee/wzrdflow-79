@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,12 +29,12 @@ function App() {
             <Toaster />
             <Sonner />
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Index viewMode={viewMode} setViewMode={setViewMode} />} />
               <Route path="/login" element={<Login />} />
               <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
               <Route path="/editor/:projectId?" element={<ProtectedRoute><VideoEditor /></ProtectedRoute>} />
-              <Route path="/shot-editor" element={<ProtectedRoute><ShotEditor /></ProtectedRoute>} />
-              <Route path="/storyboard" element={<ProtectedRoute><Storyboard /></ProtectedRoute>} />
+              <Route path="/shot-editor" element={<ProtectedRoute><ShotEditor viewMode={viewMode} setViewMode={setViewMode} /></ProtectedRoute>} />
+              <Route path="/storyboard" element={<ProtectedRoute><Storyboard viewMode={viewMode} setViewMode={setViewMode} /></ProtectedRoute>} />
               <Route path="/shared/:shareId" element={<SharedVideo />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
