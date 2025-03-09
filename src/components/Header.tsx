@@ -1,5 +1,5 @@
 
-import { Flower, Menu, LogOut, ArrowLeft, Settings, FileCode, Users, Music, Mic } from 'lucide-react';
+import { Play, Share, Settings, FileCode, Users, Music, Mic } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -34,76 +34,81 @@ const Header = ({ viewMode, setViewMode }: HeaderProps) => {
   };
 
   return (
-    <header className="w-full bg-zinc-900/50 backdrop-blur-sm border-b border-zinc-800 px-6 py-4 shadow-lg">
+    <header className="w-full bg-[#0B0D14] border-b border-[#1D2130] px-6 py-3 shadow-lg">
       <div className="flex justify-between items-center">
-        <div className="flex flex-col">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={handleBack}
-              className="text-white hover:text-teal-500 transition-colors p-1 -ml-2"
-              aria-label="Back to home"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div className="flex items-center gap-2">
-              <Flower className="w-6 h-6 text-teal-500" />
-              <h1 className="text-2xl font-bold text-amber-300 tracking-tight">WZRD.tech ALPHA</h1>
-            </div>
-          </div>
-          <span className="text-sm text-zinc-400 mt-1">Project 001</span>
-        </div>
-
-        {viewMode === 'storyboard' && (
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="text-white hover:text-purple-400">
+        <div className="flex items-center">
+          <h1 className="text-xl font-bold text-yellow-300 tracking-tight mr-2">WZRD.STUDIO</h1>
+          <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">ALPHA</span>
+          
+          <div className="flex items-center ml-8 space-x-1">
+            <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130]">
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
-            <Button variant="ghost" size="sm" className="text-white hover:text-purple-400">
+            <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130]">
               <FileCode className="h-4 w-4 mr-2" />
               Style
             </Button>
-            <Button variant="ghost" size="sm" className="text-white hover:text-purple-400">
+            <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130]">
               <Users className="h-4 w-4 mr-2" />
               Cast
             </Button>
-            <Button variant="ghost" size="sm" className="text-white hover:text-purple-400">
+            <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130]">
               <Music className="h-4 w-4 mr-2" />
               Soundtrack
             </Button>
-            <Button variant="ghost" size="sm" className="text-white hover:text-purple-400">
+            <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130]">
               <Mic className="h-4 w-4 mr-2" />
               Voiceover
             </Button>
           </div>
-        )}
+        </div>
 
-        <div className="flex items-center gap-4">
-          <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
-
-          <div className="flex items-center gap-4 ml-4">
+        <div className="flex items-center gap-3">
+          <div className="flex bg-[#1D2130] rounded-md overflow-hidden p-1">
+            <Button 
+              variant="ghost"
+              className={`px-4 py-1 text-sm rounded ${viewMode === 'storyboard' ? 'bg-purple-600 text-white' : 'text-white/70 hover:text-white'}`}
+              onClick={() => setViewMode('storyboard')}
+            >
+              STORYBOARD
+            </Button>
+            <Button 
+              variant="ghost"
+              className={`px-4 py-1 text-sm rounded ${viewMode === 'editor' ? 'bg-purple-600 text-white' : 'text-white/70 hover:text-white'}`}
+              onClick={() => setViewMode('editor')}
+            >
+              SHOT EDITOR
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-3 ml-3">
             <Button 
               variant="ghost" 
-              className="text-white hover:text-teal-500 transition-colors flex items-center gap-2"
+              className="bg-transparent hover:bg-[#1D2130] border border-[#1D2130] text-white"
             >
+              <span>-</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="bg-transparent hover:bg-[#1D2130] border border-[#1D2130] text-white"
+            >
+              <span>-</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="bg-[#1D2130] hover:bg-[#262B3D] text-white gap-2"
+            >
+              <Play className="w-4 h-4" />
               <span>Preview</span>
             </Button>
             <Button 
               variant="ghost" 
-              className="text-white hover:text-teal-500 transition-colors flex items-center gap-2"
+              className="bg-[#1D2130] hover:bg-[#262B3D] text-white gap-2"
             >
+              <Share className="w-4 h-4" />
               <span>Share</span>
             </Button>
-            <button 
-              onClick={handleLogout}
-              className="text-white hover:text-teal-500 transition-colors flex items-center gap-2"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Sign Out</span>
-            </button>
-            <button className="text-white hover:text-teal-500 transition-colors">
-              <Menu className="w-6 h-6" />
-            </button>
           </div>
         </div>
       </div>

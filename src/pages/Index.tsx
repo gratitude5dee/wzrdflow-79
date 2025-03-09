@@ -9,11 +9,11 @@ import 'reactflow/dist/style.css';
 import StoryboardPage from './Storyboard';
 
 const Index = () => {
-  const [viewMode, setViewMode] = useState<'studio' | 'storyboard' | 'editor'>('studio');
+  const [viewMode, setViewMode] = useState<'studio' | 'storyboard' | 'editor'>('storyboard');
 
   return (
     <ReactFlowProvider>
-      <div className="w-screen h-screen bg-zinc-900 flex flex-col">
+      <div className="w-screen h-screen bg-[#0F1117] flex flex-col">
         <Header viewMode={viewMode} setViewMode={setViewMode} />
         
         {viewMode === 'studio' && (
