@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { ViewModeSelector } from '@/components/home/ViewModeSelector';
@@ -38,9 +37,9 @@ const Header = ({ viewMode, setViewMode }: HeaderProps) => {
         <div className="flex items-center">
           <h1 className="text-xl font-bold text-yellow-300 tracking-tight mr-2">WZRD.STUDIO</h1>
           <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">ALPHA</span>
-          
-          <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
         </div>
+        
+        <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
 
         <div className="flex items-center gap-3">
           <Button 

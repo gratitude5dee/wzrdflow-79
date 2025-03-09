@@ -8,7 +8,7 @@ interface ViewModeSelectorProps {
 
 export const ViewModeSelector = ({ viewMode, setViewMode }: ViewModeSelectorProps) => {
   return (
-    <div className="flex bg-[#16192A] rounded-lg border border-[#272C3F] p-0.5 ml-8 shadow-inner">
+    <div className="flex bg-[#16192A] rounded-lg border border-[#272C3F] p-0.5 mx-auto shadow-inner">
       <button
         onClick={() => setViewMode('studio')}
         className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
