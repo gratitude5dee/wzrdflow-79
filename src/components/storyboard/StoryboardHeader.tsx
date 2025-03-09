@@ -16,8 +16,9 @@ const StoryboardHeader = ({ viewMode, setViewMode }: StoryboardHeaderProps) => {
 
   return (
     <header className="w-full bg-[#0A0D16] border-b border-[#1D2130] px-6 py-3 shadow-lg sticky top-0 z-10">
-      <div className="flex items-center">
-        <div className="flex items-center space-x-4">
+      <div className="flex items-center justify-between">
+        {/* Left section with navigation buttons */}
+        <div className="flex items-center space-x-6">
           <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130] glow-button">
             <Settings className="h-4 w-4 mr-2" />
             Settings
@@ -38,37 +39,41 @@ const StoryboardHeader = ({ viewMode, setViewMode }: StoryboardHeaderProps) => {
             <Mic className="h-4 w-4 mr-2" />
             Voiceover
           </Button>
+        </div>
         
+        {/* Center section with view mode selector */}
+        <div className="flex justify-center mx-4">
           <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
-          
-          <div className="flex items-center gap-3 ml-4">
-            <Button 
-              variant="ghost" 
-              className="bg-transparent hover:bg-[#1D2130] border border-[#1D2130] text-white glow-button-subtle"
-            >
-              <Undo className="w-4 h-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              className="bg-transparent hover:bg-[#1D2130] border border-[#1D2130] text-white glow-button-subtle"
-            >
-              <Redo className="w-4 h-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              className="bg-[#1D2130] hover:bg-[#262B3D] text-white gap-2 glow-button"
-            >
-              <Play className="w-4 h-4" />
-              <span>Preview</span>
-            </Button>
-            <Button 
-              variant="ghost" 
-              className="bg-[#1D2130] hover:bg-[#262B3D] text-white gap-2 glow-button"
-            >
-              <Share className="w-4 h-4" />
-              <span>Share</span>
-            </Button>
-          </div>
+        </div>
+        
+        {/* Right section with action buttons */}
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            className="bg-transparent hover:bg-[#1D2130] border border-[#1D2130] text-white glow-button-subtle"
+          >
+            <Undo className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            className="bg-transparent hover:bg-[#1D2130] border border-[#1D2130] text-white glow-button-subtle"
+          >
+            <Redo className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            className="bg-[#1D2130] hover:bg-[#262B3D] text-white gap-2 glow-button"
+          >
+            <Play className="w-4 h-4" />
+            <span>Preview</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            className="bg-[#1D2130] hover:bg-[#262B3D] text-white gap-2 glow-button"
+          >
+            <Share className="w-4 h-4" />
+            <span>Share</span>
+          </Button>
         </div>
       </div>
     </header>
