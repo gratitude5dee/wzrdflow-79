@@ -10,15 +10,12 @@ import Index from "./pages/Index";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
-import VideoEditor from "./pages/VideoEditor";
-import ShotEditor from "./pages/ShotEditor";
-import Storyboard from "./pages/Storyboard";
-import SharedVideo from "./pages/SharedVideo";
 import { useState } from "react";
 
 const queryClient = new QueryClient();
 
-function App() {
+const App = () => {
+  // Adding viewMode state to the App component
   const [viewMode, setViewMode] = useState<'studio' | 'storyboard' | 'editor'>('storyboard');
 
   return (
@@ -29,13 +26,23 @@ function App() {
             <Toaster />
             <Sonner />
             <Routes>
-              <Route path="/" element={<Index viewMode={viewMode} setViewMode={setViewMode} />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-              <Route path="/editor/:projectId?" element={<ProtectedRoute><VideoEditor /></ProtectedRoute>} />
-              <Route path="/shot-editor" element={<ProtectedRoute><ShotEditor viewMode={viewMode} setViewMode={setViewMode} /></ProtectedRoute>} />
-              <Route path="/storyboard" element={<ProtectedRoute><Storyboard viewMode={viewMode} setViewMode={setViewMode} /></ProtectedRoute>} />
-              <Route path="/shared/:shareId" element={<SharedVideo />} />
+              <Route path="/home" element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              } />
+              <Route path="/editor" element={
+                <ProtectedRoute>
+                  <Index />
+                </ProtectedRoute>
+              } />
+              <Route path="/shot-editor" element={
+                <ProtectedRoute>
+                  <Index viewMode="editor" />
+                </ProtectedRoute>
+              } />
+              <Route path="/" element={<Navigate to="/home" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>
@@ -43,6 +50,6 @@ function App() {
       </TooltipProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default App;

@@ -1,34 +1,37 @@
 
-/**
- * Downloads a file from a URL
- * @param url The URL of the file to download
- * @param filename Optional filename to use for the download
- */
-export const downloadFile = async (url: string, filename?: string) => {
+import { supabase } from '@/integrations/supabase/client';
+
+export async function downloadFile(url: string) {
   try {
-    // Use the download edge function
-    const downloadUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/download?url=${encodeURIComponent(url)}`;
+    const { data: { session } } = await supabase.auth.getSession();
     
-    // Create a link element and trigger the download
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    
-    if (filename) {
-      link.download = filename;
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/download?url=${encodeURIComponent(url)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to download file');
     }
-    
-    // Append to the document
-    document.body.appendChild(link);
-    
-    // Trigger the download
-    link.click();
-    
-    // Clean up
-    document.body.removeChild(link);
-    
-    return true;
+
+    // Create a blob URL and trigger download
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = 'download'; // You can set a custom filename here
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(downloadUrl);
+    document.body.removeChild(a);
+
   } catch (error) {
     console.error('Download failed:', error);
-    return false;
+    throw error;
   }
 }
