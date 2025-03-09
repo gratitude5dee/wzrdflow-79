@@ -1,5 +1,6 @@
 
 import { ModelType } from '@/types/modelTypes';
+import { supabase } from '@/integrations/supabase/client';
 
 async function pollResult(requestId: string): Promise<any> {
   let attempts = 0;
@@ -9,29 +10,20 @@ async function pollResult(requestId: string): Promise<any> {
     try {
       console.log('Polling for result, attempt:', attempts + 1);
       
-      const falKey = localStorage.getItem('falKey');
-      if (!falKey) {
-        throw new Error('FAL_KEY not found. Please set your API key first.');
-      }
-
-      const response = await fetch(`https://fal.run/v1/queue/status/${requestId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Key ${falKey}`,
-        },
+      // Call the fal-poll edge function instead of direct API
+      const { data, error } = await supabase.functions.invoke('fal-poll', {
+        body: { requestId }
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Poll request failed:', response.status, errorText);
-        throw new Error(`Poll request failed: ${errorText}`);
+      
+      if (error) {
+        console.error('Poll request failed:', error);
+        throw new Error(`Poll request failed: ${error.message}`);
       }
-
-      const data = await response.json();
+      
       console.log('Poll response:', data);
       
       if (data.status === 'COMPLETED') {
-        return data.logs?.[data.logs.length - 1]?.result || data.result;
+        return data.result;
       } else if (data.status === 'FAILED') {
         throw new Error('Generation failed');
       }
@@ -50,47 +42,28 @@ async function pollResult(requestId: string): Promise<any> {
 
 export const generateText = async (prompt: string, selectedModel: ModelType) => {
   try {
-    const falKey = localStorage.getItem('falKey');
-    if (!falKey) {
-      throw new Error('FAL_KEY not found. Please set your API key first.');
-    }
+    console.log('Making request with:', { prompt, selectedModel });
 
-    console.log('Making initial request with:', { prompt, selectedModel });
-
-    // Make direct request to Fal.ai
-    const response = await fetch(
-      `https://fal.run/v1/fal-ai/ideogram/v2`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Key ${falKey}`,
-        },
-        body: JSON.stringify({
+    // Call our secure edge function instead of direct API
+    const { data, error } = await supabase.functions.invoke('fal-proxy', {
+      body: {
+        endpoint: 'fal-ai/ideogram/v2',
+        input: {
           prompt,
           model: selectedModel,
-          mode: 'queue',
-        }),
+        },
+        mode: 'queue'
       }
-    );
+    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Initial request failed:', response.status, errorText);
-      let errorMessage;
-      try {
-        const error = JSON.parse(errorText);
-        errorMessage = error.error || 'Failed to generate text';
-      } catch (e) {
-        errorMessage = `Failed to generate text: ${errorText}`;
-      }
-      throw new Error(errorMessage);
+    if (error) {
+      console.error('Initial request failed:', error);
+      throw new Error(error.message || 'Failed to generate text');
     }
 
-    const data = await response.json();
     console.log('Initial response:', data);
 
-    const requestId = data.request_id;
+    const requestId = data.requestId;
     if (!requestId) {
       console.error('No request ID received:', data);
       throw new Error('No request ID received');

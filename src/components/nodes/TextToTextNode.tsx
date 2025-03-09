@@ -1,4 +1,3 @@
-
 import { memo, useState, useEffect } from 'react';
 import { Handle, Position, useReactFlow } from 'reactflow';
 import { X, Loader2 } from 'lucide-react';
@@ -13,11 +12,11 @@ import {
 } from "@/components/ui/select";
 import { useToast } from '@/components/ui/use-toast';
 import { models, ModelType } from '@/types/modelTypes';
-import { useFalClient } from '@/hooks/useFalClient';
 import { generateText } from '@/services/textGeneration';
+import { useAuth } from "@/providers/AuthProvider";
 
 interface TextToTextNodeProps {
-  id?: string; // Add id prop
+  id?: string;
   data: {
     label?: string;
   };
@@ -30,18 +29,18 @@ const TextToTextNode = memo(({ id, data }: TextToTextNodeProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelType>(models[0].value);
   const { toast } = useToast();
-  const { isInitialized, isError } = useFalClient();
-  const { deleteElements } = useReactFlow(); // Add this hook to handle node deletion
+  const { user } = useAuth();
+  const { deleteElements } = useReactFlow();
 
   useEffect(() => {
-    if (isError) {
+    if (!user) {
       toast({
         title: "Authentication Required",
-        description: "Please ensure you're logged in and have set up your FAL_KEY.",
+        description: "Please ensure you're logged in to use the AI features.",
         variant: "destructive",
       });
     }
-  }, [isError, toast]);
+  }, [user, toast]);
 
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
@@ -67,12 +66,12 @@ const TextToTextNode = memo(({ id, data }: TextToTextNodeProps) => {
     setError('');
     setOutput('');
 
-    if (!isInitialized || isError) {
-      setError('FAL client not properly initialized. Please check your API key settings.');
+    if (!user) {
+      setError('Please log in to use the AI features');
       setIsGenerating(false);
       toast({
         title: "Authentication Required",
-        description: "Please ensure you're logged in and have set up your FAL_KEY.",
+        description: "Please log in to use the AI features.",
         variant: "destructive",
       });
       return;
@@ -80,19 +79,17 @@ const TextToTextNode = memo(({ id, data }: TextToTextNodeProps) => {
 
     try {
       const result = await generateText(prompt, selectedModel);
-      setOutput(result.data.output || 'No output received.');
+      setOutput(result.data?.output || result.output || 'No output received.');
     } catch (err: any) {
       console.error('Error during generation:', err);
-      const errorMessage = err.body?.detail || err.message || 'Failed to generate text. Please try again.';
+      const errorMessage = err.message || 'Failed to generate text. Please try again.';
       setError(errorMessage);
       
-      if (err.status === 401) {
-        toast({
-          title: "Authentication Failed",
-          description: "Your FAL_KEY appears to be invalid. Please verify it and try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Generation Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsGenerating(false);
     }
