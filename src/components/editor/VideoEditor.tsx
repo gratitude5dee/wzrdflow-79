@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useVideoEditor } from '@/providers/VideoEditorProvider';
 import TimelinePanel from './TimelinePanel';
 import MediaPanel from './MediaPanel';
@@ -8,9 +8,14 @@ import ToolbarPanel from './ToolbarPanel';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const VideoEditor = () => {
   const { 
+    projectId,
     projectName, 
     isPlaying, 
     currentTime, 
@@ -20,8 +25,13 @@ const VideoEditor = () => {
     setDuration,
     dialogs,
     openDialog,
-    closeDialog
+    closeDialog,
+    setProjectId,
+    setProjectName
   } = useVideoEditor();
+  
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [userAuthenticated, setUserAuthenticated] = useState<boolean | null>(null);
 
   // Reference to the video element for playback control
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -36,6 +46,95 @@ const VideoEditor = () => {
       }
     }
   }, [isPlaying]);
+  
+  // Check if user is authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUserAuthenticated(!!session);
+    };
+    
+    checkAuth();
+    
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUserAuthenticated(!!session);
+      }
+    );
+    
+    return () => subscription.unsubscribe();
+  }, []);
+  
+  // Create a default project if needed
+  const handleCreateDefaultProject = async () => {
+    try {
+      setIsCreatingProject(true);
+      
+      // Check if user is logged in
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please log in to create a project");
+        return;
+      }
+      
+      // Create default project
+      const { data: project, error } = await supabase
+        .from('projects')
+        .insert({
+          user_id: session.user.id,
+          title: 'Untitled Project',
+        })
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      // Set project in store
+      setProjectId(project.id);
+      setProjectName(project.title);
+      
+      toast.success("New project created");
+    } catch (error) {
+      console.error('Error creating default project:', error);
+      toast.error("Failed to create project");
+    } finally {
+      setIsCreatingProject(false);
+    }
+  };
+  
+  // If we're not authenticated, show login prompt
+  if (userAuthenticated === false) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-[#0A0D16] text-white p-6">
+        <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
+        <p className="text-center mb-6">Please log in to use the video editor.</p>
+        <Button
+          onClick={() => window.location.href = '/login'}
+        >
+          Go to Login
+        </Button>
+      </div>
+    );
+  }
+  
+  // If we don't have a project ID and are authenticated, show project creation UI
+  if (!projectId && userAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-[#0A0D16] text-white p-6">
+        <h2 className="text-2xl font-bold mb-4">Create New Project</h2>
+        <p className="text-center mb-6">Start by creating a new video editing project</p>
+        <Button
+          onClick={handleCreateDefaultProject}
+          disabled={isCreatingProject}
+          className="mb-4"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          {isCreatingProject ? 'Creating...' : 'Create New Project'}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-[#0A0D16] text-white">

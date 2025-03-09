@@ -1,20 +1,127 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { useVideoEditor } from '@/providers/VideoEditorProvider';
-import { Plus, Film, Music, Image } from 'lucide-react';
+import { Plus, Film, Music, Image, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const MediaPanel = () => {
   const { 
     mediaItems, 
     addMediaItem,
+    removeMediaItem,
     selectMediaItem,
-    selectedMediaIds
+    selectedMediaIds,
+    projectId
   } = useVideoEditor();
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Function to trigger file input click
+  const handleUploadClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // Function to handle file selection
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !projectId) return;
+
+    const allowedTypes = {
+      video: ['video/mp4', 'video/webm', 'video/ogg'],
+      image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+      audio: ['audio/mpeg', 'audio/wav', 'audio/ogg']
+    };
+
+    // Process each file
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      let mediaType: 'video' | 'image' | 'audio';
+      
+      // Determine media type
+      if (allowedTypes.video.includes(file.type)) {
+        mediaType = 'video';
+      } else if (allowedTypes.image.includes(file.type)) {
+        mediaType = 'image';
+      } else if (allowedTypes.audio.includes(file.type)) {
+        mediaType = 'audio';
+      } else {
+        toast.error(`Unsupported file type: ${file.type}`);
+        continue;
+      }
+
+      try {
+        toast.info(`Uploading ${file.name}...`);
+        
+        // Upload file to Supabase storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${uuidv4()}.${fileExt}`;
+        const filePath = `${projectId}/${fileName}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage
+          .from('media')
+          .upload(filePath, file);
+          
+        if (uploadError) throw uploadError;
+        
+        // Get public URL for the uploaded file
+        const { data: { publicUrl } } = supabase
+          .storage
+          .from('media')
+          .getPublicUrl(filePath);
+          
+        // Create media item in database
+        const { data: mediaItem, error: mediaError } = await supabase
+          .from('media_items')
+          .insert({
+            project_id: projectId,
+            media_type: mediaType,
+            name: file.name,
+            url: publicUrl,
+            duration: mediaType === 'image' ? 5 : undefined,  // Default duration for images
+            start_time: 0,
+            status: 'ready'
+          })
+          .select()
+          .single();
+          
+        if (mediaError) throw mediaError;
+        
+        // Add to local state
+        addMediaItem({
+          id: mediaItem.id,
+          type: mediaType,
+          url: publicUrl,
+          name: file.name,
+          duration: mediaType === 'image' ? 5 : undefined,
+          startTime: 0
+        });
+        
+        toast.success(`${file.name} uploaded successfully`);
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast.error(`Failed to upload ${file.name}`);
+      }
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   // Mock function to add media items
   const handleAddMedia = (type: 'video' | 'image' | 'audio') => {
+    if (!projectId) {
+      toast.error("Please create a project first");
+      return;
+    }
+    
     const newMedia: Record<string, any> = {
       id: uuidv4(),
       type,
@@ -38,6 +145,26 @@ const MediaPanel = () => {
     }
     
     addMediaItem(newMedia as any);
+  };
+  
+  // Delete media item
+  const handleDeleteMedia = async (id: string) => {
+    try {
+      // Remove from database
+      const { error } = await supabase
+        .from('media_items')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      // Remove from local state
+      removeMediaItem(id);
+      toast.success("Media deleted successfully");
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error("Failed to delete media");
+    }
   };
 
   return (
@@ -69,6 +196,23 @@ const MediaPanel = () => {
           >
             <Music className="h-4 w-4" />
           </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-white hover:bg-[#1D2130] h-8 w-8 p-0"
+            onClick={handleUploadClick}
+          >
+            <Upload className="h-4 w-4" />
+          </Button>
+          {/* Hidden file input */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            className="hidden"
+            multiple
+            accept="video/*, image/*, audio/*"
+          />
         </div>
       </div>
       
@@ -77,6 +221,15 @@ const MediaPanel = () => {
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Plus className="h-8 w-8 text-zinc-500 mb-2" />
             <p className="text-sm text-zinc-400">Add media to your project</p>
+            <Button 
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={handleUploadClick}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Media
+            </Button>
           </div>
         ) : (
           mediaItems.map((item) => (
@@ -87,16 +240,28 @@ const MediaPanel = () => {
                   ? 'bg-[#1D2130] border-purple-500' 
                   : 'border-transparent hover:bg-[#1D2130]'
               }`}
-              onClick={() => selectMediaItem(item.id)}
             >
               <div className="flex items-center space-x-3">
-                {item.type === 'video' && <Film className="h-5 w-5 text-blue-400" />}
-                {item.type === 'image' && <Image className="h-5 w-5 text-green-400" />}
-                {item.type === 'audio' && <Music className="h-5 w-5 text-yellow-400" />}
-                <div className="flex-1 overflow-hidden">
+                <div onClick={() => selectMediaItem(item.id)}>
+                  {item.type === 'video' && <Film className="h-5 w-5 text-blue-400" />}
+                  {item.type === 'image' && <Image className="h-5 w-5 text-green-400" />}
+                  {item.type === 'audio' && <Music className="h-5 w-5 text-yellow-400" />}
+                </div>
+                <div 
+                  className="flex-1 overflow-hidden"
+                  onClick={() => selectMediaItem(item.id)}
+                >
                   <div className="text-sm font-medium truncate">{item.name}</div>
                   <div className="text-xs text-zinc-400">{item.duration}s</div>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-zinc-400 hover:text-white hover:bg-red-900/30"
+                  onClick={() => handleDeleteMedia(item.id)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           ))

@@ -61,6 +61,94 @@ export type Database = {
           },
         ]
       }
+      keyframes: {
+        Row: {
+          created_at: string | null
+          id: string
+          properties: Json
+          timestamp: number
+          track_item_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          properties?: Json
+          timestamp: number
+          track_item_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          properties?: Json
+          timestamp?: number
+          track_item_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keyframes_track_item_id_fkey"
+            columns: ["track_item_id"]
+            isOneToOne: false
+            referencedRelation: "track_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_items: {
+        Row: {
+          created_at: string | null
+          duration: number | null
+          end_time: number | null
+          id: string
+          media_type: string
+          metadata: Json | null
+          name: string
+          project_id: string
+          start_time: number | null
+          status: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          duration?: number | null
+          end_time?: number | null
+          id?: string
+          media_type: string
+          metadata?: Json | null
+          name: string
+          project_id: string
+          start_time?: number | null
+          status?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          duration?: number | null
+          end_time?: number | null
+          id?: string
+          media_type?: string
+          metadata?: Json | null
+          name?: string
+          project_id?: string
+          start_time?: number | null
+          status?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nodes: {
         Row: {
           created_at: string | null
@@ -102,6 +190,36 @@ export type Database = {
           },
         ]
       }
+      projects: {
+        Row: {
+          aspect_ratio: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          aspect_ratio?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          aspect_ratio?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       shared_workflows: {
         Row: {
           created_at: string | null
@@ -136,6 +254,110 @@ export type Database = {
             columns: ["workflow_id"]
             isOneToOne: false
             referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      track_items: {
+        Row: {
+          created_at: string | null
+          duration: number
+          id: string
+          media_item_id: string
+          position_x: number | null
+          position_y: number | null
+          rotation: number | null
+          scale: number | null
+          start_time: number
+          track_id: string
+          updated_at: string | null
+          z_index: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          duration: number
+          id?: string
+          media_item_id: string
+          position_x?: number | null
+          position_y?: number | null
+          rotation?: number | null
+          scale?: number | null
+          start_time?: number
+          track_id: string
+          updated_at?: string | null
+          z_index?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          duration?: number
+          id?: string
+          media_item_id?: string
+          position_x?: number | null
+          position_y?: number | null
+          rotation?: number | null
+          scale?: number | null
+          start_time?: number
+          track_id?: string
+          updated_at?: string | null
+          z_index?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "track_items_media_item_id_fkey"
+            columns: ["media_item_id"]
+            isOneToOne: false
+            referencedRelation: "media_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "track_items_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracks: {
+        Row: {
+          created_at: string | null
+          id: string
+          label: string
+          locked: boolean | null
+          position: number
+          project_id: string
+          type: string
+          updated_at: string | null
+          visible: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          label?: string
+          locked?: boolean | null
+          position?: number
+          project_id: string
+          type: string
+          updated_at?: string | null
+          visible?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          label?: string
+          locked?: boolean | null
+          position?: number
+          project_id?: string
+          type?: string
+          updated_at?: string | null
+          visible?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
