@@ -9,8 +9,12 @@ import 'reactflow/dist/style.css';
 import StoryboardPage from './Storyboard';
 import ShotEditor from './ShotEditor'; 
 
-const Index = () => {
-  const [viewMode, setViewMode] = useState<'studio' | 'storyboard' | 'editor'>('storyboard');
+interface IndexProps {
+  viewMode?: 'studio' | 'storyboard' | 'editor';
+}
+
+const Index = ({ viewMode: initialViewMode }: IndexProps) => {
+  const [viewMode, setViewMode] = useState<'studio' | 'storyboard' | 'editor'>(initialViewMode || 'storyboard');
 
   return (
     <ReactFlowProvider>
