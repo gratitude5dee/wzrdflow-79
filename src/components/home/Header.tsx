@@ -7,7 +7,7 @@ export const Header = () => {
   const navigate = useNavigate();
 
   const handleCreateProject = () => {
-    navigate('/editor');
+    navigate('/shot-editor');
   };
 
   return (
