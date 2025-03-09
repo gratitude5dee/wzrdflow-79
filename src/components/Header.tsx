@@ -1,6 +1,6 @@
+
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
-import { ViewModeSelector } from '@/components/home/ViewModeSelector';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -39,7 +39,7 @@ const Header = ({ viewMode, setViewMode }: HeaderProps) => {
           <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">ALPHA</span>
         </div>
         
-        <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
+        {/* ViewModeSelector has been removed from here */}
 
         <div className="flex items-center gap-3">
           <Button 
