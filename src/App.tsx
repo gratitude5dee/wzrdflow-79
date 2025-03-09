@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import VideoEditorPage from "./pages/VideoEditor";
 import { useState } from "react";
 
 const queryClient = new QueryClient();
@@ -34,7 +35,12 @@ const App = () => {
               } />
               <Route path="/editor" element={
                 <ProtectedRoute>
-                  <Index />
+                  <VideoEditorPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/editor/:projectId" element={
+                <ProtectedRoute>
+                  <VideoEditorPage />
                 </ProtectedRoute>
               } />
               <Route path="/shot-editor" element={
