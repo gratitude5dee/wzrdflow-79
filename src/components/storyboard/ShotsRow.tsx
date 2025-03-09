@@ -62,7 +62,7 @@ const ShotsRow = ({ sceneNumber }: ShotsRowProps) => {
         </Button>
       </div>
 
-      <ScrollArea className="pb-4" orientation="horizontal">
+      <ScrollArea className="pb-4">
         <div className="flex space-x-6 pb-4 px-2">
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <SortableContext items={shots.map(shot => shot.id)} strategy={horizontalListSortingStrategy}>
