@@ -8,33 +8,33 @@ interface ViewModeSelectorProps {
 
 export const ViewModeSelector = ({ viewMode, setViewMode }: ViewModeSelectorProps) => {
   return (
-    <div className="flex bg-zinc-900 rounded-lg border border-zinc-800 p-0.5">
+    <div className="flex bg-[#16192A] rounded-lg border border-[#272C3F] p-0.5 ml-8 shadow-inner">
       <button
         onClick={() => setViewMode('studio')}
-        className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
+        className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
           viewMode === 'studio'
-            ? 'bg-zinc-800 text-white'
-            : 'text-zinc-400 hover:text-zinc-300'
+            ? 'bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-sm'
+            : 'text-zinc-400 hover:text-zinc-200'
         }`}
       >
         Studio
       </button>
       <button
         onClick={() => setViewMode('storyboard')}
-        className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
+        className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
           viewMode === 'storyboard'
-            ? 'bg-purple-800/70 text-white'
-            : 'text-zinc-400 hover:text-zinc-300'
+            ? 'bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-sm'
+            : 'text-zinc-400 hover:text-zinc-200'
         }`}
       >
         Storyboard
       </button>
       <button
         onClick={() => setViewMode('editor')}
-        className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
+        className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
           viewMode === 'editor'
-            ? 'bg-zinc-800 text-white'
-            : 'text-zinc-400 hover:text-zinc-300'
+            ? 'bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-sm'
+            : 'text-zinc-400 hover:text-zinc-200'
         }`}
       >
         Editor

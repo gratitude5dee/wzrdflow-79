@@ -40,9 +40,7 @@ const Header = ({ viewMode, setViewMode }: HeaderProps) => {
           <h1 className="text-xl font-bold text-yellow-300 tracking-tight mr-2">WZRD.STUDIO</h1>
           <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">ALPHA</span>
           
-          <div className="ml-8">
-            <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
-          </div>
+          <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
           
           <div className="flex items-center ml-8 space-x-1">
             <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130]">
