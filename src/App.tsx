@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import ShotEditor from "./pages/ShotEditor";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,11 @@ const App = () => (
             <Route path="/editor" element={
               <ProtectedRoute>
                 <Index />
+              </ProtectedRoute>
+            } />
+            <Route path="/shot-editor" element={
+              <ProtectedRoute>
+                <ShotEditor />
               </ProtectedRoute>
             } />
             <Route path="/" element={<Navigate to="/home" replace />} />

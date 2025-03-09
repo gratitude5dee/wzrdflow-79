@@ -7,6 +7,7 @@ import { ReactFlowProvider } from 'reactflow';
 import { useState } from 'react';
 import 'reactflow/dist/style.css';
 import StoryboardPage from './Storyboard';
+import ShotEditor from './ShotEditor'; 
 
 const Index = () => {
   const [viewMode, setViewMode] = useState<'studio' | 'storyboard' | 'editor'>('storyboard');
@@ -28,9 +29,7 @@ const Index = () => {
         )}
         
         {viewMode === 'editor' && (
-          <div className="flex flex-1 items-center justify-center text-white">
-            <h2 className="text-2xl">Editor View Coming Soon</h2>
-          </div>
+          <ShotEditor />
         )}
         
         <BottomStatusBar />
