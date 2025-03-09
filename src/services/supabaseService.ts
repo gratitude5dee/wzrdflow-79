@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { MediaItem } from '@/store/videoEditorStore';
 import { toast } from 'sonner';
+import { Json } from '@/integrations/supabase/types';
 
 // Project types
 export interface Project {
@@ -52,6 +53,23 @@ export interface Keyframe {
   created_at?: string;
   updated_at?: string;
 }
+
+// Helper functions to validate and convert types
+const validateTrackType = (type: string): 'video' | 'audio' => {
+  if (type === 'video' || type === 'audio') {
+    return type;
+  }
+  console.warn(`Invalid track type: ${type}, defaulting to 'video'`);
+  return 'video';
+};
+
+const convertJsonToRecord = (json: Json): Record<string, any> => {
+  if (typeof json === 'object' && json !== null) {
+    return json as Record<string, any>;
+  }
+  console.warn('Invalid properties JSON, defaulting to empty object');
+  return {};
+};
 
 // Error handling helper
 const handleError = (error: any, action: string) => {
@@ -158,7 +176,7 @@ export const mediaService = {
       // Convert to MediaItem format
       return data ? {
         id: data.id,
-        type: data.media_type as 'video' | 'image' | 'audio',
+        type: validateMediaType(data.media_type), // Reusing the function from VideoEditorProvider
         url: data.url || '',
         name: data.name,
         duration: data.duration,
@@ -184,7 +202,7 @@ export const mediaService = {
       // Convert to MediaItem format
       return (data || []).map(item => ({
         id: item.id,
-        type: item.media_type as 'video' | 'image' | 'audio',
+        type: validateMediaType(item.media_type),
         url: item.url || '',
         name: item.name,
         duration: item.duration,
@@ -278,7 +296,14 @@ export const trackService = {
         .single();
         
       if (error) throw error;
-      return data;
+      
+      if (data) {
+        return {
+          ...data,
+          type: validateTrackType(data.type)
+        };
+      }
+      return null;
     } catch (error) {
       handleError(error, 'fetching track');
       return null;
@@ -294,7 +319,11 @@ export const trackService = {
         .order('position', { ascending: true });
         
       if (error) throw error;
-      return data || [];
+      
+      return (data || []).map(track => ({
+        ...track,
+        type: validateTrackType(track.type)
+      }));
     } catch (error) {
       handleError(error, 'listing tracks');
       return [];
@@ -439,7 +468,14 @@ export const keyframeService = {
         .single();
         
       if (error) throw error;
-      return data;
+      
+      if (data) {
+        return {
+          ...data,
+          properties: convertJsonToRecord(data.properties)
+        };
+      }
+      return null;
     } catch (error) {
       handleError(error, 'fetching keyframe');
       return null;
@@ -455,7 +491,11 @@ export const keyframeService = {
         .order('timestamp', { ascending: true });
         
       if (error) throw error;
-      return data || [];
+      
+      return (data || []).map(keyframe => ({
+        ...keyframe,
+        properties: convertJsonToRecord(keyframe.properties)
+      }));
     } catch (error) {
       handleError(error, 'listing keyframes');
       return [];
@@ -503,6 +543,16 @@ export const keyframeService = {
       handleError(error, 'deleting keyframe');
     }
   }
+};
+
+// Define the validateMediaType function used earlier
+const validateMediaType = (type: string): 'video' | 'image' | 'audio' => {
+  if (type === 'video' || type === 'image' || type === 'audio') {
+    return type;
+  }
+  // Default to 'image' if type is invalid
+  console.warn(`Invalid media type: ${type}, defaulting to 'image'`);
+  return 'image';
 };
 
 // Export all services
