@@ -2,7 +2,7 @@
 import React from 'react';
 import { useVideoEditor } from '@/providers/VideoEditorProvider';
 import { Button } from '@/components/ui/button';
-import { Settings, Save, Upload, FileExport, Cut, Copy, Undo, Redo } from 'lucide-react';
+import { Settings, Save, Upload, FileText, Scissors, Copy, Undo, Redo } from 'lucide-react';
 
 const ToolbarPanel = () => {
   const { 
@@ -39,7 +39,7 @@ const ToolbarPanel = () => {
           className="text-white hover:bg-[#1D2130] h-8"
           onClick={() => openDialog('export')}
         >
-          <FileExport className="h-4 w-4 mr-2" />
+          <FileText className="h-4 w-4 mr-2" />
           Export
         </Button>
       </div>
@@ -53,7 +53,7 @@ const ToolbarPanel = () => {
           <Redo className="h-4 w-4" />
         </Button>
         <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130] h-8">
-          <Cut className="h-4 w-4 mr-2" />
+          <Scissors className="h-4 w-4 mr-2" />
           Cut
         </Button>
         <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130] h-8">
