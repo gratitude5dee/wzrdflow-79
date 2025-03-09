@@ -7,7 +7,7 @@ export const Header = () => {
   const navigate = useNavigate();
 
   const handleCreateProject = () => {
-    // Navigate to the editor route that will display the VideoEditor component
+    // Navigate directly to the video editor route
     navigate('/editor');
   };
 
@@ -38,7 +38,7 @@ export const Header = () => {
             onClick={handleCreateProject}
             className="bg-white text-black hover:bg-zinc-200"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 mr-2" />
             Create new project
           </Button>
         </div>
