@@ -52,9 +52,12 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
             // Add media items to the store
             if (mediaItems && mediaItems.length > 0) {
               mediaItems.forEach(item => {
+                // Ensure media_type is one of the allowed types
+                const mediaType = validateMediaType(item.media_type);
+                
                 addMediaItem({
                   id: item.id,
-                  type: item.media_type,
+                  type: mediaType,
                   url: item.url || '',
                   name: item.name,
                   duration: item.duration,
@@ -77,6 +80,16 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
 
     loadProjectData();
   }, [projectId, params.projectId]);
+  
+  // Helper function to validate media type
+  const validateMediaType = (type: string): 'video' | 'image' | 'audio' => {
+    if (type === 'video' || type === 'image' || type === 'audio') {
+      return type;
+    }
+    // Default to 'image' if type is invalid
+    console.warn(`Invalid media type: ${type}, defaulting to 'image'`);
+    return 'image';
+  };
   
   // Clean up when unmounting
   useEffect(() => {
