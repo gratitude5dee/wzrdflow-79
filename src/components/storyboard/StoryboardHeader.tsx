@@ -19,7 +19,6 @@ const StoryboardHeader = ({ viewMode, setViewMode }: StoryboardHeaderProps) => {
       <div className="flex items-center justify-between">
         {/* Left section with navigation buttons */}
         <div className="flex items-center space-x-6">
-          <h1 className="text-xl font-bold text-yellow-300 tracking-tight mr-2">WZRD.STUDIO</h1>
           <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded mr-4">ALPHA</span>
           <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130] glow-button">
             <Settings className="h-4 w-4 mr-2" />
