@@ -50,12 +50,12 @@ const ShotsRow = ({ sceneNumber }: ShotsRowProps) => {
   };
 
   return (
-    <div className="mb-10">
+    <div className="mb-12">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-[#FFB628]">SCENE {sceneNumber}</h2>
+        <h2 className="text-2xl font-bold text-[#FFB628] glow-text-gold font-serif">SCENE {sceneNumber}</h2>
         <Button 
           onClick={addShot}
-          className="bg-purple-600 hover:bg-purple-700 text-white"
+          className="bg-purple-600 hover:bg-purple-700 text-white shadow-glow-purple"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Shot

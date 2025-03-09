@@ -23,12 +23,12 @@ const StoryboardSidebar = () => {
   };
 
   return (
-    <div className="w-72 bg-[#0B0D14] border-r border-[#1D2130] text-white h-full">
+    <div className="w-72 bg-[#0A0D16] border-r border-[#1D2130] text-white h-full">
       <ScrollArea className="h-full">
         <div className="p-6 space-y-8">
           <div>
-            <h2 className="text-2xl font-bold text-[#2F7BBC] mb-2">RETURN TO ELDRIDGE</h2>
-            <p className="text-zinc-400 text-sm mb-8">
+            <h2 className="text-2xl font-bold text-[#2F7BBC] mb-2 font-serif tracking-wide glow-text-blue">RETURN TO ELDRIDGE</h2>
+            <p className="text-zinc-400 text-sm mb-8 leading-relaxed">
               Sarah Thompson returns to Eldridge, evoking nostalgia as she steps into her childhood town.
             </p>
           </div>
@@ -39,31 +39,31 @@ const StoryboardSidebar = () => {
             className="space-y-4"
           >
             <CollapsibleTrigger asChild>
-              <div className="flex items-center gap-2 mb-4 cursor-pointer">
+              <div className="flex items-center gap-2 mb-4 cursor-pointer hover:text-blue-400 transition-colors">
                 <Settings className="w-5 h-5 text-zinc-500" />
                 <h3 className="text-zinc-200 font-medium">Location</h3>
               </div>
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4">
+            <CollapsibleContent className="space-y-4 sidebar-content-glow">
               <div>
-                <p className="text-xs text-zinc-500 uppercase mb-2">Description</p>
+                <p className="text-xs text-zinc-500 uppercase mb-2 font-medium">Description</p>
                 <Input 
                   placeholder="Describe the location..." 
-                  className="bg-[#141824] border-[#2D3343] text-white rounded-md"
+                  className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-sm"
                 />
               </div>
               <div>
-                <p className="text-xs text-zinc-500 uppercase mb-2">Lighting</p>
+                <p className="text-xs text-zinc-500 uppercase mb-2 font-medium">Lighting</p>
                 <Input 
                   placeholder="Describe the lighting..." 
-                  className="bg-[#141824] border-[#2D3343] text-white rounded-md"
+                  className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-sm"
                 />
               </div>
               <div>
-                <p className="text-xs text-zinc-500 uppercase mb-2">Weather</p>
+                <p className="text-xs text-zinc-500 uppercase mb-2 font-medium">Weather</p>
                 <Input 
                   placeholder="Describe the weather..." 
-                  className="bg-[#141824] border-[#2D3343] text-white rounded-md"
+                  className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-sm"
                 />
               </div>
             </CollapsibleContent>
@@ -75,40 +75,40 @@ const StoryboardSidebar = () => {
             className="space-y-4"
           >
             <CollapsibleTrigger asChild>
-              <div className="flex items-center gap-2 mb-4 cursor-pointer">
+              <div className="flex items-center gap-2 mb-4 cursor-pointer hover:text-blue-400 transition-colors">
                 <FileCode className="w-5 h-5 text-zinc-500" />
                 <h3 className="text-zinc-200 font-medium">Style</h3>
               </div>
             </CollapsibleTrigger>
-            <CollapsibleContent>
+            <CollapsibleContent className="sidebar-content-glow">
               <div>
-                <p className="text-xs text-zinc-500 uppercase mb-2">Video Style</p>
+                <p className="text-xs text-zinc-500 uppercase mb-2 font-medium">Video Style</p>
                 <div className="grid grid-cols-2 gap-2">
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="bg-purple-600 border-purple-500 text-white hover:bg-purple-700"
+                    className="bg-purple-600 border-purple-500 text-white hover:bg-purple-700 shadow-glow-purple-sm h-8"
                   >
                     Standard
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="bg-[#141824] border-[#2D3343] text-white hover:bg-purple-700"
+                    className="bg-[#141824] border-[#2D3343] text-white hover:bg-purple-700 h-8"
                   >
                     Cinematic
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="bg-[#141824] border-[#2D3343] text-white hover:bg-purple-700"
+                    className="bg-[#141824] border-[#2D3343] text-white hover:bg-purple-700 h-8"
                   >
                     Film Noir
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="bg-[#141824] border-[#2D3343] text-white hover:bg-purple-700"
+                    className="bg-[#141824] border-[#2D3343] text-white hover:bg-purple-700 h-8"
                   >
                     Anime
                   </Button>
@@ -123,15 +123,15 @@ const StoryboardSidebar = () => {
             className="space-y-4"
           >
             <CollapsibleTrigger asChild>
-              <div className="flex items-center gap-2 mb-4 cursor-pointer">
+              <div className="flex items-center gap-2 mb-4 cursor-pointer hover:text-blue-400 transition-colors">
                 <Shirt className="w-5 h-5 text-zinc-500" />
                 <h3 className="text-zinc-200 font-medium">Clothing</h3>
               </div>
             </CollapsibleTrigger>
-            <CollapsibleContent>
+            <CollapsibleContent className="sidebar-content-glow">
               <div className="bg-[#141824] p-4 rounded-md border border-[#2D3343]">
                 <p className="text-zinc-400 text-sm mb-2">No clothing items added yet</p>
-                <Button variant="outline" size="sm" className="w-full mt-2 border-dashed border-zinc-600 text-zinc-400">
+                <Button variant="outline" size="sm" className="w-full mt-2 border-dashed border-zinc-600 text-zinc-400 hover:border-zinc-400 hover:text-zinc-300 h-8">
                   + Add Clothing Item
                 </Button>
               </div>
@@ -144,9 +144,9 @@ const StoryboardSidebar = () => {
             className="pt-4 border-t border-[#1D2130]"
           >
             <CollapsibleTrigger asChild>
-              <h3 className="text-zinc-200 font-medium mb-4 cursor-pointer">Sound</h3>
+              <h3 className="text-zinc-200 font-medium mb-4 cursor-pointer hover:text-blue-400 transition-colors">Sound</h3>
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-6">
+            <CollapsibleContent className="space-y-6 sidebar-content-glow">
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Mic className="w-5 h-5 text-zinc-500" />
@@ -154,7 +154,7 @@ const StoryboardSidebar = () => {
                 </div>
                 <div className="bg-[#141824] border border-[#2D3343] rounded-md p-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-[#2F7BBC] rounded-md flex items-center justify-center text-white">
+                    <div className="w-8 h-8 bg-[#2F7BBC] rounded-md flex items-center justify-center text-white shadow-glow-blue-sm">
                       ST
                     </div>
                     <span className="text-sm text-zinc-300">Sarah Thompson</span>
@@ -177,7 +177,7 @@ const StoryboardSidebar = () => {
                 </div>
                 <Input 
                   placeholder='E.g., "Ocean waves..."' 
-                  className="bg-[#141824] border-[#2D3343] text-white rounded-md"
+                  className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-sm"
                 />
               </div>
             </CollapsibleContent>

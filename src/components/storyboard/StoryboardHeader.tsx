@@ -19,33 +19,42 @@ const StoryboardHeader = () => {
   };
 
   return (
-    <header className="w-full bg-[#0B0D14] border-b border-[#1D2130] px-6 py-3 shadow-lg sticky top-0 z-10">
+    <header className="w-full bg-[#0A0D16] border-b border-[#1D2130] px-6 py-3 shadow-lg sticky top-0 z-10">
       <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-1">
-          <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130]">
+        <div className="flex items-center space-x-4">
+          <div className="text-2xl font-bold text-yellow-400 mr-4 font-serif tracking-wider glow-text">
+            WZRD.STUDIO
+            <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded ml-2">
+              ALPHA
+            </span>
+          </div>
+          
+          <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130] glow-button">
             <Settings className="h-4 w-4 mr-2" />
             Settings
           </Button>
-          <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130]">
+          <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130] glow-button">
             <FileCode className="h-4 w-4 mr-2" />
             Style
           </Button>
-          <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130]">
+          <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130] glow-button">
             <Users className="h-4 w-4 mr-2" />
             Cast
           </Button>
-          <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130]">
+          <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130] glow-button">
             <Music className="h-4 w-4 mr-2" />
             Soundtrack
           </Button>
-          <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130]">
+          <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130] glow-button">
             <Mic className="h-4 w-4 mr-2" />
             Voiceover
           </Button>
-          
-          <div className="flex bg-[#1D2130] rounded-md overflow-hidden p-1 ml-4">
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <div className="flex bg-[#121524] rounded-md overflow-hidden p-1 border border-[#1D2130]">
             <motion.button 
-              className={`px-4 py-1 text-sm rounded ${activeTab === 'storyboard' ? 'bg-purple-600 text-white' : 'text-white/70 hover:text-white'}`}
+              className={`px-6 py-1.5 text-sm rounded ${activeTab === 'storyboard' ? 'bg-purple-600 text-white shadow-glow-purple' : 'text-white/70 hover:text-white'}`}
               onClick={() => handleTabChange('storyboard')}
               whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -53,7 +62,7 @@ const StoryboardHeader = () => {
               STORYBOARD
             </motion.button>
             <motion.button 
-              className={`px-4 py-1 text-sm rounded ${activeTab === 'shot-editor' ? 'bg-purple-600 text-white' : 'text-white/70 hover:text-white'}`}
+              className={`px-6 py-1.5 text-sm rounded ${activeTab === 'shot-editor' ? 'bg-purple-600 text-white shadow-glow-purple' : 'text-white/70 hover:text-white'}`}
               onClick={() => handleTabChange('shot-editor')}
               whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -64,26 +73,26 @@ const StoryboardHeader = () => {
           
           <Button 
             variant="ghost" 
-            className="bg-transparent hover:bg-[#1D2130] border border-[#1D2130] text-white ml-3"
+            className="bg-transparent hover:bg-[#1D2130] border border-[#1D2130] text-white glow-button-subtle"
           >
             <Undo className="w-4 h-4" />
           </Button>
           <Button 
             variant="ghost" 
-            className="bg-transparent hover:bg-[#1D2130] border border-[#1D2130] text-white"
+            className="bg-transparent hover:bg-[#1D2130] border border-[#1D2130] text-white glow-button-subtle"
           >
             <Redo className="w-4 h-4" />
           </Button>
           <Button 
             variant="ghost" 
-            className="bg-[#1D2130] hover:bg-[#262B3D] text-white gap-2"
+            className="bg-[#1D2130] hover:bg-[#262B3D] text-white gap-2 glow-button"
           >
             <Play className="w-4 h-4" />
             <span>Preview</span>
           </Button>
           <Button 
             variant="ghost" 
-            className="bg-[#1D2130] hover:bg-[#262B3D] text-white gap-2"
+            className="bg-[#1D2130] hover:bg-[#262B3D] text-white gap-2 glow-button"
           >
             <Share className="w-4 h-4" />
             <span>Share</span>

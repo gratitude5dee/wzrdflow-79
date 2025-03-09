@@ -64,6 +64,9 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
+			fontFamily: {
+				serif: ['Cinzel', 'serif'],
+			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
@@ -85,11 +88,32 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'glow-pulse': {
+					'0%, 100%': { 
+						boxShadow: '0 0 5px rgba(147, 51, 234, 0.3), 0 0 10px rgba(147, 51, 234, 0.1)' 
+					},
+					'50%': { 
+						boxShadow: '0 0 20px rgba(147, 51, 234, 0.5), 0 0 30px rgba(147, 51, 234, 0.2)' 
+					}
+				},
+				'text-glow-pulse': {
+					'0%, 100%': { 
+						textShadow: '0 0 5px rgba(255, 182, 40, 0.3), 0 0 10px rgba(255, 182, 40, 0.1)' 
+					},
+					'50%': { 
+						textShadow: '0 0 8px rgba(255, 182, 40, 0.5), 0 0 15px rgba(255, 182, 40, 0.2)' 
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'glow-pulse': 'glow-pulse 3s ease-in-out infinite',
+				'text-glow-pulse': 'text-glow-pulse 3s ease-in-out infinite'
+			},
+			backgroundImage: {
+				'noise': 'url("/noise.png")',
 			}
 		}
 	},

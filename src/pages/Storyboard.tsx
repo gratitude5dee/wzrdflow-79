@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { motion } from 'framer-motion';
 import StoryboardHeader from '@/components/storyboard/StoryboardHeader';
 import StoryboardSidebar from '@/components/storyboard/StoryboardSidebar';
 import ShotsRow from '@/components/storyboard/ShotsRow';
@@ -15,7 +16,7 @@ const StoryboardPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#0F1117]">
+    <div className="flex flex-col h-screen bg-[#0A0D16]">
       {/* Header */}
       <StoryboardHeader />
       
@@ -33,19 +34,21 @@ const StoryboardPage = () => {
               <ShotsRow key={sceneNumber} sceneNumber={sceneNumber} />
             ))}
             
-            <Button 
+            <motion.button 
               onClick={addScene}
-              className="mt-8 flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white fixed bottom-6 right-6 rounded-full h-12 w-12 p-0 justify-center shadow-lg z-10"
+              className="mt-8 fixed bottom-6 right-6 rounded-full h-12 w-12 bg-black/30 backdrop-blur-lg border border-white/10 p-0 flex items-center justify-center shadow-glow-purple z-10"
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-5 h-5 text-purple-400" />
               <span className="sr-only">Add a scene</span>
-            </Button>
+            </motion.button>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
       
       {/* Background gradient and noise texture */}
-      <div className="fixed inset-0 bg-gradient-to-br from-[#0A0D14]/80 to-[#131A2A]/80 -z-10" />
+      <div className="fixed inset-0 bg-gradient-to-br from-[#0A0D16]/90 to-[#131A2A]/90 -z-10" />
       <div className="fixed inset-0 bg-noise opacity-5 -z-10" style={{ backgroundImage: 'url(/noise.png)' }} />
     </div>
   );

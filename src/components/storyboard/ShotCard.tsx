@@ -41,10 +41,12 @@ const ShotCard = ({ id, shotNumber }: ShotCardProps) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="w-72 cursor-grab active:cursor-grabbing"
+      className="w-72 cursor-grab active:cursor-grabbing perspective"
+      whileHover={{ scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 400, damping: 15 }}
     >
-      <Card className="bg-[#0B0D14] border border-[#1D2130] rounded-lg overflow-hidden shadow-lg">
-        <div className="aspect-video bg-zinc-900 relative flex items-center justify-center group">
+      <Card className="bg-[#0A0D16] border border-[#1D2130] rounded-lg overflow-hidden shadow-xl card-3d">
+        <div className="aspect-video bg-[#0F1219] relative flex items-center justify-center group">
           <div className="absolute top-2 left-2">
             <span className="text-sm bg-black/60 px-2 py-1 rounded-full text-white">
               #{shotNumber}
@@ -56,35 +58,35 @@ const ShotCard = ({ id, shotNumber }: ShotCardProps) => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="rounded-full bg-white/10 hover:bg-white/20 p-2 h-auto w-auto"
+                className="rounded-full bg-white/10 hover:bg-white/20 p-2 h-auto w-auto glow-icon-button"
               >
                 <Edit className="w-4 h-4 text-white" />
               </Button>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="rounded-full bg-white/10 hover:bg-white/20 p-2 h-auto w-auto"
+                className="rounded-full bg-white/10 hover:bg-white/20 p-2 h-auto w-auto glow-icon-button"
               >
                 <Copy className="w-4 h-4 text-white" />
               </Button>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="rounded-full bg-white/10 hover:bg-white/20 p-2 h-auto w-auto"
+                className="rounded-full bg-white/10 hover:bg-white/20 p-2 h-auto w-auto glow-icon-button"
               >
                 <Image className="w-4 h-4 text-white" />
               </Button>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="rounded-full bg-white/10 hover:bg-white/20 p-2 h-auto w-auto"
+                className="rounded-full bg-white/10 hover:bg-white/20 p-2 h-auto w-auto glow-icon-button"
               >
                 <Play className="w-4 h-4 text-white" />
               </Button>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="rounded-full bg-white/10 hover:bg-white/20 p-2 h-auto w-auto"
+                className="rounded-full bg-white/10 hover:bg-white/20 p-2 h-auto w-auto glow-icon-button"
               >
                 <RefreshCw className="w-4 h-4 text-white" />
               </Button>
@@ -98,11 +100,11 @@ const ShotCard = ({ id, shotNumber }: ShotCardProps) => {
           </div>
         </div>
         
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-3 card-content">
           <div>
-            <p className="text-xs text-zinc-500 uppercase mb-2">Shot Type</p>
+            <p className="text-xs text-zinc-500 uppercase mb-2 font-medium">Shot Type</p>
             <Select>
-              <SelectTrigger className="bg-[#141824] border-[#2D3343] text-white">
+              <SelectTrigger className="bg-[#141824] border-[#2D3343] text-white h-8 text-sm">
                 <SelectValue placeholder="Select shot type" />
               </SelectTrigger>
               <SelectContent className="bg-[#141824] border-[#2D3343] text-white">
@@ -115,26 +117,26 @@ const ShotCard = ({ id, shotNumber }: ShotCardProps) => {
           </div>
           
           <div>
-            <p className="text-xs text-zinc-500 uppercase mb-2">Prompt</p>
+            <p className="text-xs text-zinc-500 uppercase mb-2 font-medium">Prompt</p>
             <Textarea 
               placeholder="Describe your shot..." 
-              className="bg-[#141824] border-[#2D3343] text-white min-h-20 rounded-md"
+              className="bg-[#141824] border-[#2D3343] text-white min-h-[60px] rounded-md text-sm resize-none"
             />
           </div>
           
           <div>
-            <p className="text-xs text-zinc-500 uppercase mb-2">Character Dialogue</p>
+            <p className="text-xs text-zinc-500 uppercase mb-2 font-medium">Character Dialogue</p>
             <Input 
               placeholder="Add character dialogue..." 
-              className="bg-[#141824] border-[#2D3343] text-white rounded-md"
+              className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-sm"
             />
           </div>
           
           <div>
-            <p className="text-xs text-zinc-500 uppercase mb-2">Sound Effects</p>
+            <p className="text-xs text-zinc-500 uppercase mb-2 font-medium">Sound Effects</p>
             <Input 
               placeholder='E.g., "Ocean waves..."' 
-              className="bg-[#141824] border-[#2D3343] text-white rounded-md"
+              className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-sm"
             />
           </div>
         </div>
