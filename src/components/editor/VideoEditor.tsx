@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const VideoEditor = () => {
   const { 
@@ -28,31 +28,32 @@ const VideoEditor = () => {
     openDialog,
     closeDialog,
     setProjectId,
-    setProjectName,
-    mediaItems
+    setProjectName
   } = useVideoEditor();
   
   const navigate = useNavigate();
-  const params = useParams();
-  const urlProjectId = params.projectId;
-  
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [userAuthenticated, setUserAuthenticated] = useState<boolean | null>(null);
-  const [projectCreationAttempted, setProjectCreationAttempted] = useState(false);
 
   // Reference to the video element for playback control
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Check if user is authenticated and handle URL projectId
+  useEffect(() => {
+    // Handle playback state changes
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.play().catch(err => console.error('Error playing video:', err));
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isPlaying]);
+  
+  // Check if user is authenticated
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUserAuthenticated(!!session);
-      
-      // If we have a projectId in the URL, set it in the store
-      if (urlProjectId && urlProjectId !== projectId) {
-        setProjectId(urlProjectId);
-      }
     };
     
     checkAuth();
@@ -65,33 +66,9 @@ const VideoEditor = () => {
     );
     
     return () => subscription.unsubscribe();
-  }, [urlProjectId, projectId, setProjectId]);
-
-  // Handle playback state changes
-  useEffect(() => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.play().catch(err => console.error('Error playing video:', err));
-      } else {
-        videoRef.current.pause();
-      }
-    }
-  }, [isPlaying]);
+  }, []);
   
-  // Auto-create a project if needed
-  useEffect(() => {
-    const autoCreateProject = async () => {
-      // Only attempt to create a project once and if we're authenticated
-      if (!projectId && userAuthenticated && !isCreatingProject && !projectCreationAttempted) {
-        setProjectCreationAttempted(true);
-        await handleCreateDefaultProject();
-      }
-    };
-    
-    autoCreateProject();
-  }, [projectId, userAuthenticated, projectCreationAttempted]);
-  
-  // Create a default project
+  // Create a default project if needed
   const handleCreateDefaultProject = async () => {
     try {
       setIsCreatingProject(true);
@@ -119,10 +96,9 @@ const VideoEditor = () => {
       setProjectId(project.id);
       setProjectName(project.title);
       
-      // Update URL with project ID
-      navigate(`/editor/${project.id}`, { replace: true });
-      
       toast.success("New project created");
+      
+      // Stay on the current page as we're already in the editor
     } catch (error) {
       console.error('Error creating default project:', error);
       toast.error("Failed to create project");
@@ -146,14 +122,20 @@ const VideoEditor = () => {
     );
   }
   
-  // If we don't have a project ID and are authenticated, show loading state
+  // If we don't have a project ID and are authenticated, show project creation UI
   if (!projectId && userAuthenticated) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-[#0A0D16] text-white p-6">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
-        <p className="text-center">
-          {isCreatingProject ? 'Creating new project...' : 'Loading project...'}
-        </p>
+        <h2 className="text-2xl font-bold mb-4">Create New Project</h2>
+        <p className="text-center mb-6">Start by creating a new video editing project</p>
+        <Button
+          onClick={handleCreateDefaultProject}
+          disabled={isCreatingProject}
+          className="mb-4"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          {isCreatingProject ? 'Creating...' : 'Create New Project'}
+        </Button>
       </div>
     );
   }
