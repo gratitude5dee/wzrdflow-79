@@ -159,18 +159,11 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
         throw new Error('No image URL received');
       }
 
-      toast({
-        title: "Success",
-        description: "Image generated successfully",
-      });
+      toast.success("Image generated successfully");
     } catch (err) {
       console.error('Generation error:', err);
       setError(err instanceof Error ? err.message : 'Failed to generate image');
-      toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : 'Failed to generate image',
-        variant: "destructive",
-      });
+      toast.error(err instanceof Error ? err.message : 'Failed to generate image');
     } finally {
       setIsGenerating(false);
     }

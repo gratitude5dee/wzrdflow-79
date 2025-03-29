@@ -8,7 +8,7 @@ export interface CreditTransaction {
   id: string;
   amount: number;
   transaction_type: 'usage' | 'purchase' | 'refund' | 'free';
-  resource_type: 'image' | 'video' | 'credit';
+  resource_type: 'image' | 'video' | 'text' | 'credit';
   created_at: string;
   metadata: Record<string, any>;
 }
@@ -62,8 +62,8 @@ export const useCredits = () => {
       const typedTransactions = data?.map(transaction => ({
         ...transaction,
         transaction_type: transaction.transaction_type as 'usage' | 'purchase' | 'refund' | 'free',
-        resource_type: transaction.resource_type as 'image' | 'video' | 'credit',
-        metadata: transaction.metadata || {}
+        resource_type: transaction.resource_type as 'image' | 'video' | 'text' | 'credit',
+        metadata: transaction.metadata ? (typeof transaction.metadata === 'object' ? transaction.metadata : {}) : {}
       })) || [];
       
       setTransactions(typedTransactions);
@@ -73,7 +73,7 @@ export const useCredits = () => {
   };
 
   // Use credits for a resource
-  const useCreditsForResource = async (resourceType: 'image' | 'video', creditCost: number = 1, metadata: Record<string, any> = {}) => {
+  const useCreditsForResource = async (resourceType: 'image' | 'video' | 'text', creditCost: number = 1, metadata: Record<string, any> = {}) => {
     if (!user) {
       toast.error('Please log in to use this feature');
       return false;
