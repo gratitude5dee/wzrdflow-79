@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Credits from "./pages/Credits";
+import ProjectSetup from "./pages/ProjectSetup";
 import { useState } from "react";
 
 const queryClient = new QueryClient();
@@ -33,7 +34,17 @@ const App = () => {
                   <Home />
                 </ProtectedRoute>
               } />
+              <Route path="/project-setup" element={
+                <ProtectedRoute>
+                  <ProjectSetup />
+                </ProtectedRoute>
+              } />
               <Route path="/editor" element={
+                <ProtectedRoute>
+                  <Index viewMode="editor" />
+                </ProtectedRoute>
+              } />
+              <Route path="/editor/:projectId" element={
                 <ProtectedRoute>
                   <Index viewMode="editor" />
                 </ProtectedRoute>

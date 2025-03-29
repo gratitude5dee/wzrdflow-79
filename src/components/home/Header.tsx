@@ -10,8 +10,8 @@ export const Header = () => {
   const { user } = useAuth();
 
   const handleCreateProject = () => {
-    // Navigate to the editor route that will display the VideoEditor component
-    navigate('/editor');
+    // Navigate to the project setup page instead of directly to the editor
+    navigate('/project-setup');
   };
 
   return (

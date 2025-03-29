@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/home/Header';
@@ -20,7 +21,8 @@ const Home = () => {
   ]);
 
   const handleCreateProject = () => {
-    navigate('/editor');
+    // Navigate to the project setup page instead of directly to the editor
+    navigate('/project-setup');
   };
 
   const handleOpenProject = (projectId: string) => {
