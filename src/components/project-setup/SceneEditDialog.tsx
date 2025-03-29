@@ -1,0 +1,102 @@
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react";
+
+export interface Scene {
+  id: number;
+  title: string;
+  description: string;
+  sceneDescription: string;
+  voiceover: string;
+  location?: string;
+  lighting?: string;
+  weather?: string;
+}
+
+interface SceneEditDialogProps {
+  scene: Scene;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (scene: Scene) => void;
+}
+
+export function SceneEditDialog({ scene, open, onOpenChange, onSave }: SceneEditDialogProps) {
+  const [editedScene, setEditedScene] = useState<Scene>(scene);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-zinc-900/95 border border-zinc-800 max-w-4xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-medium text-white">Edit Scene {scene.id}</DialogTitle>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-6 py-4">
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium uppercase text-zinc-400">SCENE NAME</label>
+              <Input
+                value={editedScene.title}
+                onChange={(e) => setEditedScene({ ...editedScene, title: e.target.value })}
+                className="mt-1.5 bg-zinc-900 border-zinc-800 text-white"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium uppercase text-zinc-400">LOCATION</label>
+              <Textarea
+                value={editedScene.location}
+                onChange={(e) => setEditedScene({ ...editedScene, location: e.target.value })}
+                className="mt-1.5 bg-zinc-900 border-zinc-800 text-white h-32"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium uppercase text-zinc-400">LIGHTING</label>
+              <Input
+                value={editedScene.lighting}
+                onChange={(e) => setEditedScene({ ...editedScene, lighting: e.target.value })}
+                className="mt-1.5 bg-zinc-900 border-zinc-800 text-white"
+                placeholder="E.g., 'November, 11:00 PM, harsh artificial lighting...'"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium uppercase text-zinc-400">WEATHER</label>
+              <Input
+                value={editedScene.weather}
+                onChange={(e) => setEditedScene({ ...editedScene, weather: e.target.value })}
+                className="mt-1.5 bg-zinc-900 border-zinc-800 text-white"
+                placeholder="E.g., 'Crystal clear skies, calm atmosphere...'"
+              />
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium uppercase text-zinc-400">SCENE*</label>
+              <Textarea
+                value={editedScene.sceneDescription}
+                onChange={(e) => setEditedScene({ ...editedScene, sceneDescription: e.target.value })}
+                className="mt-1.5 bg-zinc-900 border-zinc-800 text-white h-64"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium uppercase text-zinc-400">VOICEOVER</label>
+              <Input
+                value={editedScene.voiceover}
+                onChange={(e) => setEditedScene({ ...editedScene, voiceover: e.target.value })}
+                className="mt-1.5 bg-zinc-900 border-zinc-800 text-white"
+                placeholder="E.g., 'Somewhere over the Rainbow...'"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-6">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={() => {
+            onSave(editedScene);
+            onOpenChange(false);
+          }}>Done</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
