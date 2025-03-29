@@ -22,6 +22,11 @@ export interface ProjectData {
   customFormat?: string;
   specialRequests?: string;
   addVoiceover: boolean;
+  // Commercial-specific fields
+  product?: string;
+  targetAudience?: string;
+  mainMessage?: string;
+  callToAction?: string;
 }
 
 const ProjectSetupWizard = () => {
@@ -38,7 +43,12 @@ const ProjectSetupWizard = () => {
     format: 'custom',
     customFormat: '',
     specialRequests: '',
-    addVoiceover: false
+    addVoiceover: false,
+    // Commercial-specific fields initialized as empty
+    product: '',
+    targetAudience: '',
+    mainMessage: '',
+    callToAction: ''
   });
 
   const handleUpdateProjectData = (data: Partial<ProjectData>) => {
@@ -78,7 +88,12 @@ const ProjectSetupWizard = () => {
             format: projectData.format,
             customFormat: projectData.customFormat,
             specialRequests: projectData.specialRequests,
-            addVoiceover: projectData.addVoiceover
+            addVoiceover: projectData.addVoiceover,
+            // Include commercial fields in metadata
+            product: projectData.product,
+            targetAudience: projectData.targetAudience,
+            mainMessage: projectData.mainMessage,
+            callToAction: projectData.callToAction
           }
         })
         .select()
@@ -147,7 +162,7 @@ const ProjectSetupWizard = () => {
         <Button
           onClick={handleNext}
           disabled={isCreating}
-          className="bg-gray-700 hover:bg-gray-600 text-white px-8"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-8"
         >
           {isCreating ? 'Creating...' : activeTab === 'breakdown' ? 'Create Project' : 'Next'}
         </Button>

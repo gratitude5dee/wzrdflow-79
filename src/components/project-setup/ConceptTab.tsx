@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,13 @@ interface ExampleConcept {
 
 const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
   const [conceptOption, setConceptOption] = useState<'ai' | 'manual'>('ai');
+  const [conceptCharCount, setConceptCharCount] = useState(0);
+  const [showCommercialOptions, setShowCommercialOptions] = useState(false);
+
+  // Update character count when concept changes
+  useEffect(() => {
+    setConceptCharCount(projectData.concept ? projectData.concept.length : 0);
+  }, [projectData.concept]);
 
   const exampleConcepts: ExampleConcept[] = [
     {
@@ -44,6 +51,8 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
 
   const handleFormatChange = (format: string) => {
     updateProjectData({ format });
+    // Show commercial options only when commercial format is selected
+    setShowCommercialOptions(format === 'commercial');
   };
 
   const handleCustomFormatChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,6 +76,23 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
       title: concept.title,
       concept: concept.description 
     });
+  };
+
+  // Handle commercial-specific field changes
+  const handleProductChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateProjectData({ product: e.target.value });
+  };
+
+  const handleTargetAudienceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateProjectData({ targetAudience: e.target.value });
+  };
+
+  const handleMainMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateProjectData({ mainMessage: e.target.value });
+  };
+
+  const handleCallToActionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateProjectData({ callToAction: e.target.value });
   };
 
   return (
@@ -108,23 +134,55 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
           </div>
         </div>
         
-        <div className="border border-zinc-800/50 rounded-lg p-1 mb-6">
-          <Textarea 
-            value={projectData.concept}
-            onChange={handleConceptChange}
-            placeholder="Input anything from a full script, a few scenes, or a story..."
-            className="min-h-[200px] bg-transparent border-none focus-visible:ring-0 resize-none text-white placeholder:text-zinc-600"
-          />
-          <div className="flex justify-between items-center px-3 py-2 text-sm text-zinc-500">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="h-8 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800">
-                <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                Upload Text
-              </Button>
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex-1">
+            <div className="border border-zinc-800/50 rounded-lg p-1 mb-6">
+              <Textarea 
+                value={projectData.concept}
+                onChange={handleConceptChange}
+                placeholder="Input anything from a full script, a few scenes, or a story..."
+                className="min-h-[200px] bg-transparent border-none focus-visible:ring-0 resize-none text-white placeholder:text-zinc-600"
+              />
+              <div className="flex justify-between items-center px-3 py-2 text-sm text-zinc-500">
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="h-8 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800">
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    Upload Text
+                  </Button>
+                </div>
+                <div>{conceptCharCount} / 12000</div>
+              </div>
             </div>
-            <div>0 / 12000</div>
+          </div>
+          
+          {/* Examples section (moved to the right side) */}
+          <div className="w-full md:w-[300px]">
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-medium">EXAMPLES</h2>
+                <Button variant="ghost" size="sm" className="text-zinc-400">
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="space-y-3">
+                {exampleConcepts.map((example, index) => (
+                  <div 
+                    key={index} 
+                    className="bg-zinc-900 rounded-lg p-4 border border-zinc-800 cursor-pointer hover:border-zinc-700 transition-colors"
+                    onClick={() => handleUseExampleConcept(example)}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium">{example.title}</h3>
+                      <span className="text-[10px] bg-zinc-800 px-2 py-0.5 rounded text-zinc-400">LOGLINE</span>
+                    </div>
+                    <p className="text-sm text-zinc-400">{example.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
         
@@ -189,25 +247,74 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
               </div>
             )}
             
-            <div>
-              <label className="text-sm text-zinc-400 mb-2 block">GENRE</label>
-              <Input
-                value={projectData.genre}
-                onChange={handleGenreChange}
-                placeholder="This defines the overall style or category of your story"
-                className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
-              />
-            </div>
+            {/* Commercial-specific fields */}
+            {showCommercialOptions && (
+              <div className="border-l-2 border-blue-600 pl-4 space-y-4">
+                <div>
+                  <label className="text-sm text-zinc-400 mb-2 block">PRODUCT / SERVICE</label>
+                  <Input
+                    value={projectData.product || ''}
+                    onChange={handleProductChange}
+                    placeholder="What are you advertising?"
+                    className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm text-zinc-400 mb-2 block">TARGET AUDIENCE</label>
+                  <Input
+                    value={projectData.targetAudience || ''}
+                    onChange={handleTargetAudienceChange}
+                    placeholder="Who are you advertising to?"
+                    className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm text-zinc-400 mb-2 block">MAIN MESSAGE</label>
+                  <Input
+                    value={projectData.mainMessage || ''}
+                    onChange={handleMainMessageChange}
+                    placeholder="What do you want your audience to remember?"
+                    className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm text-zinc-400 mb-2 block">CALL TO ACTION</label>
+                  <Input
+                    value={projectData.callToAction || ''}
+                    onChange={handleCallToActionChange}
+                    placeholder="What do you want your audience to do?"
+                    className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                  />
+                </div>
+              </div>
+            )}
             
-            <div>
-              <label className="text-sm text-zinc-400 mb-2 block">TONE</label>
-              <Input
-                value={projectData.tone}
-                onChange={handleToneChange}
-                placeholder="This shapes the mood and emotional impact of your story"
-                className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
-              />
-            </div>
+            {!showCommercialOptions && (
+              <>
+                <div>
+                  <label className="text-sm text-zinc-400 mb-2 block">GENRE</label>
+                  <Input
+                    value={projectData.genre}
+                    onChange={handleGenreChange}
+                    placeholder="This defines the overall style or category of your story"
+                    className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm text-zinc-400 mb-2 block">TONE</label>
+                  <Input
+                    value={projectData.tone}
+                    onChange={handleToneChange}
+                    placeholder="This shapes the mood and emotional impact of your story"
+                    className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                  />
+                </div>
+              </>
+            )}
             
             <div>
               <h3 className="text-lg font-medium mb-3">Speech</h3>
@@ -229,32 +336,6 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-      
-      {/* Examples section */}
-      <div className="mt-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-medium">EXAMPLES</h2>
-          <Button variant="ghost" size="sm" className="text-zinc-400">
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {exampleConcepts.map((example, index) => (
-            <div 
-              key={index} 
-              className="bg-zinc-900 rounded-lg p-4 border border-zinc-800 cursor-pointer hover:border-zinc-700 transition-colors"
-              onClick={() => handleUseExampleConcept(example)}
-            >
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-medium">{example.title}</h3>
-                <span className="text-[10px] bg-zinc-800 px-2 py-0.5 rounded text-zinc-400">LOGLINE</span>
-              </div>
-              <p className="text-sm text-zinc-400">{example.description}</p>
-            </div>
-          ))}
         </div>
       </div>
     </div>
