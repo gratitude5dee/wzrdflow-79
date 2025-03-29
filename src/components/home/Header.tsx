@@ -2,9 +2,12 @@
 import { Button } from '@/components/ui/button';
 import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import CreditsDisplay from '@/components/CreditsDisplay';
+import { useAuth } from '@/providers/AuthProvider';
 
 export const Header = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleCreateProject = () => {
     // Navigate to the editor route that will display the VideoEditor component
@@ -34,13 +37,18 @@ export const Header = () => {
             </div>
           </div>
 
-          <Button
-            onClick={handleCreateProject}
-            className="bg-white text-black hover:bg-zinc-200"
-          >
-            <Plus className="h-4 w-4" />
-            Create new project
-          </Button>
+          <div className="flex items-center gap-4">
+            {/* Credits display */}
+            {user && <CreditsDisplay showButton />}
+            
+            <Button
+              onClick={handleCreateProject}
+              className="bg-white text-black hover:bg-zinc-200"
+            >
+              <Plus className="h-4 w-4" />
+              Create new project
+            </Button>
+          </div>
         </div>
       </div>
     </header>

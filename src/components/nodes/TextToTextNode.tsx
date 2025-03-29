@@ -1,6 +1,7 @@
+
 import { memo, useState, useEffect } from 'react';
 import { Handle, Position, useReactFlow } from 'reactflow';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, Coins } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +15,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { models, ModelType } from '@/types/modelTypes';
 import { generateText } from '@/services/textGeneration';
 import { useAuth } from "@/providers/AuthProvider";
+import { useCredits } from '@/hooks/useCredits';
+import { toast } from 'sonner';
 
 interface TextToTextNodeProps {
   id?: string;
@@ -31,6 +34,7 @@ const TextToTextNode = memo(({ id, data }: TextToTextNodeProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { deleteElements } = useReactFlow();
+  const { useCredits, availableCredits } = useCredits();
 
   useEffect(() => {
     if (!user) {
@@ -62,13 +66,8 @@ const TextToTextNode = memo(({ id, data }: TextToTextNodeProps) => {
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
     
-    setIsGenerating(true);
-    setError('');
-    setOutput('');
-
     if (!user) {
       setError('Please log in to use the AI features');
-      setIsGenerating(false);
       toast({
         title: "Authentication Required",
         description: "Please log in to use the AI features.",
@@ -76,6 +75,31 @@ const TextToTextNode = memo(({ id, data }: TextToTextNodeProps) => {
       });
       return;
     }
+    
+    // Check if user has enough credits
+    if (availableCredits === 0) {
+      setError('You need credits to generate text');
+      toast({
+        title: "No Credits Available",
+        description: "You need credits to generate text. Visit the credits page to get more.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Use 1 credit for text generation
+    const creditUsed = await useCredits('text', 1, { 
+      prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
+      model: selectedModel
+    });
+    
+    if (!creditUsed) {
+      return;
+    }
+    
+    setIsGenerating(true);
+    setError('');
+    setOutput('');
 
     try {
       const result = await generateText(prompt, selectedModel);
@@ -155,10 +179,15 @@ const TextToTextNode = memo(({ id, data }: TextToTextNodeProps) => {
         </div>
       </div>
 
-      <div className="flex items-center justify-end p-4 bg-zinc-900/30">
+      <div className="flex items-center justify-between p-4 bg-zinc-900/30">
+        <div className="flex items-center gap-1 text-zinc-400 text-xs">
+          <Coins className="h-3.5 w-3.5 text-yellow-500" />
+          <span>1 credit</span>
+        </div>
+      
         <Button
           onClick={handleGenerate}
-          disabled={!prompt.trim() || isGenerating}
+          disabled={!prompt.trim() || isGenerating || !user || availableCredits === 0}
           className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isGenerating ? (

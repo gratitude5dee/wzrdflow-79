@@ -1,7 +1,10 @@
 
 import { memo, useState } from 'react';
 import { Handle, Position } from 'reactflow';
-import { Upload, X, CircleDashed } from 'lucide-react';
+import { Upload, X, CircleDashed, Coins } from 'lucide-react';
+import { useCredits } from '@/hooks/useCredits';
+import { useAuth } from '@/providers/AuthProvider';
+import { toast } from 'sonner';
 
 interface ImagesToVideoNodeProps {
   data: {
@@ -13,18 +16,42 @@ const ImagesToVideoNode = memo(({ data }: ImagesToVideoNodeProps) => {
   const [images, setImages] = useState<string[]>(Array(9).fill(null));
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const { useCredits, availableCredits } = useCredits();
+  const { user } = useAuth();
 
   const handleImageUpload = (index: number) => {
     // This is a placeholder for the actual upload functionality
     console.log('Upload image at index:', index);
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     const uploadedImagesCount = images.filter(img => img !== null).length;
     if (uploadedImagesCount < 2) {
-      console.log('Please upload at least 2 images');
+      toast.error('Please upload at least 2 images');
       return;
     }
+
+    if (!user) {
+      toast.error('Please log in to generate videos');
+      return;
+    }
+    
+    // Check if user has enough credits
+    if (availableCredits === 0) {
+      toast.error('You need credits to generate videos. Visit the credits page to get more.');
+      return;
+    }
+    
+    // Cost for video generation is higher than images (2 credits)
+    const creditUsed = await useCredits('video', 2, { 
+      prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
+      imageCount: uploadedImagesCount
+    });
+    
+    if (!creditUsed) {
+      return;
+    }
+    
     setIsGenerating(true);
     // TODO: Implement actual video generation
     setTimeout(() => setIsGenerating(false), 2000);
@@ -119,14 +146,18 @@ const ImagesToVideoNode = memo(({ data }: ImagesToVideoNodeProps) => {
 
       {/* Bottom Controls */}
       <div className="flex items-center justify-between p-4 bg-zinc-900/30">
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <button className="p-2 bg-zinc-800 rounded-lg">
             <Upload className="w-4 h-4 text-zinc-400" />
           </button>
+          <div className="flex items-center gap-1 text-zinc-400 text-xs">
+            <Coins className="h-3.5 w-3.5 text-yellow-500" />
+            <span>2 credits</span>
+          </div>
         </div>
         <button
           onClick={handleGenerate}
-          disabled={images.filter(img => img !== null).length < 2}
+          disabled={images.filter(img => img !== null).length < 2 || !user || availableCredits < 2}
           className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isGenerating ? (

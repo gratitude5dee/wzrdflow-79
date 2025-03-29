@@ -1,11 +1,15 @@
+
 import { memo, useState } from 'react';
 import { Handle, Position, useReactFlow } from 'reactflow';
-import { X, CircleDashed } from 'lucide-react';
+import { X, CircleDashed, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useCredits } from '@/hooks/useCredits';
+import { toast } from 'sonner';
+import { useAuth } from '@/providers/AuthProvider';
 
 interface TextToImageNodeProps {
   id?: string;
@@ -30,6 +34,8 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
   const [error, setError] = useState<string | null>(null);
   const { deleteElements } = useReactFlow();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { useCredits, availableCredits } = useCredits();
 
   const handleDelete = () => {
     if (id) {
@@ -39,6 +45,36 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
+    
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to generate images",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check if user has enough credits
+    if (availableCredits === 0) {
+      toast({
+        title: "No Credits Available",
+        description: "You need credits to generate images. Visit the credits page to get more.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // First try to use a credit
+    const creditUsed = await useCredits('image', 1, { 
+      prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
+      style,
+      aspectRatio
+    });
+    
+    if (!creditUsed) {
+      return;
+    }
     
     setIsGenerating(true);
     setError(null);
@@ -225,13 +261,14 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
 
       <div className="flex items-center justify-between p-4 bg-zinc-900/30">
         <div className="flex items-center gap-2">
-          <Button className="w-8 h-8 flex items-center justify-center bg-zinc-800 rounded-lg">
-            <div className="w-4 h-4 border-2 border-zinc-600 rounded-sm" />
-          </Button>
+          <div className="flex items-center gap-1 text-zinc-400 text-xs">
+            <Coins className="h-3.5 w-3.5 text-yellow-500" />
+            <span>1 credit</span>
+          </div>
         </div>
         <Button
           onClick={handleGenerate}
-          disabled={!prompt || isGenerating}
+          disabled={!prompt || isGenerating || !user || availableCredits === 0}
           className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isGenerating ? (

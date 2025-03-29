@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import Credits from "./pages/Credits";
 import { useState } from "react";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,11 @@ const App = () => {
               <Route path="/shot-editor" element={
                 <ProtectedRoute>
                   <Index viewMode="editor" />
+                </ProtectedRoute>
+              } />
+              <Route path="/credits" element={
+                <ProtectedRoute>
+                  <Credits />
                 </ProtectedRoute>
               } />
               <Route path="/" element={<Navigate to="/home" replace />} />
