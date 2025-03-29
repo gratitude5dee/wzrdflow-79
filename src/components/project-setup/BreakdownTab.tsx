@@ -1,11 +1,12 @@
 
 import { type ProjectData } from './ProjectSetupWizard';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Copy, Edit } from 'lucide-react';
+import { Plus, Trash2, Copy, Edit, Info } from 'lucide-react';
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { SceneEditDialog, type Scene } from './SceneEditDialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
 
 interface BreakdownTabProps {
   projectData: ProjectData;
@@ -26,10 +27,13 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
     },
     {
       id: 2,
-      title: "Scene 2 - The Enchanted Feast",
-      description: "A beautifully decorated outdoor dining area under a canopy of vibrant flowers and twinkling lights, where the island's inhabitants welcome our adventurers with an elaborate feast...",
-      sceneDescription: "The dining area is a visual feast, with tables adorned in rich fabrics and gleaming silverware. Lanterns float mysteriously in the air, casting a warm glow over the scene. The island's inhabitants, dressed in flowing garments, serve exotic dishes that seem to shimmer with an otherworldly quality.",
-      voiceover: "The feast before us is a celebration of beauty and abundance, yet something in the air speaks of secrets untold."
+      title: "Scene 2 - Rebel Meeting",
+      description: "An underground hideout with exposed brick walls and low-hanging industrial lights casting shadows. The space is cluttered with old furniture, scattered papers, and high-tech equipment...",
+      sceneDescription: "In a dimly lit underground hideout, Eleanor meets with the rebels. The room is filled with maps, blueprints, and digital screens displaying stolen data. The contrast between the analog and digital elements highlights the battle between human imagination and technological control. As they plan their resistance, the tension is palpable, emphasizing the high stakes of their mission.",
+      voiceover: "Behind the veneer of luxury lies a network of resistance, fighting for the freedom to dream.",
+      location: "Abandoned subway maintenance room",
+      lighting: "Dim, with harsh spotlights over strategic areas",
+      weather: "Unknown (underground)"
     }
   ]);
 
@@ -72,87 +76,95 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="py-10 px-6 max-w-6xl mx-auto">
+      <h1 className="text-3xl font-bold mb-10">Breakdown</h1>
+      
       <div className="mb-12">
-        <h2 className="text-2xl font-semibold mb-4">SYNOPSIS</h2>
+        <h2 className="uppercase text-sm font-medium text-zinc-400 mb-2">SYNOPSIS</h2>
         <p className="text-zinc-300 leading-relaxed">
           {projectData.concept || "In a dystopian world where dreams are commodified, Eleanor Carter, a talented architect, joins rebels to reclaim humanity's freedom to dream. As she learns to design liberating dream realms, she faces moral dilemmas and confronts her mentor, culminating in a showdown at the Dream Nexus that restores the power of dreams for all."}
         </p>
       </div>
 
-      <div className="space-y-6">
-        {scenes.map((scene) => (
-          <Card key={scene.id} className="bg-zinc-900/50 border border-zinc-800 rounded-lg overflow-hidden hover:bg-zinc-900/60 transition-colors">
-            <div className="p-6 space-y-4">
-              <div className="flex justify-between items-start">
-                <h3 className="text-xl font-medium text-white">{scene.title}</h3>
-                <div className="flex gap-2">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-zinc-400 hover:text-white"
-                          onClick={() => handleDeleteScene(scene.id)}
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Delete scene</TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-zinc-400 hover:text-white"
-                          onClick={() => handleDuplicateScene(scene)}
-                        >
-                          <Copy className="h-5 w-5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Duplicate scene</TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-zinc-400 hover:text-white"
-                          onClick={() => handleEditScene(scene)}
-                        >
-                          <Edit className="h-5 w-5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Edit scene</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </div>
-
-              <p className="text-zinc-400">{scene.description || scene.location}</p>
-
+      <Separator className="my-10 bg-zinc-800/50" />
+      
+      <div className="space-y-10">
+        {scenes.map((scene, index) => (
+          <div key={scene.id} className="space-y-6">
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold text-white">
+                {scene.title}
+              </h3>
+              
+              <p className="text-zinc-400">
+                {scene.description || scene.location || "No description added yet."}
+              </p>
+              
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <h4 className="text-sm font-medium uppercase text-zinc-400">SCENE DESCRIPTION</h4>
-                  <div className="w-4 h-4 rounded-full bg-zinc-700 flex items-center justify-center text-xs">?</div>
+                  <h4 className="uppercase text-sm font-medium text-zinc-400">SCENE DESCRIPTION</h4>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="w-4 h-4 rounded-full bg-zinc-700 flex items-center justify-center text-xs cursor-help">
+                        <Info className="w-3 h-3" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <p className="w-64">Describe what's happening in this scene</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
-                <p className="text-zinc-300">{scene.sceneDescription}</p>
+                <p className="text-zinc-300">
+                  {scene.sceneDescription || "No scene description added yet."}
+                </p>
               </div>
-
+              
               <div className="space-y-2">
-                <h4 className="text-sm font-medium uppercase text-zinc-400">VOICEOVER</h4>
-                <p className="text-zinc-300 italic">{scene.voiceover}</p>
+                <h4 className="uppercase text-sm font-medium text-zinc-400">VOICEOVER</h4>
+                <p className="text-zinc-300 italic">
+                  {scene.voiceover || "No voiceover added yet."}
+                </p>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-zinc-400 hover:text-white bg-transparent hover:bg-zinc-800 border border-zinc-700"
+                  onClick={() => handleEditScene(scene)}
+                >
+                  <Edit className="h-3.5 w-3.5 mr-1" />
+                  Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-zinc-400 hover:text-white bg-transparent hover:bg-zinc-800 border border-zinc-700"
+                  onClick={() => handleDuplicateScene(scene)}
+                >
+                  <Copy className="h-3.5 w-3.5 mr-1" />
+                  Duplicate
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-zinc-400 hover:text-white bg-transparent hover:bg-zinc-800 border border-zinc-700"
+                  onClick={() => handleDeleteScene(scene.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />
+                  Delete
+                </Button>
               </div>
             </div>
-          </Card>
+            
+            {index < scenes.length - 1 && (
+              <Separator className="my-6 bg-zinc-800/50" />
+            )}
+          </div>
         ))}
       </div>
-
-      <div className="flex justify-center mt-8">
+      
+      <div className="mt-10 flex justify-center">
         <Button 
           onClick={handleNewScene}
           className="bg-blue-600 hover:bg-blue-700 text-white"

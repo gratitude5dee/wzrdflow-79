@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
+import { Info } from "lucide-react";
 
 export interface Scene {
   id: number;
@@ -90,11 +91,22 @@ export function SceneEditDialog({ scene, open, onOpenChange, onSave }: SceneEdit
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={() => {
-            onSave(editedScene);
-            onOpenChange(false);
-          }}>Done</Button>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            className="border-zinc-700 hover:bg-zinc-800 text-white"
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={() => {
+              onSave(editedScene);
+              onOpenChange(false);
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Done
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
