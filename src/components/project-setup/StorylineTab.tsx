@@ -56,23 +56,23 @@ However, the allure of the utopia comes with a price. As the fog thickens, revea
         {/* Project title and tags */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-4">{projectData.title || 'Veil of Mist'}</h1>
-          <div className="flex gap-2">
-            <Badge className="bg-zinc-800 text-white hover:bg-zinc-700">Short Film</Badge>
-            <Badge className="bg-zinc-800 text-white hover:bg-zinc-700">Adventure</Badge>
-            <Badge className="bg-zinc-800 text-white hover:bg-zinc-700">Fantasy</Badge>
-            <Badge className="bg-zinc-800 text-white hover:bg-zinc-700">Self-Discovery</Badge>
+          <div className="flex gap-2 flex-wrap">
+            <Badge className="bg-black text-white hover:bg-zinc-800">Short Film</Badge>
+            <Badge className="bg-black text-white hover:bg-zinc-800">Adventure</Badge>
+            <Badge className="bg-black text-white hover:bg-zinc-800">Fantasy</Badge>
+            <Badge className="bg-black text-white hover:bg-zinc-800">Self-Discovery</Badge>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Alternative Storylines */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Alternative Storylines - Now on the left */}
           <div className="md:col-span-1 space-y-4">
-            <h2 className="text-lg font-semibold mb-4">ALTERNATIVE STORYLINES</h2>
+            <h2 className="text-lg font-semibold mb-4 uppercase">Alternative Storylines</h2>
             
             {alternativeStorylines.map((storyline, index) => (
               <Card 
                 key={index}
-                className="bg-zinc-900 border-zinc-800 p-4 cursor-pointer hover:border-zinc-700 transition-colors"
+                className="bg-black border-zinc-800 p-4 cursor-pointer hover:border-zinc-700 transition-colors"
                 onClick={() => handleStorylineChange(storyline)}
               >
                 <h3 className="font-medium mb-2">{storyline.title}</h3>
@@ -81,7 +81,7 @@ However, the allure of the utopia comes with a price. As the fog thickens, revea
                   {storyline.tags.map((tag, tagIndex) => (
                     <Badge 
                       key={tagIndex} 
-                      className="bg-zinc-800 text-xs text-zinc-400"
+                      className="bg-zinc-900 text-xs text-zinc-400"
                     >
                       {tag}
                     </Badge>
@@ -92,7 +92,7 @@ However, the allure of the utopia comes with a price. As the fog thickens, revea
 
             <Button 
               variant="outline" 
-              className="w-full bg-zinc-900 border-zinc-800 text-blue-400 hover:bg-zinc-800"
+              className="w-full bg-blue-950 border-blue-900 text-blue-400 hover:bg-blue-900"
               onClick={handleGenerateMore}
             >
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -100,9 +100,9 @@ However, the allure of the utopia comes with a price. As the fog thickens, revea
             </Button>
           </div>
 
-          {/* Main Storyline Editor */}
-          <div className="md:col-span-3">
-            <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
+          {/* Main Storyline Editor - Now spans 2 columns */}
+          <div className="md:col-span-2">
+            <div className="bg-black rounded-lg border border-zinc-800 p-6">
               <div className="prose prose-invert max-w-none">
                 <p className="text-zinc-300 whitespace-pre-line">{mainStoryline}</p>
               </div>
