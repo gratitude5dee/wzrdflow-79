@@ -3,10 +3,9 @@ import { useState } from 'react';
 import { type ProjectData } from './ProjectSetupWizard';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Plus, RefreshCw, ImageIcon, Wand2, Edit, Repeat } from 'lucide-react';
+import { Plus, ChevronRight, ImageIcon, HelpCircle } from 'lucide-react';
 
 interface SettingsTabProps {
   projectData: ProjectData;
@@ -21,7 +20,6 @@ interface Character {
   name: string;
   description: string;
   image?: string;
-  generating?: boolean;
 }
 
 const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
@@ -33,31 +31,31 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
       id: '1',
       name: 'Lara Thompson',
       description: 'Adventurer discovering the island secrets',
-      generating: false
+      image: '/lovable-uploads/107bad81-0693-494e-8454-9075c3556cf5.png'
     },
     {
       id: '2',
       name: 'Sam Carter',
       description: 'Skeptical adventurer questioning reality',
-      generating: false
+      image: '/lovable-uploads/107bad81-0693-494e-8454-9075c3556cf5.png'
     },
     {
       id: '3',
       name: 'Jamie Lee',
       description: 'Optimistic adventurer enjoying the journey',
-      generating: true
+      image: '/lovable-uploads/107bad81-0693-494e-8454-9075c3556cf5.png'
     },
     {
       id: '4',
       name: 'Alex Martinez',
       description: 'Pragmatic adventurer weighing options',
-      generating: true
+      image: '/lovable-uploads/107bad81-0693-494e-8454-9075c3556cf5.png'
     },
     {
       id: '5',
       name: 'Mia Robinson',
       description: 'Compassionate adventurer feeling connected',
-      generating: true
+      image: '/lovable-uploads/107bad81-0693-494e-8454-9075c3556cf5.png'
     }
   ]);
 
@@ -75,134 +73,132 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
       {
         id: `${characters.length + 1}`,
         name: '',
-        description: '',
-        generating: true
+        description: ''
       }
     ]);
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+    <div className="min-h-full bg-[#121212] text-white">
+      <div className="flex flex-col md:flex-row">
         {/* Settings Section */}
-        <div className="space-y-8">
-          <h2 className="text-3xl font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-6">Settings</h2>
+        <div className="w-full md:w-5/12 p-6 border-r border-zinc-800">
+          <h2 className="text-2xl font-semibold mb-6">Settings</h2>
           
-          <div className="space-y-5">
+          <div className="space-y-6">
             <div className="space-y-2">
-              <label htmlFor="projectName" className="block text-sm font-medium text-blue-300">
-                PROJECT NAME<span className="text-blue-400">*</span>
-              </label>
+              <Label htmlFor="projectName" className="block text-sm font-medium text-gray-400 uppercase">
+                Project Name<span className="text-red-500">*</span>
+              </Label>
               <Input 
                 id="projectName"
                 value={projectData.title || 'Veil of Mist'} 
                 onChange={e => updateProjectData({ title: e.target.value })}
                 placeholder="Enter your project name"
-                className="bg-zinc-900 border-zinc-700 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                className="w-full bg-[#1E1E1E] border-zinc-700 rounded text-white"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-blue-300">
-                ASPECT RATIO
-              </label>
-              <div className="flex space-x-4">
+              <Label className="block text-sm font-medium text-gray-400 uppercase">
+                Aspect Ratio
+              </Label>
+              <div className="grid grid-cols-3 gap-2">
                 <Button 
                   onClick={() => handleAspectRatioChange('16:9')}
-                  className={`flex items-center justify-center h-20 w-24 rounded-xl transition-all transform hover:scale-105 ${
+                  variant="outline"
+                  className={`flex flex-col items-center justify-center h-16 ${
                     selectedAspectRatio === '16:9' 
-                      ? 'bg-blue-900/50 border-2 border-blue-500 text-white shadow-md shadow-blue-600/20' 
-                      : 'bg-zinc-900 border border-zinc-700 text-zinc-400 hover:bg-zinc-800'
+                      ? 'bg-blue-900 border-blue-500 text-white' 
+                      : 'bg-[#1E1E1E] border-zinc-700 text-gray-400'
                   }`}
                 >
-                  <div className="flex flex-col items-center">
-                    <div className="w-12 h-7 border-2 border-current rounded-sm mb-1"></div>
-                    <span className="text-xs">16:9</span>
-                  </div>
+                  <div className="w-8 h-5 border border-current rounded-sm mb-1"></div>
+                  <span className="text-xs">16:9</span>
                 </Button>
                 
                 <Button 
                   onClick={() => handleAspectRatioChange('1:1')}
-                  className={`flex items-center justify-center h-20 w-24 rounded-xl transition-all transform hover:scale-105 ${
+                  variant="outline"
+                  className={`flex flex-col items-center justify-center h-16 ${
                     selectedAspectRatio === '1:1' 
-                      ? 'bg-blue-900/50 border-2 border-blue-500 text-white shadow-md shadow-blue-600/20' 
-                      : 'bg-zinc-900 border border-zinc-700 text-zinc-400 hover:bg-zinc-800'
+                      ? 'bg-blue-900 border-blue-500 text-white' 
+                      : 'bg-[#1E1E1E] border-zinc-700 text-gray-400'
                   }`}
                 >
-                  <div className="flex flex-col items-center">
-                    <div className="w-7 h-7 border-2 border-current rounded-sm mb-1"></div>
-                    <span className="text-xs">1:1</span>
-                  </div>
+                  <div className="w-5 h-5 border border-current rounded-sm mb-1"></div>
+                  <span className="text-xs">1:1</span>
                 </Button>
                 
                 <Button 
                   onClick={() => handleAspectRatioChange('9:16')}
-                  className={`flex items-center justify-center h-20 w-24 rounded-xl transition-all transform hover:scale-105 ${
+                  variant="outline"
+                  className={`flex flex-col items-center justify-center h-16 ${
                     selectedAspectRatio === '9:16' 
-                      ? 'bg-blue-900/50 border-2 border-blue-500 text-white shadow-md shadow-blue-600/20' 
-                      : 'bg-zinc-900 border border-zinc-700 text-zinc-400 hover:bg-zinc-800'
+                      ? 'bg-blue-900 border-blue-500 text-white' 
+                      : 'bg-[#1E1E1E] border-zinc-700 text-gray-400'
                   }`}
                 >
-                  <div className="flex flex-col items-center">
-                    <div className="w-5 h-9 border-2 border-current rounded-sm mb-1"></div>
-                    <span className="text-xs">9:16</span>
-                  </div>
+                  <div className="w-4 h-7 border border-current rounded-sm mb-1"></div>
+                  <span className="text-xs">9:16</span>
                 </Button>
               </div>
             </div>
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-blue-300">
-                  VIDEO STYLE
-                </label>
-                <Button variant="ghost" size="sm" className="text-xs text-blue-400 hover:text-blue-300">
-                  View All
+                <Label className="block text-sm font-medium text-gray-400 uppercase">
+                  Video Style
+                </Label>
+                <Button variant="link" size="sm" className="text-xs text-blue-400 h-auto p-0">
+                  View All <ChevronRight className="h-3 w-3" />
                 </Button>
               </div>
               
               <div className="grid grid-cols-4 gap-3">
                 <Button
                   onClick={() => handleVideoStyleChange('none')}
-                  className={`flex flex-col items-center justify-center h-24 p-2 rounded-xl transition-all transform hover:scale-105 ${
+                  variant="outline"
+                  className={`flex flex-col items-center justify-center p-2 aspect-square ${
                     selectedVideoStyle === 'none' 
-                      ? 'bg-blue-900/50 border-2 border-blue-500 text-white shadow-md shadow-blue-600/20' 
-                      : 'bg-zinc-900 border border-zinc-700 text-zinc-400 hover:bg-zinc-800'
+                      ? 'bg-blue-900 border-blue-500 text-white' 
+                      : 'bg-[#1E1E1E] border-zinc-700 text-gray-400'
                   }`}
                 >
-                  <div className="w-full h-12 bg-zinc-800 rounded-md flex items-center justify-center mb-2">
-                    <div className="w-10 h-1 bg-zinc-600 rounded-full"></div>
+                  <div className="w-full h-8 bg-zinc-800 rounded flex items-center justify-center mb-2">
+                    <div className="w-6 h-0.5 bg-zinc-600 rounded-full"></div>
                   </div>
                   <span className="text-xs">None</span>
                 </Button>
                 
                 <Button
                   onClick={() => handleVideoStyleChange('cinematic')}
-                  className={`flex flex-col items-center justify-center h-24 p-2 rounded-xl transition-all transform hover:scale-105 ${
+                  variant="outline"
+                  className={`flex flex-col items-center justify-center p-2 aspect-square ${
                     selectedVideoStyle === 'cinematic' 
-                      ? 'bg-blue-900/50 border-2 border-blue-500 text-white shadow-md shadow-blue-600/20' 
-                      : 'bg-zinc-900 border border-zinc-700 text-zinc-400 hover:bg-zinc-800'
+                      ? 'bg-blue-900 border-blue-500 text-white' 
+                      : 'bg-[#1E1E1E] border-zinc-700 text-gray-400'
                   }`}
                 >
-                  <div className="w-full h-12 bg-zinc-800 rounded-md overflow-hidden mb-2">
-                    <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: 'url(/lovable-uploads/40c6c223-9220-4e7d-bd5d-a98093f96400.png)' }}></div>
+                  <div className="w-full h-8 bg-zinc-800 rounded mb-2 overflow-hidden">
+                    <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: 'url(/lovable-uploads/107bad81-0693-494e-8454-9075c3556cf5.png)' }}></div>
                   </div>
                   <span className="text-xs">Cinematic</span>
                 </Button>
                 
                 <Button
                   onClick={() => handleVideoStyleChange('scribble')}
-                  className={`flex flex-col items-center justify-center h-24 p-2 rounded-xl transition-all transform hover:scale-105 ${
+                  variant="outline"
+                  className={`flex flex-col items-center justify-center p-2 aspect-square ${
                     selectedVideoStyle === 'scribble' 
-                      ? 'bg-blue-900/50 border-2 border-blue-500 text-white shadow-md shadow-blue-600/20' 
-                      : 'bg-zinc-900 border border-zinc-700 text-zinc-400 hover:bg-zinc-800'
+                      ? 'bg-blue-900 border-blue-500 text-white' 
+                      : 'bg-[#1E1E1E] border-zinc-700 text-gray-400'
                   }`}
                 >
-                  <div className="w-full h-12 bg-zinc-800 rounded-md flex items-center justify-center mb-2">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
-                      <path d="M12 12v9"></path>
-                      <path d="m8 17 4 4 4-4"></path>
+                  <div className="w-full h-8 bg-zinc-800 rounded mb-2">
+                    <svg className="w-full h-full p-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z" />
+                      <circle cx="12" cy="12" r="3" />
                     </svg>
                   </div>
                   <span className="text-xs">Scribble</span>
@@ -210,17 +206,18 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
                 
                 <Button
                   onClick={() => handleVideoStyleChange('film-noir')}
-                  className={`flex flex-col items-center justify-center h-24 p-2 rounded-xl transition-all transform hover:scale-105 ${
+                  variant="outline"
+                  className={`flex flex-col items-center justify-center p-2 aspect-square ${
                     selectedVideoStyle === 'film-noir' 
-                      ? 'bg-blue-900/50 border-2 border-blue-500 text-white shadow-md shadow-blue-600/20' 
-                      : 'bg-zinc-900 border border-zinc-700 text-zinc-400 hover:bg-zinc-800'
+                      ? 'bg-blue-900 border-blue-500 text-white' 
+                      : 'bg-[#1E1E1E] border-zinc-700 text-gray-400'
                   }`}
                 >
-                  <div className="w-full h-12 bg-zinc-800 rounded-md flex items-center justify-center mb-2">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <path d="M8 12h8"></path>
-                      <path d="M12 8v8"></path>
+                  <div className="w-full h-8 bg-zinc-800 rounded mb-2">
+                    <svg className="w-full h-full p-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 8v8" />
+                      <path d="M8 12h8" />
                     </svg>
                   </div>
                   <span className="text-xs">Film Noir</span>
@@ -229,96 +226,96 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center text-sm font-medium text-blue-300">
-                <span>STYLE REFERENCE</span>
-                <button className="ml-2 p-1 rounded-full hover:bg-blue-900/50 text-blue-400 transition-colors" title="Get more information">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M12 16v-4"></path>
-                    <path d="M12 8h.01"></path>
-                  </svg>
-                </button>
+              <div className="flex items-center text-sm font-medium text-gray-400 uppercase">
+                <span>Style Reference</span>
+                <HelpCircle className="ml-2 h-4 w-4 text-gray-500" />
               </div>
               
-              <div className="relative bg-zinc-900 border border-zinc-700 rounded-xl p-10 flex flex-col items-center justify-center gap-2 group transition-all hover:border-blue-500/50 cursor-pointer overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <ImageIcon className="h-10 w-10 text-zinc-600 group-hover:text-blue-400 transition-colors" />
-                <p className="text-zinc-500 text-sm font-medium group-hover:text-zinc-300 transition-colors">Drag image here</p>
-                <p className="text-zinc-600 text-xs group-hover:text-zinc-400 transition-colors">Or upload a file</p>
-                <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Wand2 className="h-5 w-5 text-blue-400" />
-                </div>
+              <div className="relative border border-zinc-700 rounded p-8 flex flex-col items-center justify-center gap-2 bg-[#1E1E1E] cursor-pointer hover:border-gray-500 transition-colors">
+                <ImageIcon className="h-6 w-6 text-gray-500" />
+                <p className="text-gray-400 text-sm">Drag image here</p>
+                <p className="text-gray-500 text-xs">Or upload a file</p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="cinematic-inspiration" className="block text-sm font-medium text-blue-300">
-                CINEMATIC INSPIRATION
-              </label>
+              <Label htmlFor="cinematic-inspiration" className="block text-sm font-medium text-gray-400 uppercase">
+                Cinematic Inspiration
+              </Label>
               <Textarea 
                 id="cinematic-inspiration"
                 placeholder="E.g., 'Retro, gritty, eclectic, stylish, noir...'"
-                className="bg-zinc-900 border-zinc-700 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors min-h-[80px]"
+                className="bg-[#1E1E1E] border-zinc-700 text-white"
               />
             </div>
           </div>
         </div>
         
         {/* Cast Section */}
-        <div className="space-y-6">
-          <h2 className="text-3xl font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-6">Cast</h2>
+        <div className="w-full md:w-7/12 p-6">
+          <h2 className="text-2xl font-semibold mb-6">Cast</h2>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Add Character Card */}
-            <Card 
+            <div 
               onClick={handleAddCharacter}
-              className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-zinc-900 to-zinc-950 border-zinc-800 rounded-xl cursor-pointer h-56 group transition-all hover:shadow-md hover:shadow-blue-600/10 hover:border-blue-500/50"
+              className="border border-zinc-800 rounded aspect-[3/4] flex flex-col items-center justify-center p-4 bg-[#1E1E1E] cursor-pointer hover:border-gray-600 transition-all"
             >
-              <div className="w-14 h-14 rounded-full bg-zinc-800 flex items-center justify-center mb-3 group-hover:bg-blue-900/30 transition-colors">
-                <Plus className="h-8 w-8 text-zinc-500 group-hover:text-blue-400 transition-colors" />
+              <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center mb-3">
+                <Plus className="h-6 w-6 text-gray-400" />
               </div>
-              <p className="text-zinc-400 font-medium group-hover:text-blue-300 transition-colors">Add character</p>
-            </Card>
+              <p className="text-gray-400">Add character</p>
+            </div>
             
             {/* Character Cards */}
             {characters.map((character) => (
-              <Card key={character.id} className="relative p-0 bg-gradient-to-br from-zinc-900 to-zinc-950 border-zinc-800 rounded-xl overflow-hidden h-56 group transition-all hover:shadow-md hover:shadow-purple-600/10 hover:border-purple-500/50">
-                {character.generating ? (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                    <div className="w-14 h-14 rounded-full border-4 border-blue-600 border-t-transparent animate-spin mb-3"></div>
-                    <div className="flex flex-col items-center">
-                      <p className="font-medium text-zinc-300">{character.name}</p>
-                      <p className="text-xs text-zinc-500 text-center mt-1">{character.description}</p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="mt-3 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
-                      >
-                        <RefreshCw className="h-3 w-3 mr-1" />
-                        Retry
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
+              <div 
+                key={character.id} 
+                className="border border-zinc-800 rounded aspect-[3/4] overflow-hidden relative group"
+              >
+                {character.image ? (
                   <>
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70"></div>
-                    
-                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 bg-black/30 hover:bg-black/50 rounded-md">
-                        <Repeat className="h-3.5 w-3.5 text-zinc-300" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 bg-black/30 hover:bg-black/50 rounded-md">
-                        <Edit className="h-3.5 w-3.5 text-zinc-300" />
-                      </Button>
-                    </div>
-                    
-                    <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
-                      <h3 className="font-medium text-white">{character.name}</h3>
-                      <p className="text-xs text-zinc-400 mt-1">{character.description}</p>
+                    <img 
+                      src={character.image} 
+                      alt={character.name} 
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
+                      <h3 className="text-white font-medium">{character.name}</h3>
+                      <p className="text-xs text-gray-300 line-clamp-2">{character.description}</p>
                     </div>
                   </>
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center p-4">
+                    <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-3">
+                      <ImageIcon className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Character name"
+                      className="bg-transparent border-b border-zinc-700 text-center text-white mb-2 w-full"
+                      value={character.name}
+                      onChange={(e) => {
+                        const newCharacters = [...characters];
+                        const index = newCharacters.findIndex(c => c.id === character.id);
+                        newCharacters[index].name = e.target.value;
+                        setCharacters(newCharacters);
+                      }}
+                    />
+                    <textarea
+                      placeholder="Character description"
+                      className="bg-transparent border border-zinc-700 rounded text-center text-white text-sm w-full"
+                      value={character.description}
+                      onChange={(e) => {
+                        const newCharacters = [...characters];
+                        const index = newCharacters.findIndex(c => c.id === character.id);
+                        newCharacters[index].description = e.target.value;
+                        setCharacters(newCharacters);
+                      }}
+                    />
+                  </div>
                 )}
-              </Card>
+              </div>
             ))}
           </div>
         </div>
