@@ -16,7 +16,7 @@ const ImagesToVideoNode = memo(({ data }: ImagesToVideoNodeProps) => {
   const [images, setImages] = useState<string[]>(Array(9).fill(null));
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const { useCredits, availableCredits } = useCredits();
+  const { useCredits: useCreditsFn, availableCredits } = useCredits();
   const { user } = useAuth();
 
   const handleImageUpload = (index: number) => {
@@ -43,7 +43,7 @@ const ImagesToVideoNode = memo(({ data }: ImagesToVideoNodeProps) => {
     }
     
     // Cost for video generation is higher than images (2 credits)
-    const creditUsed = await useCredits('video', 2, { 
+    const creditUsed = await useCreditsFn('video', 2, { 
       prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
       imageCount: uploadedImagesCount
     });

@@ -1,4 +1,3 @@
-
 import { memo, useState } from 'react';
 import { Handle, Position, useReactFlow } from 'reactflow';
 import { X, CircleDashed, Coins } from 'lucide-react';
@@ -33,9 +32,9 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { deleteElements } = useReactFlow();
-  const { toast } = useToast();
+  const { toast: toastUi } = useToast();
   const { user } = useAuth();
-  const { useCredits, availableCredits } = useCredits();
+  const { useCredits: useCreditsFn, availableCredits } = useCredits();
 
   const handleDelete = () => {
     if (id) {
@@ -47,7 +46,7 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
     if (!prompt.trim()) return;
     
     if (!user) {
-      toast({
+      toastUi({
         title: "Authentication Required",
         description: "Please log in to generate images",
         variant: "destructive",
@@ -57,7 +56,7 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
     
     // Check if user has enough credits
     if (availableCredits === 0) {
-      toast({
+      toastUi({
         title: "No Credits Available",
         description: "You need credits to generate images. Visit the credits page to get more.",
         variant: "destructive",
@@ -66,7 +65,7 @@ const TextToImageNode = memo(({ id, data }: TextToImageNodeProps) => {
     }
     
     // First try to use a credit
-    const creditUsed = await useCredits('image', 1, { 
+    const creditUsed = await useCreditsFn('image', 1, { 
       prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
       style,
       aspectRatio

@@ -58,14 +58,22 @@ export const useCredits = () => {
       
       if (error) throw error;
       
-      setTransactions(data || []);
+      // Cast the data to match our CreditTransaction type
+      const typedTransactions = data?.map(transaction => ({
+        ...transaction,
+        transaction_type: transaction.transaction_type as 'usage' | 'purchase' | 'refund' | 'free',
+        resource_type: transaction.resource_type as 'image' | 'video' | 'credit',
+        metadata: transaction.metadata || {}
+      })) || [];
+      
+      setTransactions(typedTransactions);
     } catch (error) {
       console.error('Error fetching transactions:', error);
     }
   };
 
   // Use credits for a resource
-  const useCredits = async (resourceType: 'image' | 'video', creditCost: number = 1, metadata: Record<string, any> = {}) => {
+  const useCreditsForResource = async (resourceType: 'image' | 'video', creditCost: number = 1, metadata: Record<string, any> = {}) => {
     if (!user) {
       toast.error('Please log in to use this feature');
       return false;
@@ -134,7 +142,7 @@ export const useCredits = () => {
     availableCredits,
     isLoading,
     transactions,
-    useCredits,
+    useCredits: useCreditsForResource,
     addCredits,
     refreshCredits: fetchCredits,
     refreshTransactions: fetchTransactions

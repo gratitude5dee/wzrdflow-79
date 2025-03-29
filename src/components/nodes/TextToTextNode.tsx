@@ -1,4 +1,3 @@
-
 import { memo, useState, useEffect } from 'react';
 import { Handle, Position, useReactFlow } from 'reactflow';
 import { X, Loader2, Coins } from 'lucide-react';
@@ -31,20 +30,20 @@ const TextToTextNode = memo(({ id, data }: TextToTextNodeProps) => {
   const [error, setError] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelType>(models[0].value);
-  const { toast } = useToast();
+  const { toast: toastUi } = useToast();
   const { user } = useAuth();
   const { deleteElements } = useReactFlow();
-  const { useCredits, availableCredits } = useCredits();
+  const { useCredits: useCreditsFn, availableCredits } = useCredits();
 
   useEffect(() => {
     if (!user) {
-      toast({
+      toastUi({
         title: "Authentication Required",
         description: "Please ensure you're logged in to use the AI features.",
         variant: "destructive",
       });
     }
-  }, [user, toast]);
+  }, [user, toastUi]);
 
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
@@ -68,7 +67,7 @@ const TextToTextNode = memo(({ id, data }: TextToTextNodeProps) => {
     
     if (!user) {
       setError('Please log in to use the AI features');
-      toast({
+      toastUi({
         title: "Authentication Required",
         description: "Please log in to use the AI features.",
         variant: "destructive",
@@ -79,7 +78,7 @@ const TextToTextNode = memo(({ id, data }: TextToTextNodeProps) => {
     // Check if user has enough credits
     if (availableCredits === 0) {
       setError('You need credits to generate text');
-      toast({
+      toastUi({
         title: "No Credits Available",
         description: "You need credits to generate text. Visit the credits page to get more.",
         variant: "destructive",
@@ -88,7 +87,7 @@ const TextToTextNode = memo(({ id, data }: TextToTextNodeProps) => {
     }
     
     // Use 1 credit for text generation
-    const creditUsed = await useCredits('text', 1, { 
+    const creditUsed = await useCreditsFn('text', 1, { 
       prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
       model: selectedModel
     });
@@ -109,7 +108,7 @@ const TextToTextNode = memo(({ id, data }: TextToTextNodeProps) => {
       const errorMessage = err.message || 'Failed to generate text. Please try again.';
       setError(errorMessage);
       
-      toast({
+      toastUi({
         title: "Generation Failed",
         description: errorMessage,
         variant: "destructive",

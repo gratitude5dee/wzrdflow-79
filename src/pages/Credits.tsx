@@ -9,7 +9,7 @@ import { Coins, ArrowLeft, PlusCircle, MinusCircle, RefreshCw } from 'lucide-rea
 import { toast } from 'sonner';
 
 const Credits = () => {
-  const { availableCredits, isLoading, transactions, addCredits } = useCredits();
+  const { availableCredits, isLoading, transactions, addCredits, refreshTransactions } = useCredits();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isBuying, setIsBuying] = useState(false);
@@ -115,7 +115,7 @@ const Credits = () => {
                     variant="ghost" 
                     size="sm" 
                     className="text-zinc-400 hover:text-white"
-                    onClick={() => useCredits.refreshTransactions()}
+                    onClick={() => refreshTransactions()}
                   >
                     <RefreshCw className="h-4 w-4" />
                   </Button>
