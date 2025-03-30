@@ -5,7 +5,7 @@ import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-
 import { AnimatePresence, motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, RefreshCw } from 'lucide-react';
 import ShotCard from './ShotCard';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
