@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { ProjectData, ProjectSetupTab } from './types';
+import { ProjectData, ProjectSetupTab, Character } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/providers/AuthProvider';
@@ -20,6 +20,7 @@ interface ProjectContextProps {
   setIsGenerating: (generating: boolean) => void;
   generateStoryline: (projectId: string) => Promise<boolean>;
   handleCreateProject: () => Promise<void>;
+  generationCompletedSignal: number; // Add signal for character refresh
 }
 
 const defaultProjectData: ProjectData = {
@@ -35,7 +36,9 @@ const defaultProjectData: ProjectData = {
   targetAudience: '',
   mainMessage: '',
   callToAction: '',
-  conceptOption: 'ai'
+  conceptOption: 'ai',
+  aspectRatio: '16:9',
+  videoStyle: 'cinematic'
 };
 
 const ProjectContext = createContext<ProjectContextProps | undefined>(undefined);
@@ -47,8 +50,8 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previousOption, setPreviousOption] = useState<'ai' | 'manual'>('ai');
   const [projectId, setProjectId] = useState<string | null>(null);
-  
   const [projectData, setProjectData] = useState<ProjectData>(defaultProjectData);
+  const [generationCompletedSignal, setGenerationCompletedSignal] = useState(0);
   
   // Track option changes for smooth transitions
   useEffect(() => {
@@ -91,7 +94,11 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
         product_name: projectData.product,
         target_audience: projectData.targetAudience,
         main_message: projectData.mainMessage,
-        call_to_action: projectData.callToAction
+        call_to_action: projectData.callToAction,
+        // Add settings fields
+        aspect_ratio: projectData.aspectRatio,
+        video_style: projectData.videoStyle,
+        cinematic_inspiration: projectData.cinematicInspiration
       };
       
       console.log('Project payload:', projectPayload);
@@ -170,7 +177,30 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
       
-      toast.success(`Storyline generated with ${data.scene_count ?? 0} scenes`);
+      // Add character count to toast message if available
+      toast.success(`Storyline generated with ${data.scene_count ?? 0} scenes${data.character_count ? ` and ${data.character_count} characters` : ''}`);
+      
+      // If AI inferred settings that didn't exist, update them in context
+      if (data.updated_settings?.length > 0) {
+        const updates: Partial<ProjectData> = {};
+        // Check for updated settings from the response
+        if (data.updated_settings.includes('genre') && !projectData.genre) {
+          updates.genre = data.potential_genre || '';
+        }
+        if (data.updated_settings.includes('tone') && !projectData.tone) {
+          updates.tone = data.potential_tone || '';
+        }
+        
+        if (Object.keys(updates).length > 0) {
+          console.log('Applying inferred settings to context:', updates);
+          updateProjectData(updates);
+        }
+      }
+      
+      // Signal generation completion - AFTER all DB operations
+      setGenerationCompletedSignal(prev => prev + 1);
+      console.log('Generation completed signal incremented:', generationCompletedSignal + 1);
+      
       return true;
     } catch (error: any) {
       console.error('Error in generateStoryline:', error);
@@ -233,7 +263,8 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       isGenerating,
       setIsGenerating,
       generateStoryline,
-      handleCreateProject
+      handleCreateProject,
+      generationCompletedSignal
     }}>
       {children}
     </ProjectContext.Provider>

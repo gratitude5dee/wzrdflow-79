@@ -22,7 +22,7 @@ type AspectRatioOption = '16:9' | '1:1' | '9:16';
 type VideoStyleOption = 'none' | 'cinematic' | 'scribble' | 'film-noir';
 
 const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
-  const { projectId } = useProject();
+  const { projectId, generationCompletedSignal } = useProject();
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatioOption>(
     (projectData.aspectRatio as AspectRatioOption) || '16:9'
   );
@@ -30,18 +30,20 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
     (projectData.videoStyle as VideoStyleOption) || 'cinematic'
   );
   const [characters, setCharacters] = useState<Character[]>([]);
-  const [isLoadingCharacters, setIsLoadingCharacters] = useState(false);
+  const [isLoadingCharacters, setIsLoadingCharacters] = useState(true);
   const [isAddingCharacter, setIsAddingCharacter] = useState(false);
 
-  // Fetch characters when projectId changes
+  // Fetch characters when projectId changes or after generation completes
   useEffect(() => {
     const fetchCharacters = async () => {
       if (!projectId) {
         setCharacters([]);
+        setIsLoadingCharacters(false);
         return;
       }
       setIsLoadingCharacters(true);
       try {
+        console.log(`Fetching characters for project: ${projectId}, generation signal: ${generationCompletedSignal}`);
         const { data, error } = await supabase
           .from('characters')
           .select('*')
@@ -49,6 +51,7 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
           .order('created_at', { ascending: true });
 
         if (error) throw error;
+        console.log(`Found ${data?.length || 0} characters for project`);
         setCharacters(data || []);
       } catch (error: any) {
         console.error("Error fetching characters:", error);
@@ -60,7 +63,7 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
     };
 
     fetchCharacters();
-  }, [projectId]);
+  }, [projectId, generationCompletedSignal]);
 
   // Update projectData when settings change
   useEffect(() => {
@@ -272,7 +275,7 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
           )}
 
           {/* Character Cards */}
-          {!isLoadingCharacters && characters.map(char => (
+          {!isLoadingCharacters && characters.length > 0 && characters.map(char => (
             <CharacterCard
               key={char.id}
               character={char}
@@ -296,6 +299,13 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
               </div>
               <p className="text-gray-400">Add character</p>
             </Card>
+          )}
+
+          {/* Empty state message */}
+          {!isLoadingCharacters && characters.length === 0 && (
+            <div className="w-full text-center py-10 text-zinc-500">
+              No characters generated or added yet.
+            </div>
           )}
         </div>
       </div>

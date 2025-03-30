@@ -334,7 +334,9 @@ If no characters are found, return an empty array for "characters". If optional 
             scene_count: scene_count,
             character_count: characters.length,
             is_alternative: generate_alternative,
-            updated_settings: Object.keys(projectUpdates).filter(k => k !== 'selected_storyline_id')
+            updated_settings: Object.keys(projectUpdates).filter(k => k !== 'selected_storyline_id'),
+            potential_genre: analysisData?.potential_genre,
+            potential_tone: analysisData?.potential_tone
         });
 
     } catch (error) {
