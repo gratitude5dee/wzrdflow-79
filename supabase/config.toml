@@ -1,19 +1,1 @@
-
 project_id = "ixkkrousepsiorwlaycp"
-
-[functions]
-[functions.generate-storylines]
-verify_jwt = false
-max_timeout = 300
-
-[functions.generate-shots-for-scene]
-verify_jwt = false
-max_timeout = 180
-
-[functions.generate-character-image]
-verify_jwt = false
-max_timeout = 300
-
-[functions.generate-shot-image]
-verify_jwt = false
-max_timeout = 300
