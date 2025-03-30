@@ -13,12 +13,15 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
   const [localVisualPrompt, setLocalVisualPrompt] = useState(shot.visual_prompt || '');
   const [localImageUrl, setLocalImageUrl] = useState(shot.image_url || null);
   const [localImageStatus, setLocalImageStatus] = useState<ImageStatus>(shot.image_status || 'pending');
+  const [localAudioUrl, setLocalAudioUrl] = useState(shot.audio_url || null);
+  const [localAudioStatus, setLocalAudioStatus] = useState(shot.audio_status || 'pending');
   
   // UI state
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(shot.image_status === 'generating');
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(shot.audio_status === 'generating');
   const isGeneratingRef = useRef<boolean>(false);
 
   // Update local state when props change (e.g., initial load)
@@ -30,9 +33,12 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
     setLocalVisualPrompt(shot.visual_prompt || '');
     setLocalImageUrl(shot.image_url || null);
     setLocalImageStatus(shot.image_status || 'pending');
+    setLocalAudioUrl(shot.audio_url || null);
+    setLocalAudioStatus(shot.audio_status || 'pending');
     setIsGeneratingImage(shot.image_status === 'generating');
+    setIsGeneratingAudio(shot.audio_status === 'generating');
   }, [shot.id, shot.shot_type, shot.prompt_idea, shot.dialogue, shot.sound_effects, 
-      shot.visual_prompt, shot.image_url, shot.image_status]);
+      shot.visual_prompt, shot.image_url, shot.image_status, shot.audio_url, shot.audio_status]);
 
   // Set up realtime subscription to receive updates for this shot
   useEffect(() => {
@@ -66,6 +72,16 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
           if (updatedShot.image_status && updatedShot.image_status !== localImageStatus) {
             setLocalImageStatus(updatedShot.image_status as ImageStatus);
             setIsGeneratingImage(updatedShot.image_status === 'generating');
+          }
+
+          // Handle audio updates
+          if (updatedShot.audio_url && updatedShot.audio_url !== localAudioUrl) {
+            setLocalAudioUrl(updatedShot.audio_url);
+          }
+          
+          if (updatedShot.audio_status && updatedShot.audio_status !== localAudioStatus) {
+            setLocalAudioStatus(updatedShot.audio_status);
+            setIsGeneratingAudio(updatedShot.audio_status === 'generating');
           }
         })
       .subscribe();
@@ -137,10 +153,13 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
     localVisualPrompt,
     localImageUrl,
     localImageStatus,
+    localAudioUrl,
+    localAudioStatus,
     isDeleting,
     isSaving,
     isGeneratingPrompt,
     isGeneratingImage,
+    isGeneratingAudio,
     isGeneratingRef,
     
     // Setters
@@ -150,9 +169,12 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
     setSoundEffects,
     setLocalVisualPrompt,
     setLocalImageStatus,
+    setLocalAudioUrl,
+    setLocalAudioStatus,
     setIsDeleting,
     setIsGeneratingPrompt,
     setIsGeneratingImage,
+    setIsGeneratingAudio,
     
     // Handlers
     handleShotTypeChange

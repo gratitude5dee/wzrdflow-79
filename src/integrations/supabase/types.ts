@@ -621,8 +621,11 @@ export type Database = {
       }
       shots: {
         Row: {
+          audio_status: string | null
+          audio_url: string | null
           created_at: string | null
           dialogue: string | null
+          failure_reason: string | null
           id: string
           image_status: string | null
           image_url: string | null
@@ -637,8 +640,11 @@ export type Database = {
           visual_prompt: string | null
         }
         Insert: {
+          audio_status?: string | null
+          audio_url?: string | null
           created_at?: string | null
           dialogue?: string | null
+          failure_reason?: string | null
           id?: string
           image_status?: string | null
           image_url?: string | null
@@ -653,8 +659,11 @@ export type Database = {
           visual_prompt?: string | null
         }
         Update: {
+          audio_status?: string | null
+          audio_url?: string | null
           created_at?: string | null
           dialogue?: string | null
+          failure_reason?: string | null
           id?: string
           image_status?: string | null
           image_url?: string | null

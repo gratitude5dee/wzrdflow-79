@@ -1,130 +1,210 @@
 
 import React from 'react';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Wand2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ImagePlus, Loader2 } from 'lucide-react';
+import { useAIGeneration } from './useAIGeneration';
+import { useAudioGeneration } from './useAudioGeneration';
+import ShotAudio from './ShotAudio';
 
 interface ShotFormProps {
+  id: string;
   shotType: string | null;
   promptIdea: string | null;
-  dialogue: string | null;
+  dialogue: string | null; 
   soundEffects: string | null;
-  visualPrompt: string | null;
+  visualPrompt: string;
+  imageStatus: string;
+  audioUrl: string | null;
+  audioStatus: 'pending' | 'generating' | 'completed' | 'failed';
   isGeneratingPrompt: boolean;
   isGeneratingImage: boolean;
+  isGeneratingAudio: boolean;
+  isGeneratingRef: React.MutableRefObject<boolean>;
   onShotTypeChange: (value: string) => void;
-  onPromptIdeaChange: (value: string | null) => void;
-  onDialogueChange: (value: string | null) => void;
-  onSoundEffectsChange: (value: string | null) => void;
-  onVisualPromptChange: (value: string) => void;
-  onGeneratePrompt: () => Promise<void>;
+  onPromptIdeaChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onDialogueChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onSoundEffectsChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  setLocalVisualPrompt: (prompt: string) => void;
+  setLocalImageStatus: (status: string) => void;
+  setIsGeneratingPrompt: (isGenerating: boolean) => void;
+  setIsGeneratingImage: (isGenerating: boolean) => void;
+  setLocalAudioUrl: (url: string | null) => void;
+  setLocalAudioStatus: (status: 'pending' | 'generating' | 'completed' | 'failed') => void;
+  setIsGeneratingAudio: (isGenerating: boolean) => void;
 }
 
+const shotTypeOptions = [
+  { value: 'wide', label: 'Wide Shot' },
+  { value: 'medium', label: 'Medium Shot' },
+  { value: 'close', label: 'Close-Up' },
+  { value: 'extreme_close_up', label: 'Extreme Close-Up' },
+  { value: 'establishing', label: 'Establishing Shot' },
+  { value: 'pov', label: 'POV Shot' },
+  { value: 'over_the_shoulder', label: 'Over-the-Shoulder' },
+  { value: 'aerial', label: 'Aerial Shot' },
+  { value: 'low_angle', label: 'Low Angle' },
+  { value: 'high_angle', label: 'High Angle' },
+  { value: 'dutch_angle', label: 'Dutch Angle' },
+  { value: 'tracking', label: 'Tracking Shot' },
+  { value: 'insert', label: 'Insert Shot' },
+];
+
 const ShotForm: React.FC<ShotFormProps> = ({
+  id,
   shotType,
   promptIdea,
   dialogue,
   soundEffects,
   visualPrompt,
+  imageStatus,
+  audioUrl,
+  audioStatus,
   isGeneratingPrompt,
   isGeneratingImage,
+  isGeneratingAudio,
+  isGeneratingRef,
   onShotTypeChange,
   onPromptIdeaChange,
   onDialogueChange,
   onSoundEffectsChange,
-  onVisualPromptChange,
-  onGeneratePrompt
+  setLocalVisualPrompt,
+  setLocalImageStatus,
+  setIsGeneratingPrompt,
+  setIsGeneratingImage,
+  setLocalAudioUrl,
+  setLocalAudioStatus,
+  setIsGeneratingAudio
 }) => {
-  return (
-    <div className="p-4 space-y-3 card-content">
-      {/* Visual Prompt Display */}
-      <div>
-        <p className="text-xs text-zinc-500 uppercase mb-1 font-medium flex items-center justify-between">
-          Visual Prompt
-          <TooltipProvider delayDuration={100}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button 
-                  onClick={onGeneratePrompt} 
-                  disabled={isGeneratingPrompt || isGeneratingImage} 
-                  className="text-purple-400 hover:text-purple-300 disabled:opacity-50"
-                >
-                  <Wand2 className="w-3 h-3"/>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                <p>Generate/Regenerate</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </p>
-        <Textarea
-          placeholder="AI generated visual prompt appears here..."
-          className="bg-[#141824] border-[#2D3343] text-white min-h-[40px] rounded-md text-xs resize-none leading-snug"
-          value={visualPrompt || ''}
-          onChange={(e) => onVisualPromptChange(e.target.value)}
-          readOnly={isGeneratingPrompt}
-        />
-      </div>
+  // Get AI generation functions
+  const { handleGenerateVisualPrompt, handleGenerateImage } = useAIGeneration({
+    shotId: id,
+    isGeneratingRef,
+    setIsGeneratingPrompt,
+    setIsGeneratingImage,
+    setLocalVisualPrompt,
+    setLocalImageStatus,
+    localVisualPrompt: visualPrompt
+  });
 
-      {/* Shot Type */}
+  // Get audio generation function
+  const { handleGenerateAudio } = useAudioGeneration({
+    shotId: id,
+    isGeneratingRef,
+    setIsGeneratingAudio,
+    setLocalAudioUrl,
+    setLocalAudioStatus
+  });
+
+  return (
+    <div className="p-4 space-y-4">
       <div>
-        <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Shot Type</p>
-        <Select value={shotType || undefined} onValueChange={onShotTypeChange}>
-          <SelectTrigger className="bg-[#141824] border-[#2D3343] text-white h-8 text-xs">
+        <Label htmlFor={`shot-type-${id}`} className="text-xs font-medium uppercase text-zinc-400 mb-1 block">
+          Shot Type
+        </Label>
+        <Select value={shotType || 'medium'} onValueChange={onShotTypeChange}>
+          <SelectTrigger id={`shot-type-${id}`} className="bg-[#141824] border-[#2D3343] text-white text-xs h-8">
             <SelectValue placeholder="Select shot type" />
           </SelectTrigger>
           <SelectContent className="bg-[#141824] border-[#2D3343] text-white">
-            <SelectItem value="wide">Wide Shot</SelectItem>
-            <SelectItem value="medium">Medium Shot</SelectItem>
-            <SelectItem value="close">Close-up</SelectItem>
-            <SelectItem value="extreme_close_up">Extreme Close-up</SelectItem>
-            <SelectItem value="establishing">Establishing Shot</SelectItem>
-            <SelectItem value="pov">POV Shot</SelectItem>
-            <SelectItem value="over_the_shoulder">Over-the-Shoulder</SelectItem>
-            <SelectItem value="dutch_angle">Dutch Angle</SelectItem>
-            <SelectItem value="low_angle">Low Angle</SelectItem>
-            <SelectItem value="high_angle">High Angle</SelectItem>
-            <SelectItem value="aerial">Aerial/Drone</SelectItem>
-            <SelectItem value="tracking">Tracking Shot</SelectItem>
-            <SelectItem value="insert">Insert Shot</SelectItem>
+            {shotTypeOptions.map(option => (
+              <SelectItem key={option.value} value={option.value} className="text-xs">
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* Prompt Idea */}
       <div>
-        <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Description / Idea</p>
+        <Label htmlFor={`prompt-idea-${id}`} className="text-xs font-medium uppercase text-zinc-400 mb-1 block">
+          Shot Description
+        </Label>
         <Textarea
-          placeholder="Describe the shot's content or purpose..."
-          className="bg-[#141824] border-[#2D3343] text-white min-h-[50px] rounded-md text-xs resize-none leading-snug"
+          id={`prompt-idea-${id}`}
           value={promptIdea || ''}
-          onChange={(e) => onPromptIdeaChange(e.target.value)}
+          onChange={onPromptIdeaChange}
+          className="bg-[#141824] border-[#2D3343] text-white resize-none min-h-[80px] text-xs"
+          placeholder="Describe what's happening in this shot..."
         />
       </div>
 
-      {/* Dialogue */}
       <div>
-        <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Dialogue</p>
-        <Input
-          placeholder='Character dialogue...'
-          className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-xs"
+        <Label htmlFor={`dialogue-${id}`} className="text-xs font-medium uppercase text-zinc-400 mb-1 block">
+          Dialogue/Voiceover
+        </Label>
+        <Textarea
+          id={`dialogue-${id}`}
           value={dialogue || ''}
-          onChange={(e) => onDialogueChange(e.target.value)}
+          onChange={onDialogueChange}
+          className="bg-[#141824] border-[#2D3343] text-white resize-none min-h-[60px] text-xs"
+          placeholder="Any spoken dialogue in this shot..."
+        />
+        <ShotAudio 
+          audioUrl={audioUrl}
+          status={audioStatus}
+          isGenerating={isGeneratingAudio}
+          hasDialogue={!!dialogue}
+          onGenerateAudio={handleGenerateAudio}
         />
       </div>
 
-      {/* Sound Effects */}
       <div>
-        <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Sound Effects</p>
-        <Input
-          placeholder='E.g., "Footsteps on gravel..."'
-          className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-xs"
+        <Label htmlFor={`sound-effects-${id}`} className="text-xs font-medium uppercase text-zinc-400 mb-1 block">
+          Sound Effects
+        </Label>
+        <Textarea
+          id={`sound-effects-${id}`}
           value={soundEffects || ''}
-          onChange={(e) => onSoundEffectsChange(e.target.value)}
+          onChange={onSoundEffectsChange}
+          className="bg-[#141824] border-[#2D3343] text-white resize-none min-h-[60px] text-xs"
+          placeholder="Sound effects for this shot (e.g., footsteps, rain, door slam)..."
         />
+      </div>
+
+      <div>
+        <Label htmlFor={`visual-prompt-${id}`} className="text-xs font-medium uppercase text-zinc-400 mb-1 flex justify-between">
+          <span>Visual Prompt</span>
+          {(imageStatus === 'pending' || imageStatus === 'failed') && (
+            <button 
+              onClick={handleGenerateVisualPrompt}
+              className="text-blue-400 text-[10px] hover:text-blue-300 disabled:text-zinc-500"
+              disabled={isGeneratingPrompt || isGeneratingImage || !promptIdea}
+            >
+              {isGeneratingPrompt ? 'Generating...' : 'Generate prompt'}
+            </button>
+          )}
+        </Label>
+        <Textarea
+          id={`visual-prompt-${id}`}
+          value={visualPrompt || ''}
+          readOnly
+          className="bg-[#141824] border-[#2D3343] text-white resize-none min-h-[80px] text-xs opacity-75"
+          placeholder="Visual prompt will be generated..."
+        />
+        {visualPrompt && ['prompt_ready', 'failed'].includes(imageStatus) && (
+          <Button
+            variant="outline" 
+            size="sm"
+            className="mt-2 w-full text-purple-400 border-purple-500/30 hover:bg-purple-500/10"
+            onClick={handleGenerateImage}
+            disabled={isGeneratingImage}
+          >
+            {isGeneratingImage ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Generating Image...
+              </>
+            ) : (
+              <>
+                <ImagePlus className="h-4 w-4 mr-2" />
+                Generate Image
+              </>
+            )}
+          </Button>
+        )}
       </div>
     </div>
   );
