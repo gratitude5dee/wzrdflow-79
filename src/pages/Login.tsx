@@ -1,30 +1,41 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/providers/AuthProvider';
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const location = useLocation();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  
+  // Redirect to home if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/home');
+    }
+  }, [user, navigate]);
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const {
-        error
-      } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
       if (error) throw error;
-      navigate('/');
+      
+      // Successful login - navigate to home
+      navigate('/home');
     } catch (error: any) {
       toast({
         title: "Error signing in",
@@ -35,13 +46,12 @@ const Login = () => {
       setLoading(false);
     }
   };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const {
-        error
-      } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password
       });
@@ -60,7 +70,9 @@ const Login = () => {
       setLoading(false);
     }
   };
-  return <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
+
+  return (
+    <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
       <div className="w-full max-w-md p-8 bg-zinc-800 rounded-lg shadow-lg">
         <h2 className="text-2xl font-bold text-white mb-6 text-center">Welcome to WZRD.tech</h2>
         
@@ -99,6 +111,8 @@ const Login = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Login;
