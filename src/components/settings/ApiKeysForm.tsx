@@ -1,45 +1,19 @@
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useApiKeys } from '@/hooks/useApiKeys';
 import { useAuth } from '@/providers/AuthProvider';
-import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import { CircleDashed, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export const ApiKeysForm = () => {
-  const { apiKeys, isLoading, storeApiKeys } = useApiKeys();
+  const { apiKeys, isLoading } = useApiKeys();
   const { user } = useAuth();
-  const [lumaApiKey, setLumaApiKey] = useState('');
-  const [claudeApiKey, setClaudeApiKey] = useState('');
-  const [showLumaKey, setShowLumaKey] = useState(false);
-  const [showClaudeKey, setShowClaudeKey] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
-  // Update local state when API keys are loaded
-  useState(() => {
-    if (apiKeys) {
-      if (apiKeys.lumaApiKey) setLumaApiKey(apiKeys.lumaApiKey);
-      if (apiKeys.claudeApiKey) setClaudeApiKey(apiKeys.claudeApiKey);
-    }
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!user) return;
-    
-    setIsSaving(true);
-    await storeApiKeys(lumaApiKey || null, claudeApiKey || null);
-    setIsSaving(false);
-  };
 
   if (!user) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>API Keys</CardTitle>
-          <CardDescription>You must be logged in to manage API keys</CardDescription>
+          <CardDescription>You must be logged in to use API features</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -47,71 +21,47 @@ export const ApiKeysForm = () => {
 
   return (
     <Card>
-      <form onSubmit={handleSubmit}>
-        <CardHeader>
-          <CardTitle>API Keys</CardTitle>
-          <CardDescription>
-            Add your API keys to enable advanced features. Your keys are securely stored.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="luma-api-key" className="text-sm font-medium">
-              Luma API Key
-            </label>
-            <div className="flex">
-              <Input
-                id="luma-api-key"
-                type={showLumaKey ? "text" : "password"}
-                placeholder="Enter your Luma API key"
-                value={lumaApiKey}
-                onChange={(e) => setLumaApiKey(e.target.value)}
-                className="flex-1"
-                disabled={isLoading}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => setShowLumaKey(!showLumaKey)}
-                className="ml-2"
-              >
-                {showLumaKey ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
-              </Button>
+      <CardHeader>
+        <CardTitle>API Keys</CardTitle>
+        <CardDescription>
+          API keys are managed by the application. You don't need to provide your own keys.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-md">
+            <div>
+              <h3 className="font-medium">Luma API</h3>
+              <p className="text-sm text-muted-foreground">Used for video generation</p>
+            </div>
+            <div>
+              {isLoading ? (
+                <CircleDashed className="h-5 w-5 text-slate-400 animate-spin" />
+              ) : apiKeys?.lumaApiKey ? (
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+              ) : (
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+              )}
             </div>
           </div>
-          <div className="space-y-2">
-            <label htmlFor="claude-api-key" className="text-sm font-medium">
-              Claude API Key
-            </label>
-            <div className="flex">
-              <Input
-                id="claude-api-key"
-                type={showClaudeKey ? "text" : "password"}
-                placeholder="Enter your Claude API key"
-                value={claudeApiKey}
-                onChange={(e) => setClaudeApiKey(e.target.value)}
-                className="flex-1"
-                disabled={isLoading}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => setShowClaudeKey(!showClaudeKey)}
-                className="ml-2"
-              >
-                {showClaudeKey ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
-              </Button>
+
+          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-md">
+            <div>
+              <h3 className="font-medium">Claude API</h3>
+              <p className="text-sm text-muted-foreground">Used for text generation</p>
+            </div>
+            <div>
+              {isLoading ? (
+                <CircleDashed className="h-5 w-5 text-slate-400 animate-spin" />
+              ) : apiKeys?.claudeApiKey ? (
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+              ) : (
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+              )}
             </div>
           </div>
-        </CardContent>
-        <CardFooter>
-          <Button type="submit" disabled={isLoading || isSaving}>
-            {isSaving ? 'Saving...' : 'Save API Keys'}
-          </Button>
-        </CardFooter>
-      </form>
+        </div>
+      </CardContent>
     </Card>
   );
 };

@@ -31,7 +31,8 @@ export const useApiKeys = () => {
         throw new Error('No active session found');
       }
       
-      const { data, error } = await supabase.functions.invoke('get-api-keys', {
+      // Use the new edge function to get application-level API keys
+      const { data, error } = await supabase.functions.invoke('get-application-keys', {
         headers: {
           Authorization: `Bearer ${session.access_token}`
         }
@@ -51,51 +52,6 @@ export const useApiKeys = () => {
     }
   };
 
-  const storeApiKeys = async (lumaApiKey: string | null, claudeApiKey: string | null) => {
-    if (!user) {
-      toast.error('You must be logged in to store API keys');
-      return false;
-    }
-
-    try {
-      // Get the current session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('No active session found');
-      }
-      
-      const { error } = await supabase.functions.invoke('store-api-keys', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        },
-        body: {
-          luma_api_key: lumaApiKey,
-          claude_api_key: claudeApiKey
-        }
-      });
-      
-      if (error) throw error;
-      
-      // Update local state
-      setApiKeys({
-        lumaApiKey,
-        claudeApiKey
-      });
-      
-      toast.success('API keys stored successfully');
-      return true;
-    } catch (error) {
-      console.error('Error storing API keys:', error);
-      toast.error('Failed to store API keys');
-      return false;
-    }
-  };
-  
-  const clearApiKeys = async () => {
-    return await storeApiKeys(null, null);
-  };
-
   // Initialize
   useEffect(() => {
     fetchApiKeys();
@@ -104,8 +60,6 @@ export const useApiKeys = () => {
   return {
     apiKeys,
     isLoading,
-    storeApiKeys,
-    clearApiKeys,
     refreshApiKeys: fetchApiKeys
   };
 };
