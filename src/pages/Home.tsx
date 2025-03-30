@@ -1,132 +1,205 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/home/Header';
 import { ProjectList } from '@/components/home/ProjectList';
 import type { Project } from '@/components/home/ProjectCard';
-import { Plus, MoreVertical } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/providers/AuthProvider';
+import { Loader2, AlertTriangle, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const [activeTab, setActiveTab] = useState<'all' | 'private' | 'public'>('all');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [projects] = useState<Project[]>([
-    {
-      id: '1',
-      name: 'World Builder',
-      thumbnail: 'public/lovable-uploads/1e1aab33-e5d2-4ef2-b40d-84a2e2679e3c.png',
-      lastEdited: 'No edits since creation',
-      isPrivate: true,
-    }
-  ]);
+  // Fetch projects from Supabase
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!user) {
+        setIsLoading(false);
+        setProjects([]);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('projects')
+          .select('id, title, description, updated_at, created_at, is_private, thumbnail_url')
+          .eq('user_id', user.id)
+          .order('updated_at', { ascending: false });
+
+        if (fetchError) throw fetchError;
+
+        const fetchedProjects: Project[] = (data || []).map(p => ({
+          id: p.id,
+          title: p.title || 'Untitled Project',
+          updated_at: p.updated_at || new Date().toISOString(),
+          is_private: p.is_private !== undefined ? p.is_private : true,
+          thumbnail_url: p.thumbnail_url || null,
+          description: p.description || null
+        }));
+
+        setProjects(fetchedProjects);
+      } catch (err: any) {
+        console.error('Error fetching projects:', err);
+        setError('Failed to load projects. Please try again.');
+        toast({
+          title: "Error loading projects",
+          description: err.message || "An unknown error occurred",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [user]);
 
   const handleCreateProject = () => {
-    // Navigate to the project setup page instead of directly to the editor
     navigate('/project-setup');
   };
 
   const handleOpenProject = (projectId: string) => {
-    navigate('/editor');
+    navigate(`/storyboard/${projectId}`);
+  };
+
+  // Filter projects based on active tab
+  const filteredProjects = projects.filter(p => {
+    if (activeTab === 'all') return true;
+    if (activeTab === 'private') return p.is_private;
+    if (activeTab === 'public') return !p.is_private;
+    return false;
+  });
+
+  const counts = {
+    all: projects.length,
+    private: projects.filter(p => p.is_private).length,
+    public: projects.filter(p => !p.is_private).length,
+  };
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center items-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+          <span className="ml-3 text-zinc-400">Loading projects...</span>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 text-red-400 bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+          <AlertTriangle className="h-8 w-8 mb-3" />
+          <p className="font-semibold mb-1">Error Loading Projects</p>
+          <p className="text-sm text-red-300">{error}</p>
+          <Button 
+            variant="outline" 
+            className="mt-4 border-red-500/30 hover:bg-red-950/50 text-red-300"
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </Button>
+        </div>
+      );
+    }
+
+    if (projects.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 text-zinc-500 border border-dashed border-zinc-700 rounded-lg bg-zinc-900/50">
+          <div className="w-16 h-16 mb-4 flex items-center justify-center rounded-full bg-zinc-800/60">
+            <Plus className="h-8 w-8 text-zinc-400" />
+          </div>
+          <p className="text-lg mb-2">No projects yet</p>
+          <p className="text-sm text-zinc-400 mb-5">Start creating to see your projects here.</p>
+          <Button
+            onClick={handleCreateProject}
+            className="bg-purple-600 hover:bg-purple-700 text-white shadow-glow-purple-sm"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Your First Project
+          </Button>
+        </div>
+      );
+    }
+
+    if (filteredProjects.length === 0 && activeTab !== 'all') {
+      return (
+        <div className="text-center py-16 text-zinc-500">
+          No {activeTab} projects found.
+        </div>
+      );
+    }
+
+    return (
+      <ProjectList
+        projects={filteredProjects}
+        onOpenProject={handleOpenProject}
+        onCreateProject={handleCreateProject}
+      />
+    );
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 text-white">
       <Header />
-
-      {/* Main Content */}
+      
       <main className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-semibold">Your projects</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-semibold">Your Projects</h1>
         </div>
 
-        {/* Recent Projects */}
-        <section className="mb-12">
-          <h2 className="text-lg font-medium mb-4">Recents</h2>
-          <ProjectList
-            projects={projects}
-            onOpenProject={handleOpenProject}
-            onCreateProject={handleCreateProject}
-          />
-        </section>
-
-        {/* All Projects */}
         <section>
-          <div className="border-b border-zinc-800/50 mb-6">
+          <div className="border-b border-zinc-700/50 mb-6">
             <div className="flex gap-6">
               <button
                 onClick={() => setActiveTab('all')}
-                className={`px-4 py-2 -mb-px ${
+                className={`relative px-4 py-2 text-sm transition-colors duration-200 ${
                   activeTab === 'all'
-                    ? 'border-b-2 border-white font-medium'
-                    : 'text-zinc-400'
+                    ? 'text-white font-medium'
+                    : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                All Projects (3)
+                All Projects ({counts.all})
+                {activeTab === 'all' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500"></span>}
               </button>
               <button
                 onClick={() => setActiveTab('private')}
-                className={`px-4 py-2 -mb-px ${
+                className={`relative px-4 py-2 text-sm transition-colors duration-200 ${
                   activeTab === 'private'
-                    ? 'border-b-2 border-white font-medium'
-                    : 'text-zinc-400'
+                    ? 'text-white font-medium'
+                    : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                Private (3)
+                Private ({counts.private})
+                {activeTab === 'private' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500"></span>}
               </button>
               <button
                 onClick={() => setActiveTab('public')}
-                className={`px-4 py-2 -mb-px ${
+                className={`relative px-4 py-2 text-sm transition-colors duration-200 ${
                   activeTab === 'public'
-                    ? 'border-b-2 border-white font-medium'
-                    : 'text-zinc-400'
+                    ? 'text-white font-medium'
+                    : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                Public (0)
+                Public ({counts.public})
+                {activeTab === 'public' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500"></span>}
               </button>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 gap-4">
-            {projects.map((project) => (
-              <div
-                key={project.id}
-                className="group relative bg-zinc-900 rounded-lg overflow-hidden border border-zinc-800/50 hover:border-zinc-700/50 transition-all p-4"
-              >
-                <div className="flex items-center gap-4">
-                  {project.thumbnail ? (
-                    <img
-                      src={project.thumbnail}
-                      alt={project.name}
-                      className="w-32 aspect-video object-cover rounded"
-                    />
-                  ) : (
-                    <div className="w-32 aspect-video bg-zinc-800 flex items-center justify-center rounded">
-                      <Plus className="h-6 w-6 text-zinc-600" />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">{project.name}</h3>
-                      <button className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <MoreVertical className="h-4 w-4 text-zinc-400" />
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-zinc-400">
-                      <span>{project.lastEdited}</span>
-                      <span className="px-2 py-1 bg-zinc-800 rounded text-xs">
-                        {project.isPrivate ? 'Private' : 'Public'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleOpenProject(project.id)}
-                  className="absolute inset-0 w-full h-full opacity-0"
-                  aria-label={`Open ${project.name}`}
-                />
-              </div>
-            ))}
-          </div>
+          
+          {renderContent()}
         </section>
       </main>
     </div>

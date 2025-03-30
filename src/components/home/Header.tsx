@@ -10,29 +10,27 @@ export const Header = () => {
   const { user } = useAuth();
 
   const handleCreateProject = () => {
-    // Navigate to the project setup page instead of directly to the editor
     navigate('/project-setup');
   };
 
   return (
-    <header className="border-b border-zinc-800/50">
+    <header className="border-b border-zinc-800/50 bg-black/70 backdrop-blur-sm">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-8">
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <img src="/logo.svg" alt="WZRD.tech" className="h-8 w-8" />
-              <span className="font-semibold">WZRD.tech</span>
-              <span className="px-1.5 py-0.5 text-[10px] bg-zinc-800 rounded text-zinc-400">BETA</span>
+              <h1 className="text-xl font-bold text-yellow-300 tracking-tight mr-2 glow-text-gold">WZRD.STUDIO</h1>
+              <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">ALPHA</span>
             </div>
 
             {/* Search */}
-            <div className="relative">
+            <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               <input
                 type="text"
-                placeholder="Search"
-                className="w-64 bg-zinc-900 rounded-lg pl-10 pr-4 py-2 text-sm border border-zinc-800 focus:outline-none focus:border-zinc-700"
+                placeholder="Search projects..."
+                className="w-64 bg-zinc-900/50 rounded-lg pl-10 pr-4 py-2 text-sm border border-zinc-800 focus:outline-none focus:border-zinc-700 placeholder:text-zinc-600"
               />
             </div>
           </div>
@@ -43,10 +41,10 @@ export const Header = () => {
             
             <Button
               onClick={handleCreateProject}
-              className="bg-white text-black hover:bg-zinc-200"
+              className="bg-purple-600 hover:bg-purple-700 text-white shadow-glow-purple-sm"
             >
-              <Plus className="h-4 w-4" />
-              Create new project
+              <Plus className="h-4 w-4 mr-1" />
+              New Project
             </Button>
           </div>
         </div>
