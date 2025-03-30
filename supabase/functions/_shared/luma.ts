@@ -1,3 +1,4 @@
+
 export async function initiateLumaImageGeneration({
   supabase,
   userId,
@@ -15,6 +16,7 @@ export async function initiateLumaImageGeneration({
 }) {
   const lumaApiKey = Deno.env.get("LUMA_API_KEY");
   if (!lumaApiKey) {
+    console.error(`[Luma Helper][Shot ${shotId}] Missing LUMA_API_KEY in environment variables`);
     throw new Error("Missing Luma API key in environment variables");
   }
 
@@ -22,8 +24,8 @@ export async function initiateLumaImageGeneration({
   const model = "photon-flash-1"; // Default model for image generation
 
   // Log the initiation
-  console.log(`Calling Luma API (${model}, ${aspectRatio}) with prompt: ${prompt.substring(0, 75)}...`);
-  console.log(`  with user_id: ${userId}`);
+  console.log(`[Luma Helper][Shot ${shotId}] Calling Luma API (${model}, ${aspectRatio}) with prompt: ${prompt.substring(0, 75)}...`);
+  console.log(`[Luma Helper][Shot ${shotId}] User ID: ${userId}`);
 
   // Prepare the request body for Luma API
   const requestBody = {
@@ -34,6 +36,7 @@ export async function initiateLumaImageGeneration({
 
   try {
     // Call Luma API
+    console.log(`[Luma Helper][Shot ${shotId}] Sending request to Luma API...`);
     const response = await fetch("https://api.lumalabs.ai/photon", {
       method: "POST",
       headers: {
@@ -43,14 +46,23 @@ export async function initiateLumaImageGeneration({
       body: JSON.stringify(requestBody),
     });
 
+    // Log response status for debugging
+    console.log(`[Luma Helper][Shot ${shotId}] Luma API Response Status: ${response.status}`);
+    
+    // Get the response body as text
+    const responseBodyText = await response.text();
+    console.log(`[Luma Helper][Shot ${shotId}] Luma API Response Body: ${responseBodyText}`);
+
     if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(`Luma API Error (${response.status}): ${errorBody}`);
+      throw new Error(`Luma API Error (${response.status}): ${responseBodyText}`);
     }
 
-    const data = await response.json();
+    // Parse the response JSON
+    const data = JSON.parse(responseBodyText);
+    console.log(`[Luma Helper][Shot ${shotId}] Luma response contains ID: ${data.id}`);
     
     // Store the generation record in our database
+    console.log(`[Luma Helper][Shot ${shotId}] Inserting generation record to database...`);
     const { data: generation, error: insertError } = await supabase
       .from("generations")
       .insert({
@@ -66,16 +78,18 @@ export async function initiateLumaImageGeneration({
       .single();
 
     if (insertError) {
-      console.error(`Failed to record generation in database: ${insertError.message}`);
+      console.error(`[Luma Helper][Shot ${shotId}] Failed to record generation in database: ${insertError.message}`);
       throw new Error(`Database error: ${insertError.message}`);
     }
 
+    console.log(`[Luma Helper][Shot ${shotId}] Generation record created with ID: ${generation.id}`);
     return {
       generation_id: generation.id,
       luma_id: data.id,
       message: "Image generation started successfully"
     };
   } catch (error) {
+    console.error(`[Luma Helper][Shot ${shotId}] Error: ${error.message}`);
     throw error;
   }
 }
@@ -95,6 +109,7 @@ export async function initiateLumaVideoGeneration({
 }) {
   const lumaApiKey = Deno.env.get("LUMA_API_KEY");
   if (!lumaApiKey) {
+    console.error(`[Luma Helper][Shot ${shotId}] Missing LUMA_API_KEY in environment variables`);
     throw new Error("Missing Luma API key in environment variables");
   }
 
@@ -102,8 +117,8 @@ export async function initiateLumaVideoGeneration({
   const model = "ray-2-flash"; // Default model for video generation from image
   
   // Log the initiation
-  console.log(`Initiating video generation with Luma Ray model (${model}) from image`);
-  console.log(`  with user_id: ${userId}, shot_id: ${shotId}`);
+  console.log(`[Luma Helper][Shot ${shotId}] Initiating video generation with Luma Ray model (${model}) from image`);
+  console.log(`[Luma Helper][Shot ${shotId}] User ID: ${userId}`);
 
   // Prepare the request body for Luma API
   const requestBody = {
@@ -113,6 +128,7 @@ export async function initiateLumaVideoGeneration({
 
   try {
     // Call Luma API
+    console.log(`[Luma Helper][Shot ${shotId}] Sending request to Luma API for video generation...`);
     const response = await fetch("https://api.lumalabs.ai/ray/video", {
       method: "POST",
       headers: {
@@ -122,14 +138,23 @@ export async function initiateLumaVideoGeneration({
       body: JSON.stringify(requestBody),
     });
 
+    // Log response status for debugging
+    console.log(`[Luma Helper][Shot ${shotId}] Luma API Response Status: ${response.status}`);
+    
+    // Get the response body as text
+    const responseBodyText = await response.text();
+    console.log(`[Luma Helper][Shot ${shotId}] Luma API Response Body: ${responseBodyText}`);
+
     if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(`Luma API Error (${response.status}): ${errorBody}`);
+      throw new Error(`Luma API Error (${response.status}): ${responseBodyText}`);
     }
 
-    const data = await response.json();
+    // Parse the response JSON
+    const data = JSON.parse(responseBodyText);
+    console.log(`[Luma Helper][Shot ${shotId}] Luma video generation response contains ID: ${data.id}`);
     
     // Store the generation record in our database
+    console.log(`[Luma Helper][Shot ${shotId}] Inserting video generation record to database...`);
     const { data: generation, error: insertError } = await supabase
       .from("generations")
       .insert({
@@ -145,16 +170,18 @@ export async function initiateLumaVideoGeneration({
       .single();
 
     if (insertError) {
-      console.error(`Failed to record video generation in database: ${insertError.message}`);
+      console.error(`[Luma Helper][Shot ${shotId}] Failed to record video generation in database: ${insertError.message}`);
       throw new Error(`Database error: ${insertError.message}`);
     }
 
+    console.log(`[Luma Helper][Shot ${shotId}] Video generation record created with ID: ${generation.id}`);
     return {
       generation_id: generation.id,
       luma_id: data.id,
       message: "Video generation started successfully"
     };
   } catch (error) {
+    console.error(`[Luma Helper][Shot ${shotId}] Error in video generation: ${error.message}`);
     throw error;
   }
 }

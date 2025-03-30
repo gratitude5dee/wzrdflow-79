@@ -13,7 +13,7 @@ import { ImageStatus, AudioStatus } from '@/types/storyboardTypes';
 interface ShotFormProps {
   id?: string;
   shotType: string | null;
-  promptIdea: string | null;
+  promptIdea: string | null; 
   dialogue: string | null; 
   soundEffects?: string | null;
   visualPrompt?: string;
@@ -118,6 +118,13 @@ const ShotForm: React.FC<ShotFormProps> = ({
   const { handleGenerateAudio } = audioGenerationProps
     ? useAudioGeneration(audioGenerationProps)
     : { handleGenerateAudio: () => {} };
+
+  // Create an async wrapper for the onSave function
+  const handleSaveClick = async () => {
+    if (onSave) {
+      await onSave();
+    }
+  };
 
   return (
     <div className="p-4 space-y-4">
@@ -253,7 +260,7 @@ const ShotForm: React.FC<ShotFormProps> = ({
               type="button" 
               variant="default" 
               size="sm" 
-              onClick={onSave}
+              onClick={handleSaveClick}
               className="bg-purple-600 hover:bg-purple-700"
             >
               Save

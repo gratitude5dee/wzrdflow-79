@@ -104,7 +104,7 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
   // Handlers for edit form
   const handleSave = async () => {
     setIsEditing(false);
-    // Note: No Promise is being returned here, which is causing the type error
+    // No Promise is being returned here, which was causing the type error
     // But our updated interface will handle this correctly now
   };
 

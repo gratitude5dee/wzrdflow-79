@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -19,14 +18,21 @@ serve(async (req) => {
     });
   }
 
+  let lumaJobId: string | null = null;
+  let generationId: string | null = null;
+  let shotId: string | null = null;
+
   try {
     // Parse the webhook payload
     const payload = await req.json();
-    console.log("Received Luma webhook:", JSON.stringify(payload));
+    lumaJobId = payload.id || null;
+    
+    console.log(`[Luma Webhook] Received webhook for Luma job ID: ${lumaJobId || 'UNKNOWN'}`);
+    console.log(`[Luma Webhook] Payload:`, JSON.stringify(payload, null, 2));
 
     // Validate the webhook payload
-    if (!payload.id || !payload.status) {
-      console.error("Invalid webhook payload:", payload);
+    if (!lumaJobId || !payload.status) {
+      console.error("[Luma Webhook] Invalid webhook payload:", payload);
       return new Response(
         JSON.stringify({ success: false, error: "Invalid webhook payload" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -34,21 +40,34 @@ serve(async (req) => {
     }
 
     // Find the generation record for this Luma job
+    console.log(`[Luma Webhook][${lumaJobId}] Looking up generation record...`);
     const { data: generation, error: genError } = await supabase
       .from("generations")
       .select("id, user_id, project_id, shot_id, api_provider")
-      .eq("external_request_id", payload.id)
-      .single();
+      .eq("external_request_id", lumaJobId)
+      .maybeSingle(); // Use maybeSingle to handle the case where no record is found
 
-    if (genError || !generation) {
-      console.error(`No generation found for Luma job ID: ${payload.id}`);
+    if (genError) {
+      console.error(`[Luma Webhook][${lumaJobId}] Error finding generation record:`, genError);
       return new Response(
-        JSON.stringify({ success: false, error: "Generation not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: false, error: "Error finding generation record" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Processing webhook for generation ${generation.id}, shot ${generation.shot_id}`);
+    if (!generation) {
+      // Important: Return 200 OK even if not found, so Luma doesn't keep retrying
+      console.warn(`[Luma Webhook][${lumaJobId}] Generation record not found. Acknowledging webhook.`);
+      return new Response(
+        JSON.stringify({ success: true, message: "Generation not found, webhook acknowledged" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    generationId = generation.id;
+    shotId = generation.shot_id;
+
+    console.log(`[Luma Webhook][Gen ${generationId} / Shot ${shotId}] Processing webhook with status: ${payload.status}`);
 
     // Map Luma status to our status
     let status = "pending";
@@ -74,7 +93,8 @@ serve(async (req) => {
       
       // Update the shot status as well
       if (generation.api_provider === "luma_image") {
-        await supabase
+        console.log(`[Luma Webhook][Shot ${shotId}] Updating shot status to 'failed' due to Luma failure.`);
+        const { error: shotUpdateError } = await supabase
           .from("shots")
           .update({ 
             image_status: "failed",
@@ -82,7 +102,11 @@ serve(async (req) => {
           })
           .eq("id", generation.shot_id);
           
-        console.log(`Updated shot ${generation.shot_id} status to failed`);
+        if (shotUpdateError) {
+          console.error(`[Luma Webhook][Shot ${shotId}] Error updating shot status to failed: ${shotUpdateError.message}`);
+        } else {
+          console.log(`[Luma Webhook][Shot ${shotId}] Shot status updated to failed.`);
+        }
       }
     }
 
@@ -91,8 +115,10 @@ serve(async (req) => {
       // For image generation
       if (generation.api_provider === "luma_image" && payload.output.images && payload.output.images[0]) {
         const imageUrl = payload.output.images[0];
+        console.log(`[Luma Webhook][Shot ${shotId}] Image completed. URL: ${imageUrl}`);
         
         // Create a media asset entry
+        console.log(`[Luma Webhook][Shot ${shotId}] Creating media asset record...`);
         const { data: mediaAsset, error: mediaError } = await supabase
           .from("media_assets")
           .insert({
@@ -108,28 +134,58 @@ serve(async (req) => {
           .single();
           
         if (mediaError) {
-          console.error(`Error creating media asset: ${mediaError.message}`);
+          console.error(`[Luma Webhook][Shot ${shotId}] Error creating media asset: ${mediaError.message}`);
         } else {
+          console.log(`[Luma Webhook][Shot ${shotId}] Media asset created with ID: ${mediaAsset.id}`);
           updateData.result_media_asset_id = mediaAsset.id;
           
           // Update the shot with the new image URL
-          await supabase
+          console.log(`[Luma Webhook][Shot ${shotId}] Updating shot with image URL and status 'completed'...`);
+          const { error: shotUpdateError } = await supabase
             .from("shots")
             .update({ 
               image_url: imageUrl,
-              image_status: "completed"
+              image_status: "completed",
+              failure_reason: null // Clear any failure reason on success
             })
             .eq("id", generation.shot_id);
             
-          console.log(`Updated shot ${generation.shot_id} with image URL`);
+          if (shotUpdateError) {
+            console.error(`[Luma Webhook][Shot ${shotId}] Error updating shot with image URL: ${shotUpdateError.message}`);
+          } else {
+            console.log(`[Luma Webhook][Shot ${shotId}] Shot updated with image URL.`);
+          }
+        }
+      } else if (generation.api_provider === "luma_image") {
+        console.warn(`[Luma Webhook][Shot ${shotId}] Luma reported 'completed' but no image URL found in payload.`);
+        // Override the status to failed
+        status = "failed";
+        updateData.status = status;
+        updateData.failure_reason = "Luma completed without providing an image URL";
+        
+        // Update the shot status to failed
+        const { error: shotUpdateError } = await supabase
+          .from("shots")
+          .update({ 
+            image_status: "failed",
+            failure_reason: updateData.failure_reason
+          })
+          .eq("id", generation.shot_id);
+          
+        if (shotUpdateError) {
+          console.error(`[Luma Webhook][Shot ${shotId}] Error updating shot status to failed: ${shotUpdateError.message}`);
+        } else {
+          console.log(`[Luma Webhook][Shot ${shotId}] Shot status updated to failed due to missing image URL.`);
         }
       }
       
       // For video generation
       if (generation.api_provider === "luma_video" && payload.output.videos && payload.output.videos[0]) {
         const videoUrl = payload.output.videos[0];
+        console.log(`[Luma Webhook][Shot ${shotId}] Video completed. URL: ${videoUrl}`);
         
         // Create a media asset entry
+        console.log(`[Luma Webhook][Shot ${shotId}] Creating video media asset record...`);
         const { data: mediaAsset, error: mediaError } = await supabase
           .from("media_assets")
           .insert({
@@ -145,33 +201,38 @@ serve(async (req) => {
           .single();
           
         if (mediaError) {
-          console.error(`Error creating media asset: ${mediaError.message}`);
+          console.error(`[Luma Webhook][Shot ${shotId}] Error creating video media asset: ${mediaError.message}`);
         } else {
+          console.log(`[Luma Webhook][Shot ${shotId}] Video media asset created with ID: ${mediaAsset.id}`);
           updateData.result_media_asset_id = mediaAsset.id;
+          
+          // Note: You could update the shot with the video URL here if needed
         }
       }
     }
 
     // Update the generation record
+    console.log(`[Luma Webhook][Gen ${generationId}] Updating generation record with status: ${status}`);
     const { error: updateError } = await supabase
       .from("generations")
       .update(updateData)
       .eq("id", generation.id);
 
     if (updateError) {
-      console.error(`Error updating generation: ${updateError.message}`);
+      console.error(`[Luma Webhook][Gen ${generationId}] Error updating generation: ${updateError.message}`);
       return new Response(
         JSON.stringify({ success: false, error: updateError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    console.log(`[Luma Webhook][Gen ${generationId}] Webhook processing completed successfully.`);
     return new Response(
       JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error(`Unexpected error: ${error.message}`);
+    console.error(`[Luma Webhook][${lumaJobId || 'UNKNOWN'}] Unexpected error: ${error.message}`, error.stack);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
