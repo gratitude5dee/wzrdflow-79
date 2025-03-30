@@ -8,6 +8,7 @@ import { AuthProvider } from "@/providers/AuthProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
+import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Credits from "./pages/Credits";
@@ -24,6 +25,7 @@ const App = () => {
             <Toaster />
             <Sonner />
             <Routes>
+              <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/home" element={
                 <ProtectedRoute>
@@ -60,7 +62,6 @@ const App = () => {
                   <Credits />
                 </ProtectedRoute>
               } />
-              <Route path="/" element={<Navigate to="/home" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

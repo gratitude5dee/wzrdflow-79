@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -88,6 +87,12 @@ body::after {
   pointer-events: none;
   z-index: -10;
   animation: noise 0.2s infinite;
+}
+
+/* Added background noise class for landing page */
+.bg-noise {
+  background-image: url('/noise.png');
+  background-repeat: repeat;
 }
 
 /* Scrollbar styling */
