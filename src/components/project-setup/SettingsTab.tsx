@@ -1,11 +1,17 @@
 
-import { useState } from 'react';
-import { type ProjectData } from './types';
+import { useState, useEffect } from 'react';
+import { type ProjectData, Character } from './types';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, ChevronRight, ImageIcon, HelpCircle } from 'lucide-react';
+import { Plus, ChevronRight, ImageIcon, HelpCircle, Loader2 } from 'lucide-react';
+import { useProject } from './ProjectContext';
+import { supabase } from '@/integrations/supabase/client';
+import CharacterCard from './CharacterCard';
+import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Card } from '@/components/ui/card';
 
 interface SettingsTabProps {
   projectData: ProjectData;
@@ -15,18 +21,54 @@ interface SettingsTabProps {
 type AspectRatioOption = '16:9' | '1:1' | '9:16';
 type VideoStyleOption = 'none' | 'cinematic' | 'scribble' | 'film-noir';
 
-interface Character {
-  id: string;
-  name: string;
-  description: string;
-  image?: string;
-}
-
 const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
-  const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatioOption>('16:9');
-  const [selectedVideoStyle, setSelectedVideoStyle] = useState<VideoStyleOption>('cinematic');
-  
+  const { projectId } = useProject();
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatioOption>(
+    (projectData.aspectRatio as AspectRatioOption) || '16:9'
+  );
+  const [selectedVideoStyle, setSelectedVideoStyle] = useState<VideoStyleOption>(
+    (projectData.videoStyle as VideoStyleOption) || 'cinematic'
+  );
   const [characters, setCharacters] = useState<Character[]>([]);
+  const [isLoadingCharacters, setIsLoadingCharacters] = useState(false);
+  const [isAddingCharacter, setIsAddingCharacter] = useState(false);
+
+  // Fetch characters when projectId changes
+  useEffect(() => {
+    const fetchCharacters = async () => {
+      if (!projectId) {
+        setCharacters([]);
+        return;
+      }
+      setIsLoadingCharacters(true);
+      try {
+        const { data, error } = await supabase
+          .from('characters')
+          .select('*')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        setCharacters(data || []);
+      } catch (error: any) {
+        console.error("Error fetching characters:", error);
+        toast.error("Failed to load characters");
+        setCharacters([]);
+      } finally {
+        setIsLoadingCharacters(false);
+      }
+    };
+
+    fetchCharacters();
+  }, [projectId]);
+
+  // Update projectData when settings change
+  useEffect(() => {
+    updateProjectData({
+      aspectRatio: selectedAspectRatio,
+      videoStyle: selectedVideoStyle
+    });
+  }, [selectedAspectRatio, selectedVideoStyle, updateProjectData]);
 
   const handleAspectRatioChange = (ratio: AspectRatioOption) => {
     setSelectedAspectRatio(ratio);
@@ -36,15 +78,56 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
     setSelectedVideoStyle(style);
   };
 
-  const handleAddCharacter = () => {
-    setCharacters([
-      ...characters,
-      {
-        id: `${characters.length + 1}`,
-        name: '',
-        description: ''
+  const handleAddCharacter = async () => {
+    if (!projectId) {
+      toast.error("Please save the project first");
+      return;
+    }
+    setIsAddingCharacter(true);
+    try {
+      const newName = `Character ${characters.length + 1}`;
+      const { data: newChar, error } = await supabase
+        .from('characters')
+        .insert({
+          project_id: projectId,
+          name: newName,
+          description: "A new character."
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      if (newChar) {
+        setCharacters([...characters, newChar]);
+        toast.success(`Added ${newName}`);
       }
-    ]);
+    } catch (error: any) {
+      console.error("Error adding character:", error);
+      toast.error("Failed to add character");
+    } finally {
+      setIsAddingCharacter(false);
+    }
+  };
+
+  const handleEditCharacter = (character: Character) => {
+    // This would open an edit dialog in a complete implementation
+    toast.info(`Edit ${character.name} (functionality coming soon)`);
+  };
+
+  const handleDeleteCharacter = async (characterId: string) => {
+    if (!confirm('Are you sure you want to delete this character?')) return;
+    try {
+      const { error } = await supabase
+        .from('characters')
+        .delete()
+        .eq('id', characterId);
+      if (error) throw error;
+      setCharacters(characters.filter(c => c.id !== characterId));
+      toast.success("Character deleted");
+    } catch (error: any) {
+      console.error("Error deleting character:", error);
+      toast.error("Failed to delete character");
+    }
   };
 
   return (
@@ -72,41 +155,22 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
               ASPECT RATIO
             </Label>
             <div className="grid grid-cols-3 gap-2">
-              <button 
-                onClick={() => handleAspectRatioChange('16:9')}
-                className={`flex flex-col items-center justify-center h-12 rounded border ${
-                  selectedAspectRatio === '16:9' 
-                    ? 'bg-blue-600 border-blue-500 text-white' 
-                    : 'bg-[#18191E] border-zinc-700 text-gray-400'
-                }`}
-              >
-                <div className="w-8 h-5 border border-current rounded-sm mb-1"></div>
-                <span className="text-xs">16:9</span>
-              </button>
-              
-              <button 
-                onClick={() => handleAspectRatioChange('1:1')}
-                className={`flex flex-col items-center justify-center h-12 rounded border ${
-                  selectedAspectRatio === '1:1' 
-                    ? 'bg-blue-600 border-blue-500 text-white' 
-                    : 'bg-[#18191E] border-zinc-700 text-gray-400'
-                }`}
-              >
-                <div className="w-5 h-5 border border-current rounded-sm mb-1"></div>
-                <span className="text-xs">1:1</span>
-              </button>
-              
-              <button 
-                onClick={() => handleAspectRatioChange('9:16')}
-                className={`flex flex-col items-center justify-center h-12 rounded border ${
-                  selectedAspectRatio === '9:16' 
-                    ? 'bg-blue-600 border-blue-500 text-white' 
-                    : 'bg-[#18191E] border-zinc-700 text-gray-400'
-                }`}
-              >
-                <div className="w-4 h-7 border border-current rounded-sm mb-1"></div>
-                <span className="text-xs">9:16</span>
-              </button>
+              {(['16:9', '1:1', '9:16'] as AspectRatioOption[]).map(ratio => (
+                <button 
+                  key={ratio}
+                  onClick={() => handleAspectRatioChange(ratio)}
+                  className={`flex flex-col items-center justify-center h-12 rounded border ${
+                    selectedAspectRatio === ratio 
+                      ? 'bg-blue-600 border-blue-500 text-white' 
+                      : 'bg-[#18191E] border-zinc-700 text-gray-400'
+                  }`}
+                >
+                  <div className={`border border-current rounded-sm mb-1 ${
+                    ratio === '16:9' ? 'w-8 h-5' : ratio === '1:1' ? 'w-5 h-5' : 'w-4 h-7'
+                  }`}></div>
+                  <span className="text-xs">{ratio}</span>
+                </button>
+              ))}
             </div>
           </div>
 
@@ -121,88 +185,56 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
             </div>
             
             <div className="grid grid-cols-4 gap-3">
-              <button
-                onClick={() => handleVideoStyleChange('none')}
-                className={`relative p-1 pb-6 aspect-square rounded border ${
-                  selectedVideoStyle === 'none' 
-                    ? 'border-blue-500' 
-                    : 'border-zinc-700'
-                }`}
-              >
-                <div className="w-full h-full bg-zinc-800 rounded-sm flex items-center justify-center">
-                  <div className="w-6 h-0.5 bg-zinc-600 rounded-full"></div>
-                </div>
-                <span className={`absolute bottom-1 left-0 right-0 text-center text-xs ${
-                  selectedVideoStyle === 'none' ? 'text-white' : 'text-gray-400'
-                }`}>None</span>
-              </button>
-              
-              <button
-                onClick={() => handleVideoStyleChange('cinematic')}
-                className={`relative p-1 pb-6 aspect-square rounded border ${
-                  selectedVideoStyle === 'cinematic' 
-                    ? 'border-blue-500' 
-                    : 'border-zinc-700'
-                }`}
-              >
-                <div className="w-full h-full bg-[#18191E] rounded-sm overflow-hidden">
-                  <img 
-                    src="/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png" 
-                    alt="Cinematic"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <span className={`absolute bottom-1 left-0 right-0 text-center text-xs ${
-                  selectedVideoStyle === 'cinematic' ? 'text-white' : 'text-gray-400'
-                }`}>Cinematic</span>
-              </button>
-              
-              <button
-                onClick={() => handleVideoStyleChange('scribble')}
-                className={`relative p-1 pb-6 aspect-square rounded border ${
-                  selectedVideoStyle === 'scribble' 
-                    ? 'border-blue-500' 
-                    : 'border-zinc-700'
-                }`}
-              >
-                <div className="w-full h-full bg-[#18191E] rounded-sm">
-                  <img 
-                    src="/lovable-uploads/4e20f36a-2bff-48d8-b07b-257334e35506.png" 
-                    alt="Scribble"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <span className={`absolute bottom-1 left-0 right-0 text-center text-xs ${
-                  selectedVideoStyle === 'scribble' ? 'text-white' : 'text-gray-400'
-                }`}>Scribble</span>
-              </button>
-              
-              <button
-                onClick={() => handleVideoStyleChange('film-noir')}
-                className={`relative p-1 pb-6 aspect-square rounded border ${
-                  selectedVideoStyle === 'film-noir' 
-                    ? 'border-blue-500' 
-                    : 'border-zinc-700'
-                }`}
-              >
-                <div className="w-full h-full bg-[#18191E] rounded-sm">
-                  <img 
-                    src="/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png" 
-                    alt="Film Noir"
-                    className="w-full h-full object-cover grayscale contrast-125"
-                  />
-                </div>
-                <span className={`absolute bottom-1 left-0 right-0 text-center text-xs ${
-                  selectedVideoStyle === 'film-noir' ? 'text-white' : 'text-gray-400'
-                }`}>Film Noir</span>
-              </button>
+              {(['none', 'cinematic', 'scribble', 'film-noir'] as VideoStyleOption[]).map(style => {
+                let imgSrc = '';
+                let altText = style.charAt(0).toUpperCase() + style.slice(1);
+                if (style === 'cinematic') imgSrc = '/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png';
+                if (style === 'scribble') imgSrc = '/lovable-uploads/4e20f36a-2bff-48d8-b07b-257334e35506.png';
+                if (style === 'film-noir') imgSrc = '/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png';
+
+                return (
+                  <button
+                    key={style}
+                    onClick={() => handleVideoStyleChange(style)}
+                    className={`relative p-1 pb-6 aspect-square rounded border ${
+                      selectedVideoStyle === style 
+                        ? 'border-blue-500' 
+                        : 'border-zinc-700'
+                    }`}
+                  >
+                    <div className={`w-full h-full bg-[#18191E] rounded-sm overflow-hidden flex items-center justify-center ${style === 'film-noir' ? 'grayscale contrast-125' : ''}`}>
+                      {imgSrc ? (
+                        <img 
+                          src={imgSrc} 
+                          alt={altText}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-6 h-0.5 bg-zinc-600 rounded-full"></div>
+                      )}
+                    </div>
+                    <span className={`absolute bottom-1 left-0 right-0 text-center text-xs ${
+                      selectedVideoStyle === style ? 'text-white' : 'text-gray-400'
+                    }`}>{altText}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center text-sm font-medium text-gray-400 uppercase">
               <span>STYLE REFERENCE</span>
-              <HelpCircle className="ml-2 h-4 w-4 text-gray-500" />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="ml-2 h-4 w-4 text-gray-500 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Upload an image to guide the visual style.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             
             <div className="relative border border-zinc-700 rounded p-8 flex flex-col items-center justify-center gap-2 bg-[#18191E] cursor-pointer hover:border-gray-500 transition-colors">
@@ -218,6 +250,8 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
             </Label>
             <Textarea 
               id="cinematic-inspiration"
+              value={projectData.cinematicInspiration || ''}
+              onChange={e => updateProjectData({ cinematicInspiration: e.target.value })}
               placeholder="E.g., 'Retro, gritty, eclectic, stylish, noir...'"
               className="bg-[#111319] border-zinc-700 text-white"
             />
@@ -229,16 +263,40 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
       <div className="w-full md:w-1/2 p-6">
         <h2 className="text-2xl font-semibold mb-6">Cast</h2>
         
-        <div className="flex justify-center items-center">
-          <div
-            onClick={handleAddCharacter}
-            className="border border-zinc-800 rounded aspect-[3/4] w-56 flex flex-col items-center justify-center p-4 bg-[#18191E] cursor-pointer hover:border-gray-600 transition-all"
-          >
-            <div className="w-12 h-12 rounded-full bg-[#222] flex items-center justify-center mb-3">
-              <Plus className="h-6 w-6 text-gray-400" />
+        <div className="flex flex-wrap gap-4">
+          {/* Loading State */}
+          {isLoadingCharacters && (
+            <div className="w-full flex justify-center items-center min-h-[200px]">
+              <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
             </div>
-            <p className="text-gray-400">Add character</p>
-          </div>
+          )}
+
+          {/* Character Cards */}
+          {!isLoadingCharacters && characters.map(char => (
+            <CharacterCard
+              key={char.id}
+              character={char}
+              onEdit={handleEditCharacter}
+              onDelete={handleDeleteCharacter}
+            />
+          ))}
+
+          {/* Add Character Button */}
+          {!isLoadingCharacters && (
+            <Card
+              onClick={handleAddCharacter}
+              className="bg-[#18191E] border border-dashed border-zinc-700 w-56 aspect-[3/4] flex flex-col items-center justify-center p-4 cursor-pointer hover:border-zinc-500 hover:bg-[#222733] transition-all"
+            >
+              <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center mb-3">
+                {isAddingCharacter ? (
+                  <Loader2 className="h-6 w-6 text-gray-400 animate-spin" />
+                ) : (
+                  <Plus className="h-6 w-6 text-gray-400" />
+                )}
+              </div>
+              <p className="text-gray-400">Add character</p>
+            </Card>
+          )}
         </div>
       </div>
     </div>

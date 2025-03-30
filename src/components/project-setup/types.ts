@@ -17,4 +17,18 @@ export interface ProjectData {
   callToAction?: string;
   // Additional field to track AI or manual mode
   conceptOption: 'ai' | 'manual';
+
+  // Settings fields
+  aspectRatio?: string;
+  videoStyle?: string;
+  cinematicInspiration?: string;
+  styleReferenceUrl?: string;
+}
+
+// Character type definition for reuse across components
+export interface Character {
+  id: string;
+  name: string;
+  description?: string | null;
+  image_url?: string | null;
 }
