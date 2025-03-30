@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, FileText, Info, Plus, ArrowClockwise } from 'lucide-react';
+import { RefreshCw, FileText, Info, Plus } from 'lucide-react';
 import { type ProjectData } from './ProjectSetupWizard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -144,7 +143,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
             <div className="mb-4 flex justify-between items-center">
               <h2 className="font-semibold text-zinc-300">EXAMPLES</h2>
               <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-zinc-200">
-                <ArrowClockwise className="h-4 w-4" />
+                <RefreshCw className="h-4 w-4" />
               </Button>
             </div>
             
