@@ -28,7 +28,7 @@ interface Storyline {
 const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => {
   const [characterCount, setCharacterCount] = useState(0);
   const [selectedStoryline, setSelectedStoryline] = useState<Storyline | null>(null);
-  const [storylines, setStorylines] = useState<Storyline[]>([]);
+  const [alternativeStorylines, setAlternativeStorylines] = useState<Storyline[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const { user } = useAuth();
@@ -37,7 +37,7 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
   const params = useParams();
   const id = params.id || projectId;
 
-  // Fetch storylines when component mounts or when projectId changes
+  // Fetch selected storyline when component mounts or when projectId changes
   useEffect(() => {
     if (id) {
       fetchStorylines();
@@ -47,30 +47,39 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
   const fetchStorylines = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      
+      // First, fetch the selected storyline
+      const { data: selectedData, error: selectedError } = await supabase
         .from('storylines')
         .select('*')
         .eq('project_id', id)
+        .eq('is_selected', true)
+        .single();
+
+      if (selectedError && selectedError.code !== 'PGRST116') { // Not found error
+        throw selectedError;
+      }
+
+      // Then fetch alternative storylines
+      const { data: alternativesData, error: alternativesError } = await supabase
+        .from('storylines')
+        .select('*')
+        .eq('project_id', id)
+        .eq('is_selected', false)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        throw error;
+      if (alternativesError) {
+        throw alternativesError;
       }
 
-      if (data && data.length > 0) {
-        setStorylines(data);
-        
-        // Find and set the selected storyline if any
-        const selected = data.find(s => s.is_selected);
-        if (selected) {
-          setSelectedStoryline(selected);
-          setCharacterCount(selected.full_story.length);
-        } else {
-          // If none is selected, default to the first one
-          setSelectedStoryline(data[0]);
-          setCharacterCount(data[0].full_story.length);
-        }
+      // Update states based on fetched data
+      if (selectedData) {
+        setSelectedStoryline(selectedData);
+        setCharacterCount(selectedData.full_story.length);
       }
+
+      setAlternativeStorylines(alternativesData || []);
+      
     } catch (error) {
       console.error("Error fetching storylines:", error);
       toast.error("Failed to load storylines");
@@ -94,11 +103,17 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
         throw error;
       }
 
-      // Update locally
-      setStorylines(storylines.map(s => ({
-        ...s,
-        is_selected: s.id === storyline.id
-      })));
+      // Update locally - set the selected storyline and move the previous one to alternatives
+      if (selectedStoryline) {
+        // Add the previous selected storyline to alternatives
+        setAlternativeStorylines(prev => [
+          {...selectedStoryline, is_selected: false}, 
+          ...prev.filter(s => s.id !== storyline.id)
+        ]);
+      }
+
+      // Remove the new selected storyline from alternatives
+      setAlternativeStorylines(prev => prev.filter(s => s.id !== storyline.id));
 
     } catch (error) {
       console.error("Error updating selected storyline:", error);
@@ -140,12 +155,15 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
         throw new Error('No active session found');
       }
 
-      // Call our edge function
+      // Call our edge function with a flag to generate alternative storylines
       const { data, error } = await supabase.functions.invoke('generate-storylines', {
         headers: {
           Authorization: `Bearer ${session.access_token}`
         },
-        body: { project_id: currentProjectId }
+        body: { 
+          project_id: currentProjectId,
+          generate_alternative: true // Add flag to indicate this is for an alternative storyline
+        }
       });
       
       if (error) {
@@ -153,14 +171,14 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
       }
       
       if (data.success) {
-        toast.success(`Generated ${data.total} new storylines`);
+        toast.success(`Generated a new alternative storyline`);
         await fetchStorylines(); // Refresh storylines list
       } else {
-        throw new Error(data.error || 'Failed to generate storylines');
+        throw new Error(data.error || 'Failed to generate alternative storyline');
       }
     } catch (error) {
-      console.error("Error generating storylines:", error);
-      toast.error("Failed to generate storylines");
+      console.error("Error generating alternative storyline:", error);
+      toast.error("Failed to generate alternative storyline");
     } finally {
       setIsGenerating(false);
     }
@@ -210,7 +228,7 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
                 ) : (
                   <>
                     <RefreshCw className="w-4 h-4 mr-2" />
-                    Generate more
+                    Generate alternative
                   </>
                 )}
               </Button>
@@ -220,18 +238,16 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
               <div className="flex justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
               </div>
-            ) : storylines.length === 0 ? (
+            ) : alternativeStorylines.length === 0 ? (
               <div className="text-center py-8 text-zinc-400">
-                <p>No storylines yet.</p>
-                <p className="mt-2">Click "Generate more" to create storylines based on your concept.</p>
+                <p>No alternative storylines yet.</p>
+                <p className="mt-2">Click "Generate alternative" to create different storyline options based on your concept.</p>
               </div>
             ) : (
-              storylines.map((storyline) => (
+              alternativeStorylines.map((storyline) => (
                 <Card 
                   key={storyline.id}
-                  className={`bg-black border-zinc-800 p-4 cursor-pointer hover:border-zinc-700 transition-colors ${
-                    selectedStoryline?.id === storyline.id ? 'border-blue-500' : ''
-                  }`}
+                  className="bg-black border-zinc-800 p-4 cursor-pointer hover:border-zinc-700 transition-colors"
                   onClick={() => handleStorylineChange(storyline)}
                 >
                   <h3 className="font-medium mb-2">{storyline.title}</h3>
@@ -254,8 +270,24 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
           {/* Main Storyline Editor - Now spans 2 columns */}
           <div className="md:col-span-2">
             <div className="bg-black rounded-lg border border-zinc-800 p-6">
-              {selectedStoryline ? (
+              {isLoading ? (
+                <div className="flex justify-center items-center py-20">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                  <span className="ml-3 text-zinc-400">Loading your storyline...</span>
+                </div>
+              ) : selectedStoryline ? (
                 <>
+                  <h2 className="text-2xl font-bold mb-4 text-white">{selectedStoryline.title}</h2>
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {selectedStoryline.tags && selectedStoryline.tags.map((tag, tagIndex) => (
+                      <Badge 
+                        key={tagIndex} 
+                        className="bg-zinc-900 text-zinc-300"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
                   <div className="prose prose-invert max-w-none">
                     <p className="text-zinc-300 whitespace-pre-line">
                       {selectedStoryline.full_story}
@@ -266,13 +298,27 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
                   </div>
                 </>
               ) : (
-                <div className="text-center py-8 text-zinc-400">
-                  <p>No storyline selected.</p>
-                  {storylines.length > 0 ? (
-                    <p className="mt-2">Select a storyline from the left panel to view it.</p>
-                  ) : (
-                    <p className="mt-2">Generate storylines to get started.</p>
-                  )}
+                <div className="text-center py-16 text-zinc-400">
+                  <p className="text-xl font-medium mb-2">No storyline available</p>
+                  <p className="mb-8">A storyline should have been generated during project setup.</p>
+                  <Button 
+                    variant="outline" 
+                    className="bg-blue-950 border-blue-900 text-blue-400 hover:bg-blue-900"
+                    onClick={handleGenerateMore}
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Generate a storyline now
+                      </>
+                    )}
+                  </Button>
                 </div>
               )}
             </div>
