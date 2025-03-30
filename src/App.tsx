@@ -12,7 +12,6 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Credits from "./pages/Credits";
 import ProjectSetup from "./pages/ProjectSetup";
-import { useState } from "react";
 
 const queryClient = new QueryClient();
 
