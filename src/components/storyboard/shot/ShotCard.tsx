@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -132,7 +131,7 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
       style={style}
       ref={setNodeRef}
       className={cn(
-        "relative flex flex-col bg-zinc-800/70 border border-zinc-700/50 rounded-lg overflow-hidden w-[230px] min-h-[300px]",
+        "relative flex flex-col glass-card rounded-lg overflow-hidden w-[230px] min-h-[300px]",
         isExpanded && "min-h-[400px] w-[320px]"
       )}
     >
@@ -140,7 +139,7 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
       <div
         {...attributes}
         {...listeners}
-        className="absolute top-2 left-2 z-20 cursor-move bg-black/30 hover:bg-black/50 p-1 rounded opacity-70 hover:opacity-100 transition-opacity"
+        className="absolute top-2 left-2 z-20 cursor-move bg-black/30 hover:bg-black/50 backdrop-blur-sm p-1 rounded opacity-70 hover:opacity-100 transition-opacity"
       >
         <Move className="h-4 w-4 text-white" />
       </div>
@@ -149,7 +148,7 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-2 right-2 z-20 h-6 w-6 p-1 bg-black/30 hover:bg-black/50 opacity-70 hover:opacity-100 transition-opacity"
+        className="absolute top-2 right-2 z-20 h-6 w-6 p-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <Expand className="h-4 w-4 text-white" />
@@ -159,7 +158,7 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
       <Button
         variant="ghost"
         size="icon"
-        className="absolute bottom-2 right-2 z-20 h-6 w-6 p-1 bg-black/30 hover:bg-black/50 opacity-70 hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
+        className="absolute bottom-2 right-2 z-20 h-6 w-6 p-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
         onClick={validateAndDelete}
         disabled={isDeleting}
       >
@@ -167,7 +166,7 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
       </Button>
 
       {/* Shot number badge */}
-      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-amber-800/80 text-amber-100 text-xs px-2 py-0.5 rounded-full">
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-amber-800/80 backdrop-blur-sm text-amber-100 text-xs px-2 py-0.5 rounded-full">
         Shot {shot.shot_number}
       </div>
 
@@ -237,7 +236,7 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
               </div>
               
               {isExpanded && localVisualPrompt && (
-                <div className="text-xs text-zinc-500 mt-1 border-t border-zinc-700/50 pt-1">
+                <div className="text-xs text-zinc-500 mt-1 border-t border-white/10 pt-1">
                   <span className="text-zinc-400 font-medium">Visual Prompt:</span>
                   <p className="line-clamp-4">{localVisualPrompt}</p>
                 </div>
@@ -246,7 +245,7 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
 
             <div className="flex flex-col mt-auto">
               {dialogue && (
-                <div className="text-xs text-zinc-400 border-t border-zinc-700/50 pt-1 mb-1">
+                <div className="text-xs text-zinc-400 border-t border-white/10 pt-1 mb-1">
                   <span className="text-zinc-300 font-medium">Dialogue:</span>
                   <p className="italic line-clamp-2">{dialogue}</p>
                 </div>

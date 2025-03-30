@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -54,7 +53,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
   };
 
   return (
-    <div className="w-full bg-[#0A0D16] border-r border-[#1D2130] text-white h-full">
+    <div className="w-full bg-[#0A0D16]/80 backdrop-blur-lg border-r border-white/10 text-white h-full">
       <ScrollArea className="h-full">
         <div className="p-6 space-y-6">
           {/* Project Title and Description */}
@@ -75,7 +74,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
               onChange={(e) => setSceneDesc(e.target.value)}
               onBlur={() => handleUpdate('description', sceneDesc)}
               placeholder="Describe the scene..."
-              className="bg-[#141824] border-[#2D3343] text-white rounded-md text-sm min-h-[80px]"
+              className="glass-input text-white rounded-md text-sm min-h-[80px]"
             />
           </div>
 
@@ -102,7 +101,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
                   onChange={(e) => setLocationDesc(e.target.value)}
                   onBlur={() => handleUpdate('location', locationDesc)}
                   placeholder="Describe the location..."
-                  className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-xs"
+                  className="glass-input rounded-md h-8 text-xs"
                 />
               </div>
               <div>
@@ -112,7 +111,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
                   onChange={(e) => setLightingDesc(e.target.value)}
                   onBlur={() => handleUpdate('lighting', lightingDesc)}
                   placeholder="Describe the lighting..."
-                  className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-xs"
+                  className="glass-input rounded-md h-8 text-xs"
                 />
               </div>
               <div>
@@ -122,7 +121,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
                   onChange={(e) => setWeatherDesc(e.target.value)}
                   onBlur={() => handleUpdate('weather', weatherDesc)}
                   placeholder="Describe the weather..."
-                  className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-xs"
+                  className="glass-input rounded-md h-8 text-xs"
                 />
               </div>
             </CollapsibleContent>
@@ -167,7 +166,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="sidebar-content-glow pl-6">
-              <div className="bg-[#141824] p-3 rounded-md border border-[#2D3343]">
+              <div className="bg-black/30 backdrop-blur-sm p-3 rounded-md border border-white/10">
                 <p className="text-zinc-400 text-xs mb-2">No clothing items specified for this scene yet.</p>
                 <Button variant="outline" size="sm" className="w-full mt-1 border-dashed border-zinc-600 text-zinc-400 hover:border-zinc-400 hover:text-zinc-300 h-7 text-xs">
                   + Add Clothing Item
@@ -180,7 +179,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
           <Collapsible
             open={openSections.sound}
             onOpenChange={() => toggleSection('sound')}
-            className="pt-4 border-t border-[#1D2130]"
+            className="pt-4 border-t border-white/5"
           >
             <CollapsibleTrigger asChild>
               <div className="flex items-center justify-between cursor-pointer hover:text-blue-400 transition-colors mb-2">
@@ -195,7 +194,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
                   <Mic className="w-4 h-4 text-zinc-500" />
                   <p className="text-zinc-300 font-medium text-xs uppercase">Voiceover</p>
                 </div>
-                <div className="bg-[#141824] border border-[#2D3343] rounded-md p-3 flex items-center justify-between">
+                <div className="bg-black/30 backdrop-blur-sm border border-white/10 rounded-md p-3 flex items-center justify-between">
                   <div className="text-xs text-zinc-400">No voiceover specified.</div>
                 </div>
               </div>
@@ -207,7 +206,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
                 </div>
                 <Input
                   placeholder='E.g., "Footsteps on gravel, distant siren..."'
-                  className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-xs"
+                  className="glass-input rounded-md h-8 text-xs"
                 />
               </div>
             </CollapsibleContent>

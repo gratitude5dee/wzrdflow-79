@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -34,8 +35,7 @@ interface ShotFormProps {
   setLocalAudioUrl?: (url: string | null) => void;
   setLocalAudioStatus?: (status: AudioStatus) => void;
   setIsGeneratingAudio?: (isGenerating: boolean) => void;
-  // Change the type to accept either a void or a Promise<void> return type
-  onSave?: () => void | Promise<void>;
+  onSave?: () => Promise<void>;
   onCancel?: () => void;
   isExpanded?: boolean;
 }
@@ -113,7 +113,7 @@ const ShotForm: React.FC<ShotFormProps> = ({
     : null;
   const { handleGenerateAudio } = audioGenerationProps
     ? useAudioGeneration(audioGenerationProps)
-    : { handleGenerateAudio: () => Promise.resolve() }; // Return a resolved Promise for type consistency
+    : { handleGenerateAudio: async () => {} }; // Make the fallback async
 
   // Create an async wrapper for onSave that works with any return type
   const handleSaveClick = async () => {
@@ -130,10 +130,10 @@ const ShotForm: React.FC<ShotFormProps> = ({
           Shot Type
         </Label>
         <Select value={shotType || 'medium'} onValueChange={onShotTypeChange}>
-          <SelectTrigger id={`shot-type-${id}`} className="bg-[#141824] border-[#2D3343] text-white text-[10px] h-7">
+          <SelectTrigger id={`shot-type-${id}`} className="glass-input border-white/10 text-white text-[10px] h-7">
             <SelectValue placeholder="Select shot type" />
           </SelectTrigger>
-          <SelectContent className="bg-[#141824] border-[#2D3343] text-white">
+          <SelectContent className="bg-black/80 backdrop-blur-md border-white/10 text-white">
             {shotTypeOptions.map(option => (
               <SelectItem key={option.value} value={option.value} className="text-xs">
                 {option.label}
@@ -150,7 +150,7 @@ const ShotForm: React.FC<ShotFormProps> = ({
           id={`prompt-idea-${id}`}
           value={promptIdea || ''}
           onChange={onPromptIdeaChange}
-          className="bg-[#141824] border-[#2D3343] text-white resize-none min-h-[60px] text-[11px]"
+          className="glass-input text-white resize-none min-h-[60px] text-[11px]"
           placeholder="Describe what's happening..."
         />
       </div>
@@ -162,7 +162,7 @@ const ShotForm: React.FC<ShotFormProps> = ({
           id={`dialogue-${id}`}
           value={dialogue || ''}
           onChange={onDialogueChange}
-          className="bg-[#141824] border-[#2D3343] text-white resize-none min-h-[40px] text-[11px]"
+          className="glass-input text-white resize-none min-h-[40px] text-[11px]"
           placeholder="Spoken words..."
         />
         {id && setIsGeneratingAudio && setLocalAudioUrl && setLocalAudioStatus && isGeneratingRef && (
@@ -184,7 +184,7 @@ const ShotForm: React.FC<ShotFormProps> = ({
             id={`sound-effects-${id}`}
             value={soundEffects || ''}
             onChange={onSoundEffectsChange}
-            className="bg-[#141824] border-[#2D3343] text-white resize-none min-h-[40px] text-[11px]"
+            className="glass-input text-white resize-none min-h-[40px] text-[11px]"
             placeholder="e.g., footsteps, rain..."
           />
         </div>
@@ -208,14 +208,14 @@ const ShotForm: React.FC<ShotFormProps> = ({
             id={`visual-prompt-${id}`}
             value={visualPrompt || ''}
             readOnly
-            className="bg-[#141824] border-[#2D3343] text-white resize-none min-h-[60px] text-[10px] opacity-75"
+            className="glass-input text-white resize-none min-h-[60px] text-[10px] opacity-75"
             placeholder="Visual prompt will appear here..."
           />
           {visualPrompt && ['prompt_ready', 'failed', 'completed'].includes(imageStatus) && (
             <Button
               variant="outline"
               size="sm"
-              className="mt-1 w-full text-purple-400 border-purple-500/30 hover:bg-purple-500/10 h-7 text-xs"
+              className="mt-1 w-full text-purple-400 border-purple-500/30 hover:bg-purple-500/10 h-7 text-xs bg-black/30 backdrop-blur-sm"
               onClick={handleGenerateImage}
               disabled={isGeneratingImage || isGeneratingPrompt}
             >
@@ -242,7 +242,7 @@ const ShotForm: React.FC<ShotFormProps> = ({
               variant="outline"
               size="sm"
               onClick={onCancel}
-              className="text-zinc-400 border-zinc-700 hover:bg-zinc-800 h-7 text-xs"
+              className="text-zinc-400 border-white/10 hover:bg-white/5 h-7 text-xs bg-black/30 backdrop-blur-sm"
             >
               Cancel
             </Button>
@@ -253,7 +253,7 @@ const ShotForm: React.FC<ShotFormProps> = ({
               variant="default"
               size="sm"
               onClick={handleSaveClick}
-              className="bg-purple-600 hover:bg-purple-700 h-7 text-xs"
+              className="bg-purple-600/80 hover:bg-purple-700/80 backdrop-blur-sm h-7 text-xs"
             >
               Save
             </Button>
