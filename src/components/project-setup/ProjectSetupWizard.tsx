@@ -39,6 +39,7 @@ const ProjectSetupWizard = () => {
   const [activeTab, setActiveTab] = useState<ProjectSetupTab>('concept');
   const [isCreating, setIsCreating] = useState(false);
   const [previousOption, setPreviousOption] = useState<'ai' | 'manual'>('ai');
+  const [projectId, setProjectId] = useState<string | null>(null);
   
   const [projectData, setProjectData] = useState<ProjectData>({
     title: 'Untitled Project',
@@ -74,9 +75,84 @@ const ProjectSetupWizard = () => {
     setProjectData(prev => ({ ...prev, ...data }));
   };
 
-  const handleNext = () => {
+  // Save project data to Supabase
+  const saveProjectData = async (): Promise<string | null> => {
+    if (!user) {
+      toast.error("Please log in to create a project");
+      return null;
+    }
+
+    try {
+      // If project already exists, update it
+      if (projectId) {
+        const { error } = await supabase
+          .from('projects')
+          .update({
+            title: projectData.title,
+            concept_text: projectData.concept,
+            concept_option: projectData.conceptOption,
+            format: projectData.format,
+            custom_format_description: projectData.customFormat,
+            genre: projectData.genre,
+            tone: projectData.tone,
+            add_voiceover: projectData.addVoiceover,
+            special_requests: projectData.specialRequests,
+            product_name: projectData.product,
+            target_audience: projectData.targetAudience,
+            main_message: projectData.mainMessage,
+            call_to_action: projectData.callToAction
+          })
+          .eq('id', projectId);
+          
+        if (error) throw error;
+        return projectId;
+      } else {
+        // Create new project
+        const { data: project, error } = await supabase
+          .from('projects')
+          .insert({
+            user_id: user.id,
+            title: projectData.title || 'Untitled Project',
+            concept_text: projectData.concept,
+            concept_option: projectData.conceptOption,
+            format: projectData.format,
+            custom_format_description: projectData.customFormat,
+            genre: projectData.genre,
+            tone: projectData.tone,
+            add_voiceover: projectData.addVoiceover,
+            special_requests: projectData.specialRequests,
+            product_name: projectData.product,
+            target_audience: projectData.targetAudience,
+            main_message: projectData.mainMessage,
+            call_to_action: projectData.callToAction
+          })
+          .select()
+          .single();
+          
+        if (error) throw error;
+        return project.id;
+      }
+    } catch (error: any) {
+      console.error('Error saving project:', error);
+      toast.error("Failed to save project");
+      return null;
+    }
+  };
+
+  const handleNext = async () => {
     const tabs = getVisibleTabs();
     const currentIndex = tabs.indexOf(activeTab);
+    
+    // If currently on concept tab, save project data before proceeding
+    if (activeTab === 'concept') {
+      const savedProjectId = await saveProjectData();
+      if (savedProjectId) {
+        setProjectId(savedProjectId);
+      } else {
+        // If saving failed, don't proceed
+        return;
+      }
+    }
     
     if (currentIndex < tabs.length - 1) {
       setActiveTab(tabs[currentIndex + 1]);
@@ -114,38 +190,16 @@ const ProjectSetupWizard = () => {
     try {
       setIsCreating(true);
       
-      // Create project in database
-      const { data: project, error } = await supabase
-        .from('projects')
-        .insert({
-          user_id: user.id,
-          title: projectData.title || 'Untitled Project',
-          metadata: {
-            concept: projectData.concept,
-            genre: projectData.genre,
-            tone: projectData.tone,
-            format: projectData.format,
-            customFormat: projectData.customFormat,
-            specialRequests: projectData.specialRequests,
-            addVoiceover: projectData.addVoiceover,
-            // Include commercial fields in metadata
-            product: projectData.product,
-            targetAudience: projectData.targetAudience,
-            mainMessage: projectData.mainMessage,
-            callToAction: projectData.callToAction,
-            // Include the conceptOption
-            conceptOption: projectData.conceptOption
-          }
-        })
-        .select()
-        .single();
-        
-      if (error) throw error;
+      // Save final project data if needed
+      const savedProjectId = await saveProjectData();
+      if (!savedProjectId) {
+        throw new Error("Failed to save project data");
+      }
       
       toast.success("Project created successfully");
       
       // Navigate to the editor with the new project ID
-      navigate(`/editor/${project.id}`);
+      navigate(`/editor/${savedProjectId}`);
     } catch (error: any) {
       console.error('Error creating project:', error);
       toast.error("Failed to create project");
