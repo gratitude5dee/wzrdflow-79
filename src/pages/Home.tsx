@@ -1,8 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/home/Header';
 import { ProjectList } from '@/components/home/ProjectList';
+import { HeroSection } from '@/components/home/HeroSection';
+import { JudgePanel } from '@/components/home/JudgePanel';
 import type { Project } from '@/components/home/ProjectCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/providers/AuthProvider';
@@ -18,6 +19,7 @@ const Home = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showWelcome, setShowWelcome] = useState(true);
 
   // Fetch projects from Supabase
   useEffect(() => {
@@ -53,7 +55,6 @@ const Home = () => {
       } catch (err: any) {
         console.error('Error fetching projects:', err);
         setError('Failed to load projects. Please try again.');
-        // Show toast notification for error
         toast.error("Error loading projects", {
           description: err.message || "An unknown error occurred"
         });
@@ -85,6 +86,11 @@ const Home = () => {
     all: projects.length,
     private: projects.filter(p => p.is_private).length,
     public: projects.filter(p => !p.is_private).length,
+  };
+
+  // Toggle welcome screen
+  const handleSkipWelcome = () => {
+    setShowWelcome(false);
   };
 
   const renderContent = () => {
@@ -150,6 +156,25 @@ const Home = () => {
     );
   };
 
+  // If showing welcome screen, render hero and judges
+  if (showWelcome) {
+    return (
+      <div className="min-h-screen bg-black text-white overflow-x-hidden">
+        <HeroSection />
+        <JudgePanel />
+        <div className="flex justify-center py-10">
+          <Button 
+            onClick={handleSkipWelcome}
+            className="bg-purple-600 hover:bg-purple-700 text-white shadow-glow-purple-sm"
+          >
+            View My Projects
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Otherwise show the regular projects interface
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 text-white">
       <Header />

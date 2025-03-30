@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -135,10 +134,11 @@ export default {
 			},
 			backgroundImage: {
 				'noise': 'url("/noise.png")',
-				'gradient-dark': 'radial-gradient(ellipse at bottom, hsl(224, 71%, 10%) 0%, hsl(224, 71%, 4%) 100%)'
+				'gradient-dark': 'radial-gradient(ellipse at bottom, hsl(224, 71%, 10%) 0%, hsl(224, 71%, 4%) 100%)',
+				'gradient-hero': 'linear-gradient(135deg, rgba(76, 29, 149, 0.5) 0%, rgba(124, 58, 237, 0.5) 35%, rgba(139, 92, 246, 0.5) 75%, rgba(167, 139, 250, 0.3) 100%)',
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
 			}
 		},
-		// Custom utilities for 3D transforms
 		transformStyle: {
 			'3d': 'preserve-3d',
 			'flat': 'flat',
@@ -156,7 +156,6 @@ export default {
 	},
 	plugins: [
 		require("tailwindcss-animate"),
-		// Add plugin for custom 3D transform utilities
 		function({ addUtilities }) {
 			const newUtilities = {
 				'.transform-style-3d': {

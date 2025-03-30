@@ -95,6 +95,11 @@ body::after {
   background-repeat: repeat;
 }
 
+/* Added radial gradient for the hero section */
+.bg-gradient-radial {
+  background-image: radial-gradient(circle at center, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%);
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
