@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ProjectData, ProjectSetupTab } from './types';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +15,9 @@ interface ProjectContextProps {
   previousOption: 'ai' | 'manual';
   isCreating: boolean;
   setIsCreating: (creating: boolean) => void;
+  isGenerating: boolean; 
+  setIsGenerating: (generating: boolean) => void;
+  generateStoryline: (projectId: string) => Promise<boolean>;
   handleCreateProject: () => Promise<void>;
 }
 
@@ -41,6 +43,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<ProjectSetupTab>('concept');
   const [isCreating, setIsCreating] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [previousOption, setPreviousOption] = useState<'ai' | 'manual'>('ai');
   const [projectId, setProjectId] = useState<string | null>(null);
   
@@ -130,6 +133,38 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Function to generate storyline using the generate-storylines Edge Function
+  const generateStoryline = async (projectId: string): Promise<boolean> => {
+    if (!user) {
+      toast.error("Please log in to generate storylines");
+      return false;
+    }
+
+    try {
+      setIsGenerating(true);
+      
+      const { data, error } = await supabase.functions.invoke('generate-storylines', {
+        body: { project_id: projectId }
+      });
+      
+      if (error) {
+        console.error('Error generating storylines:', error);
+        toast.error("Failed to generate storylines");
+        return false;
+      }
+      
+      console.log('Storyline generation successful:', data);
+      toast.success(`Storyline generated with ${data.scene_count} scenes`);
+      return true;
+    } catch (error: any) {
+      console.error('Error in generateStoryline:', error);
+      toast.error("Failed to generate storylines");
+      return false;
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   // Function to get visible tabs based on the conceptOption
   const getVisibleTabs = (): ProjectSetupTab[] => {
     if (projectData.conceptOption === 'manual') {
@@ -180,6 +215,9 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       previousOption,
       isCreating,
       setIsCreating,
+      isGenerating,
+      setIsGenerating,
+      generateStoryline,
       handleCreateProject
     }}>
       {children}

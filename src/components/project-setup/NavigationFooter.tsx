@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 import { useProject } from './ProjectContext';
 
 const NavigationFooter = () => {
@@ -12,7 +12,10 @@ const NavigationFooter = () => {
     getVisibleTabs, 
     saveProjectData, 
     setActiveTab, 
-    isCreating, 
+    isCreating,
+    isGenerating,
+    generateStoryline,
+    projectData,
     handleCreateProject 
   } = useProject();
 
@@ -30,6 +33,15 @@ const NavigationFooter = () => {
       if (!savedProjectId) {
         // If saving failed, don't proceed
         return;
+      }
+      
+      // If using AI generation, call the generate-storylines function before proceeding
+      if (projectData.conceptOption === 'ai') {
+        const success = await generateStoryline(savedProjectId);
+        if (!success) {
+          // If generation failed, we still proceed to the next tab but show an error
+          // The error toast is already shown in the generateStoryline function
+        }
       }
     }
     
@@ -53,6 +65,17 @@ const NavigationFooter = () => {
       setActiveTab(tabs[currentIndex - 1]);
     }
   };
+
+  // Determine the button text based on various states
+  const getNextButtonText = () => {
+    if (isGenerating) return "Generating...";
+    if (isCreating) return "Creating...";
+    if (isLastTab) return "Start Project";
+    return "Next";
+  };
+
+  // Determine if the next button should be disabled
+  const isNextButtonDisabled = isCreating || isGenerating;
 
   return (
     <motion.div 
@@ -99,15 +122,19 @@ const NavigationFooter = () => {
       
       <Button
         onClick={handleNext}
-        disabled={isCreating}
+        disabled={isNextButtonDisabled}
         className={`px-8 flex items-center gap-2 transition-all duration-300 ${
           isLastTab 
             ? 'bg-green-600 hover:bg-green-700 text-white' 
             : 'bg-blue-600 hover:bg-blue-700 text-white'
         }`}
       >
-        {isCreating ? 'Creating...' : isLastTab ? 'Start Project' : 'Next'}
-        {!isLastTab && <ArrowRight className="h-4 w-4" />}
+        {getNextButtonText()}
+        {isGenerating || isCreating ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : !isLastTab ? (
+          <ArrowRight className="h-4 w-4" />
+        ) : null}
       </Button>
     </motion.div>
   );
