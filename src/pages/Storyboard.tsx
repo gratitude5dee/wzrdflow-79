@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -161,6 +160,50 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
     }) : null);
   };
 
+  // Function to handle deleting a scene
+  const handleDeleteScene = async (sceneId: string) => {
+    if (!projectId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('scenes')
+        .delete()
+        .eq('id', sceneId)
+        .eq('project_id', projectId);
+      
+      if (error) throw error;
+      
+      // Update local state to remove the deleted scene
+      setScenes(prev => prev.filter(scene => scene.id !== sceneId));
+      
+      // If the deleted scene was selected, select another scene or null
+      if (selectedScene?.id === sceneId) {
+        const remainingScenes = scenes.filter(scene => scene.id !== sceneId);
+        setSelectedScene(remainingScenes.length > 0 ? remainingScenes[0] : null);
+        
+        // Update sidebar data if needed
+        if (remainingScenes.length > 0 && projectDetails) {
+          const nextScene = remainingScenes[0];
+          setSidebarData({
+            projectTitle: projectDetails.title,
+            projectDescription: projectDetails.description,
+            sceneDescription: nextScene.description ?? null,
+            sceneLocation: nextScene.location ?? null,
+            sceneLighting: nextScene.lighting ?? null,
+            videoStyle: projectDetails.video_style ?? null,
+            characters: characters
+          });
+        }
+      }
+      
+      toast.success('Scene deleted');
+    } catch (error: any) {
+      console.error("Error deleting scene:", error);
+      toast.error(`Failed to delete scene: ${error.message}`);
+      throw error; // Re-throw so ShotsRow can handle it
+    }
+  };
+
   // Render logic
   if (isLoading) {
     return (
@@ -213,6 +256,9 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
                   <ShotsRow
                     sceneId={scene.id}
                     sceneNumber={scene.scene_number}
+                    projectId={projectId} // Add the missing projectId prop here
+                    onSceneDelete={handleDeleteScene} // Add scene deletion handler
+                    isSelected={selectedScene?.id === scene.id}
                   />
                 </div>
               ))
