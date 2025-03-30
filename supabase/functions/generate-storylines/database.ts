@@ -1,6 +1,6 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { StorylineResponseData, AnalysisResponseData } from './types.ts';
+import { StorylineResponseData, AnalysisResponseData, SceneInfo } from './types.ts';
 
 /**
  * Database operations for storyline generation
@@ -15,12 +15,18 @@ interface SaveResult {
   inserted_shot_ids: string[];
 }
 
+interface SceneWithId extends Omit<SceneInfo, 'shot_ideas'> {
+  id: string;
+  shot_ideas?: string[];
+}
+
 export async function saveStorylineData(
   supabaseClient: any,
   project_id: string,
   storylineData: StorylineResponseData,
   isSelected: boolean,
-  analysisData: AnalysisResponseData | null
+  analysisData: AnalysisResponseData | null,
+  isAlternative: boolean
 ): Promise<SaveResult> {
   // Results to return
   const results: SaveResult = {
@@ -29,7 +35,7 @@ export async function saveStorylineData(
     character_count: 0,
     characters: [],
     updatedSettings: {} as Record<string, any>,
-    inserted_shot_ids: [] as string[]
+    inserted_shot_ids: []
   };
 
   // If generating the initial selected storyline, deselect others first
@@ -71,8 +77,8 @@ export async function saveStorylineData(
   results.storyline_id = storyline.id;
 
   // Insert scenes if not an alternative
-  let scenes = [];
-  if (storylineData.scene_breakdown && Array.isArray(storylineData.scene_breakdown)) {
+  let scenes: SceneWithId[] = [];
+  if (!isAlternative && storylineData.scene_breakdown && Array.isArray(storylineData.scene_breakdown)) {
     console.log(`Inserting ${storylineData.scene_breakdown.length} scenes for storyline ${storyline.id}...`);
     const scenesToInsert = storylineData.scene_breakdown.map(scene => ({
       project_id: project_id,
@@ -93,28 +99,37 @@ export async function saveStorylineData(
     if (scenesError) {
       console.error('Error inserting scenes:', scenesError);
       // Continue anyway, as the main operation succeeded
-    } else {
-      scenes = insertedScenes || [];
+    } else if (insertedScenes) {
+      // Map the inserted scenes back with their shot_ideas
+      scenes = insertedScenes.map((scene, index) => ({
+        ...scene,
+        shot_ideas: storylineData.scene_breakdown?.[index]?.shot_ideas || []
+      }));
+      
       results.scene_count = scenes.length;
       console.log(`${results.scene_count} scenes inserted successfully.`);
       
-      // Create default shots for each scene
+      // --- UPDATED: Create shots from shot_ideas ---
       if (scenes.length > 0) {
-        console.log(`Creating default shots for ${scenes.length} scenes...`);
-        const shotsToInsert = [];
+        console.log(`Creating shots based on ideas for ${scenes.length} scenes...`);
+        const shotsToInsert: any[] = [];
         
         scenes.forEach(scene => {
-          // Create initial shot for each scene
-          shotsToInsert.push({
-            scene_id: scene.id,
-            project_id: project_id,
-            shot_number: 1,
-            shot_type: 'medium', // Default shot type
-            prompt_idea: `Scene ${scene.scene_number}: ${
-              scene.description ? scene.description.substring(0, 100) + '...' : 
-              scene.title || 'Initial shot'
-            }`,
-            image_status: 'pending'
+          // Use shot_ideas if available, otherwise create a default shot
+          const ideas = scene.shot_ideas && scene.shot_ideas.length > 0
+            ? scene.shot_ideas
+            : [`Scene ${scene.scene_number}: ${scene.description?.substring(0, 80) || scene.title || 'Initial shot'}`];
+          
+          // Create a shot for each idea
+          ideas.forEach((idea, index) => {
+            shotsToInsert.push({
+              scene_id: scene.id,
+              project_id: project_id,
+              shot_number: index + 1,
+              shot_type: getShotTypeFromIdea(idea),
+              prompt_idea: idea,
+              image_status: 'pending'
+            });
           });
         });
         
@@ -125,18 +140,19 @@ export async function saveStorylineData(
             .select('id');
             
           if (shotsError) {
-            console.error('Error inserting default shots:', shotsError);
+            console.error('Error inserting shots:', shotsError);
           } else if (newShots) {
             results.inserted_shot_ids = newShots.map(s => s.id);
-            console.log(`Created ${results.inserted_shot_ids.length} default shots.`);
+            console.log(`Created ${results.inserted_shot_ids.length} shots from ideas.`);
           }
         }
       }
+      // --- END UPDATED ---
     }
   }
 
   // Insert characters if analysis provided them
-  if (analysisData?.characters && analysisData.characters.length > 0) {
+  if (!isAlternative && analysisData?.characters && analysisData.characters.length > 0) {
     console.log(`Inserting ${analysisData.characters.length} characters from analysis...`);
     const charactersToInsert = analysisData.characters.map(char => ({
       project_id: project_id,
@@ -156,8 +172,6 @@ export async function saveStorylineData(
       results.characters = insertedCharacters || [];
       results.character_count = results.characters.length;
       console.log(`${results.character_count} characters inserted successfully.`);
-      
-      // Queue character image generation - handled by the caller
     }
   }
 
@@ -168,16 +182,50 @@ export async function saveStorylineData(
     };
     
     // Only update genre/tone if analysis provided them and project doesn't have them
-    if (analysisData?.potential_genre) {
-      results.updatedSettings.genre = analysisData.potential_genre;
-    }
-    
-    if (analysisData?.potential_tone) {
-      results.updatedSettings.tone = analysisData.potential_tone;
+    const { data: currentProject, error: currentProjError } = await supabaseClient
+      .from('projects')
+      .select('genre, tone')
+      .eq('id', project_id)
+      .single();
+      
+    if (currentProjError) {
+      console.warn('Could not fetch current project settings:', currentProjError.message);
+    } else {
+      if (analysisData?.potential_genre && !currentProject.genre) {
+        results.updatedSettings.genre = analysisData.potential_genre;
+      }
+      
+      if (analysisData?.potential_tone && !currentProject.tone) {
+        results.updatedSettings.tone = analysisData.potential_tone;
+      }
     }
   }
 
   return results;
+}
+
+/**
+ * Helper function to guess shot type from the idea description
+ */
+function getShotTypeFromIdea(idea: string): string {
+  const lowerIdea = idea.toLowerCase();
+  
+  if (lowerIdea.includes('close-up') || lowerIdea.includes('closeup')) {
+    return 'close-up';
+  } else if (lowerIdea.includes('wide shot') || lowerIdea.includes('establishing')) {
+    return 'wide';
+  } else if (lowerIdea.includes('over the shoulder') || lowerIdea.includes('over-the-shoulder')) {
+    return 'over-shoulder';
+  } else if (lowerIdea.includes('aerial') || lowerIdea.includes('drone')) {
+    return 'aerial';
+  } else if (lowerIdea.includes('tracking')) {
+    return 'tracking';
+  } else if (lowerIdea.includes('medium')) {
+    return 'medium';
+  }
+  
+  // Default to medium if no specific type is detected
+  return 'medium';
 }
 
 export async function updateProjectSettings(

@@ -15,6 +15,7 @@ ${!isAlternative ? `
     *   Number the scenes sequentially starting from 1.
     *   Generate between 5 and 10 scenes, appropriate for the story's length and format.
     *   For each scene, provide: \`scene_number\`, \`title\`, \`description\`, optional \`location\`, \`lighting\`, \`weather\`.
+    *   **Crucially, for each scene, also include a \`shot_ideas\` array containing 2-4 brief descriptions (max 25 words each) for potential key shots within that scene (e.g., "Establishing shot of the location", "Close-up on the character's reaction", "Medium shot showing the interaction").**
 ` : '' }
 3.  **Output Format:** Your entire response MUST be a single JSON object. Do NOT include any text outside the JSON structure. The JSON structure must be exactly:
     \`\`\`json
@@ -32,13 +33,18 @@ ${!isAlternative ? `
           "description": "Detailed scene description...",
           "location": "Location details...",
           "lighting": "Lighting details...",
-          "weather": "Weather details..."
+          "weather": "Weather details...",
+          "shot_ideas": [
+            "Brief description for shot 1...",
+            "Brief description for shot 2...",
+            "Brief description for shot 3..."
+          ]
         }
         // ... more scene objects
       ]` : '' }
     }
     \`\`\`
-Ensure the \`description\` in \`primary_storyline\` is concise (max 200 chars). Make \`full_story\` comprehensive. Tags should be relevant keywords.${!isAlternative ? ' Ensure all fields in the `scene_breakdown` array adhere to the specified types.' : ''}`;
+Ensure the \`description\` in \`primary_storyline\` is concise (max 200 chars). Make \`full_story\` comprehensive. Tags should be relevant keywords.${!isAlternative ? ' Ensure all fields in the `scene_breakdown` array adhere to the specified types, including the new `shot_ideas` array.' : ''}`;
 }
 
 export function getStorylineUserPrompt(project: any, isAlternative: boolean): string {

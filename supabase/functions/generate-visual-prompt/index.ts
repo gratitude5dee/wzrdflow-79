@@ -2,11 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { callClaudeApi } from '../_shared/claude.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, errorResponse, successResponse, handleCors } from '../_shared/response.ts';
 
 interface RequestBody {
     shot_id: string;
@@ -34,7 +30,7 @@ interface ShotData {
 serve(async (req) => {
     // Handle CORS preflight requests
     if (req.method === 'OPTIONS') {
-        return new Response(null, { headers: corsHeaders });
+        return handleCors();
     }
 
     const supabaseClient = createClient(
@@ -46,10 +42,7 @@ serve(async (req) => {
         // Get the shot ID from the request
         const { shot_id }: RequestBody = await req.json();
         if (!shot_id) {
-            return new Response(
-                JSON.stringify({ error: 'shot_id is required' }),
-                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
+            return errorResponse('shot_id is required', 400);
         }
 
         console.log(`Generating visual prompt for shot ID: ${shot_id}`);
@@ -80,10 +73,7 @@ serve(async (req) => {
 
         if (fetchError || !shotData) {
             console.error('Error fetching shot data:', fetchError?.message);
-            return new Response(
-                JSON.stringify({ error: 'Shot not found or failed to fetch context' }),
-                { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
+            return errorResponse('Shot not found or failed to fetch context', 404);
         }
 
         // 2. Prepare Prompt for Claude
@@ -126,13 +116,10 @@ Output *only* the comma-separated prompt string. No extra text or formatting.`;
         // 3. Call Claude API
         const claudeApiKey = Deno.env.get('ANTHROPIC_API_KEY');
         if (!claudeApiKey) {
-            return new Response(
-                JSON.stringify({ error: 'Server config error: Anthropic key missing' }),
-                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
+            return errorResponse('Server config error: Anthropic key missing', 500);
         }
 
-        const visualPrompt = await callClaudeApi(claudeApiKey, systemPrompt, userPrompt, 300); // Max 300 tokens for the prompt
+        const visualPrompt = await callClaudeApi(claudeApiKey, systemPrompt, userPrompt, 300); // Max 300 tokens
         const cleanedVisualPrompt = visualPrompt.trim().replace(/^"|"$/g, ''); // Remove potential wrapping quotes
 
         console.log(`Generated Visual Prompt for shot ${shot_id}: ${cleanedVisualPrompt}`);
@@ -148,10 +135,7 @@ Output *only* the comma-separated prompt string. No extra text or formatting.`;
 
         if (updateError) {
             console.error(`Failed to update shot ${shot_id} with visual prompt:`, updateError);
-            return new Response(
-                JSON.stringify({ error: 'Failed to save generated prompt' }),
-                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
+            return errorResponse('Failed to save generated prompt', 500);
         }
 
         console.log(`Successfully updated shot ${shot_id} with visual prompt.`);
@@ -167,24 +151,23 @@ Output *only* the comma-separated prompt string. No extra text or formatting.`;
             
             if (invokeError) {
                 console.error(`Failed to invoke image generation for shot ${shot_id}:`, invokeError);
-                // We continue anyway as the prompt generation succeeded
+                // Continue anyway as the prompt generation succeeded
             } else {
                 console.log(`Successfully invoked image generation for shot ${shot_id}`);
             }
         } catch (invokeError) {
             console.error(`Error invoking image generation for shot ${shot_id}:`, invokeError);
-            // We continue anyway as the prompt generation succeeded
+            // Continue anyway as the prompt generation succeeded
         }
 
-        return new Response(
-            JSON.stringify({ success: true, shot_id: shot_id, visual_prompt: cleanedVisualPrompt }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return successResponse({ 
+            success: true, 
+            shot_id: shot_id, 
+            visual_prompt: cleanedVisualPrompt 
+        });
+        
     } catch (error) {
         console.error(`Error in generate-visual-prompt:`, error);
-        return new Response(
-            JSON.stringify({ error: error.message || 'Failed to generate visual prompt' }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return errorResponse(error.message || 'Failed to generate visual prompt', 500);
     }
 });

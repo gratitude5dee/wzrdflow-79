@@ -33,6 +33,7 @@ export interface SceneInfo {
   location?: string;
   lighting?: string;
   weather?: string;
+  shot_ideas?: string[]; // Add this line for shot ideas
 }
 
 export interface CharacterInfo {

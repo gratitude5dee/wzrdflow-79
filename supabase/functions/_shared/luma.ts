@@ -12,8 +12,8 @@ interface LumaGenerationResponse {
 interface LumaCompletedResponse extends LumaGenerationResponse {
     state: 'completed';
     assets: {
-        video?: string; 
-        image?: string;
+        video?: string | null; 
+        image?: string | null;
     };
 }
 
@@ -27,28 +27,33 @@ interface LumaFailedResponse extends LumaGenerationResponse {
  * @param lumaApiKey Your Luma API key.
  * @param visualPrompt The prompt for image generation.
  * @param aspectRatio Aspect ratio (e.g., "16:9", "3:4"). Defaults to "16:9".
- * @param model Model to use (e.g., "photon-flash-1"). Defaults to "photon-flash-1".
+ * @param userId Optional user ID for Luma API tracking.
  * @returns The initial Luma generation response containing the ID and state.
  */
 export async function initiateLumaImageGeneration(
     lumaApiKey: string,
     visualPrompt: string,
     aspectRatio: string = "16:9",
-    model: string = "photon-flash-1"
+    userId?: string | null
 ): Promise<LumaGenerationResponse> {
-    console.log(`Calling Luma API (${model}, ${aspectRatio}) with prompt: ${visualPrompt.substring(0, 100)}...`);
+    console.log(`Calling Luma API (photon-flash-1, ${aspectRatio}) with prompt: ${visualPrompt.substring(0, 100)}...`);
     const lumaApiUrl = "https://api.lumalabs.ai/dream-machine/v1/generations/image"; // Image endpoint
 
-    const payload = {
+    const payload: any = {
         prompt: visualPrompt,
         aspect_ratio: aspectRatio,
-        model: model,
+        model: "photon-flash-1", // Explicitly use photon-flash-1
     };
+    
+    if (userId) {
+        payload.user_id = userId;
+        console.log(`  with user_id: ${userId}`);
+    }
 
     const response = await fetch(lumaApiUrl, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${lumaApiKey}`,
+            'Authorization': `luma-api-key=${lumaApiKey}`, // Correct header format
             'Content-Type': 'application/json',
             'accept': 'application/json'
         },
@@ -83,7 +88,7 @@ export async function initiateLumaImageGeneration(
 export async function pollLumaResult(
     lumaApiKey: string,
     generationId: string,
-    maxAttempts = 60, // ~3 minutes with 3s delay
+    maxAttempts = 90, // Increase polling attempts (~4.5 mins)
     delay = 3000
 ): Promise<LumaCompletedResponse> {
     console.log(`Polling Luma result (ID: ${generationId})...`);
@@ -97,7 +102,7 @@ export async function pollLumaResult(
             const response = await fetch(pollUrl, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${lumaApiKey}`,
+                    'Authorization': `luma-api-key=${lumaApiKey}`,
                     'accept': 'application/json'
                 }
             });

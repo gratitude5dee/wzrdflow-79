@@ -114,7 +114,8 @@ serve(async (req) => {
       project_id,
       storylineData,
       isSelected,
-      analysisData
+      analysisData,
+      generate_alternative
     );
 
     // Update project with selected storyline and potentially inferred settings
