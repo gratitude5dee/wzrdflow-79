@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConceptTab from './ConceptTab';
 import StorylineTab from './StorylineTab';
@@ -10,6 +11,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/providers/AuthProvider';
 import ProjectSetupHeader from './ProjectSetupHeader';
 import { ArrowRight, ChevronRight, ArrowLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type ProjectSetupTab = 'concept' | 'storyline' | 'settings' | 'breakdown';
 
@@ -36,6 +38,7 @@ const ProjectSetupWizard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<ProjectSetupTab>('concept');
   const [isCreating, setIsCreating] = useState(false);
+  const [previousOption, setPreviousOption] = useState<'ai' | 'manual'>('ai');
   
   const [projectData, setProjectData] = useState<ProjectData>({
     title: 'Untitled Project',
@@ -54,6 +57,18 @@ const ProjectSetupWizard = () => {
     // Default to AI mode
     conceptOption: 'ai'
   });
+  
+  // Track option changes for smooth transitions
+  useEffect(() => {
+    if (previousOption !== projectData.conceptOption) {
+      setPreviousOption(projectData.conceptOption);
+      
+      // If switching from AI to manual and currently on storyline tab, move to settings
+      if (previousOption === 'ai' && projectData.conceptOption === 'manual' && activeTab === 'storyline') {
+        setActiveTab('settings');
+      }
+    }
+  }, [projectData.conceptOption, activeTab, previousOption]);
   
   const handleUpdateProjectData = (data: Partial<ProjectData>) => {
     setProjectData(prev => ({ ...prev, ...data }));
@@ -144,6 +159,13 @@ const ProjectSetupWizard = () => {
   const isLastTab = activeTab === visibleTabs[visibleTabs.length - 1];
   const isFirstTab = activeTab === visibleTabs[0];
 
+  // Animation variants
+  const tabContentVariants = {
+    hidden: { opacity: 0, x: 20 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.4 } },
+    exit: { opacity: 0, x: -20, transition: { duration: 0.3 } }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#111319]">
       {/* Header */}
@@ -152,17 +174,25 @@ const ProjectSetupWizard = () => {
       {/* Tabs Navigation */}
       <div className="border-b border-zinc-800 bg-[#0F1219]">
         <div className="container mx-auto">
-          <div className="flex">
+          <motion.div 
+            className="flex"
+            initial={false}
+            animate={{ height: 'auto' }}
+            transition={{ duration: 0.3 }}
+          >
             {visibleTabs.map((tab, index) => (
-              <div 
+              <motion.div 
                 key={tab}
-                className={`relative ${
-                  index > 0 ? 'flex-1' : ''
-                }`}
+                className={`relative ${index > 0 ? 'flex-1' : ''}`}
+                initial={false}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                layout
               >
                 <button
                   onClick={() => setActiveTab(tab)}
-                  className={`py-4 px-6 w-full relative transition-all duration-200 flex items-center justify-center ${
+                  className={`py-4 px-6 w-full relative transition-all duration-300 flex items-center justify-center ${
                     activeTab === tab
                       ? 'text-white font-medium bg-[#0050E4]'
                       : index < visibleTabs.indexOf(activeTab) 
@@ -180,28 +210,79 @@ const ProjectSetupWizard = () => {
                   )}
                 </button>
                 {activeTab === tab && (
-                  <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500"></div>
+                  <motion.div 
+                    className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500"
+                    layoutId="activeTabIndicator"
+                    transition={{ duration: 0.3 }}
+                  />
                 )}
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </div>
 
-      {/* Tab Content */}
+      {/* Tab Content with Animation */}
       <div className="flex-1 overflow-auto bg-[#111319]">
-        {activeTab === 'concept' && <ConceptTab projectData={projectData} updateProjectData={handleUpdateProjectData} />}
-        {activeTab === 'storyline' && <StorylineTab projectData={projectData} updateProjectData={handleUpdateProjectData} />}
-        {activeTab === 'settings' && <SettingsTab projectData={projectData} updateProjectData={handleUpdateProjectData} />}
-        {activeTab === 'breakdown' && <BreakdownTab projectData={projectData} updateProjectData={handleUpdateProjectData} />}
+        <AnimatePresence mode="wait">
+          {activeTab === 'concept' && (
+            <motion.div
+              key="concept"
+              variants={tabContentVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <ConceptTab projectData={projectData} updateProjectData={handleUpdateProjectData} />
+            </motion.div>
+          )}
+          {activeTab === 'storyline' && (
+            <motion.div
+              key="storyline"
+              variants={tabContentVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <StorylineTab projectData={projectData} updateProjectData={handleUpdateProjectData} />
+            </motion.div>
+          )}
+          {activeTab === 'settings' && (
+            <motion.div
+              key="settings"
+              variants={tabContentVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <SettingsTab projectData={projectData} updateProjectData={handleUpdateProjectData} />
+            </motion.div>
+          )}
+          {activeTab === 'breakdown' && (
+            <motion.div
+              key="breakdown"
+              variants={tabContentVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <BreakdownTab projectData={projectData} updateProjectData={handleUpdateProjectData} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Footer with navigation buttons */}
-      <div className="border-t border-zinc-800 p-4 flex justify-between items-center">
+      <motion.div 
+        className="border-t border-zinc-800 p-4 flex justify-between items-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.3 }}
+      >
         <Button
           onClick={handleBack}
           variant="outline"
-          className={`text-white border-zinc-700 hover:bg-zinc-800 hover:text-white flex items-center gap-2 ${isFirstTab ? 'opacity-0 pointer-events-none' : ''}`}
+          className={`text-white border-zinc-700 hover:bg-zinc-800 hover:text-white flex items-center gap-2 transition-all duration-300 ${isFirstTab ? 'opacity-0 pointer-events-none' : ''}`}
         >
           <ArrowLeft className="h-4 w-4" />
           Back
@@ -210,7 +291,7 @@ const ProjectSetupWizard = () => {
         <div className="flex-1 flex justify-center">
           <div className="flex space-x-2">
             {visibleTabs.map((tab, i) => (
-              <div 
+              <motion.div 
                 key={i}
                 className={`w-2 h-2 rounded-full ${
                   i === visibleTabs.indexOf(activeTab) 
@@ -219,7 +300,17 @@ const ProjectSetupWizard = () => {
                       ? 'bg-blue-800'
                       : 'bg-zinc-700'
                 }`}
-              ></div>
+                initial={false}
+                animate={{ 
+                  scale: i === visibleTabs.indexOf(activeTab) ? 1.2 : 1,
+                  backgroundColor: i === visibleTabs.indexOf(activeTab) 
+                    ? 'rgb(59, 130, 246)' 
+                    : i < visibleTabs.indexOf(activeTab)
+                      ? 'rgb(30, 64, 175)'
+                      : 'rgb(63, 63, 70)'
+                }}
+                transition={{ duration: 0.3 }}
+              />
             ))}
           </div>
         </div>
@@ -227,7 +318,7 @@ const ProjectSetupWizard = () => {
         <Button
           onClick={handleNext}
           disabled={isCreating}
-          className={`px-8 flex items-center gap-2 ${
+          className={`px-8 flex items-center gap-2 transition-all duration-300 ${
             isLastTab 
               ? 'bg-green-600 hover:bg-green-700 text-white' 
               : 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -236,7 +327,7 @@ const ProjectSetupWizard = () => {
           {isCreating ? 'Creating...' : isLastTab ? 'Start Project' : 'Next'}
           {!isLastTab && <ArrowRight className="h-4 w-4" />}
         </Button>
-      </div>
+      </motion.div>
     </div>
   );
 };

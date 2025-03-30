@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw, FileText, Info, Plus } from 'lucide-react';
 import { type ProjectData } from './ProjectSetupWizard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { motion } from 'framer-motion';
 
 interface ConceptTabProps {
   projectData: ProjectData;
@@ -109,36 +110,60 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
         
         <div className="flex mb-6">
           <div className="flex-1 grid grid-cols-1 gap-4 md:grid-cols-2">
-            {/* Option cards */}
-            <div 
-              className={`p-6 rounded-lg ${projectData.conceptOption === 'ai' ? 'bg-[#001036] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3`}
+            {/* Option cards with enhanced animations */}
+            <motion.div 
+              className={`p-6 rounded-lg ${projectData.conceptOption === 'ai' ? 'bg-[#001036] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3 relative overflow-hidden transition-all duration-300`}
               onClick={() => handleConceptOptionChange('ai')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.2 }}
             >
-              <div className={`p-2 ${projectData.conceptOption === 'ai' ? 'text-blue-400' : 'text-zinc-400'}`}>
+              {projectData.conceptOption === 'ai' && (
+                <motion.div 
+                  className="absolute inset-0 bg-blue-500/5"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                />
+              )}
+              <div className={`p-2 ${projectData.conceptOption === 'ai' ? 'text-blue-400' : 'text-zinc-400'} transition-colors duration-300`}>
                 <RefreshCw className="h-5 w-5" />
               </div>
               <div>
-                <h3 className={`text-lg font-medium ${projectData.conceptOption === 'ai' ? 'text-blue-400' : 'text-white'}`}>
+                <h3 className={`text-lg font-medium ${projectData.conceptOption === 'ai' ? 'text-blue-400' : 'text-white'} transition-colors duration-300`}>
                   Develop concept with AI
                 </h3>
                 <p className="text-sm text-zinc-400">AI involvement in script editing and writing</p>
               </div>
-            </div>
+            </motion.div>
             
-            <div 
-              className={`p-6 rounded-lg ${projectData.conceptOption === 'manual' ? 'bg-[#001036] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3`}
+            <motion.div 
+              className={`p-6 rounded-lg ${projectData.conceptOption === 'manual' ? 'bg-[#001036] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3 relative overflow-hidden transition-all duration-300`}
               onClick={() => handleConceptOptionChange('manual')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.2 }}
             >
-              <div className={`p-2 ${projectData.conceptOption === 'manual' ? 'text-blue-400' : 'text-zinc-400'}`}>
+              {projectData.conceptOption === 'manual' && (
+                <motion.div 
+                  className="absolute inset-0 bg-blue-500/5"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                />
+              )}
+              <div className={`p-2 ${projectData.conceptOption === 'manual' ? 'text-blue-400' : 'text-zinc-400'} transition-colors duration-300`}>
                 <FileText className="h-5 w-5" />
               </div>
               <div>
-                <h3 className={`text-lg font-medium ${projectData.conceptOption === 'manual' ? 'text-blue-400' : 'text-white'}`}>
+                <h3 className={`text-lg font-medium ${projectData.conceptOption === 'manual' ? 'text-blue-400' : 'text-white'} transition-colors duration-300`}>
                   Stick to the script
                 </h3>
                 <p className="text-sm text-zinc-400">Visualize your idea or script as written</p>
               </div>
-            </div>
+            </motion.div>
           </div>
           
           {/* Examples section (only visible on desktop) */}
@@ -152,10 +177,13 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
             
             <div className="space-y-4">
               {exampleConcepts.map((concept, index) => (
-                <div 
+                <motion.div 
                   key={index} 
                   className="bg-[#1E222B] rounded-lg p-4 cursor-pointer hover:bg-[#252A36] transition-colors"
                   onClick={() => handleUseExampleConcept(concept)}
+                  whileHover={{ scale: 1.02, backgroundColor: 'rgba(45, 55, 72, 1)' }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.2 }}
                 >
                   <div className="flex justify-between">
                     <h3 className="font-medium text-white">{concept.title}</h3>
@@ -164,14 +192,19 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                     </span>
                   </div>
                   <p className="text-sm text-zinc-400 mt-2 line-clamp-3">{concept.description}</p>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
         </div>
         
         {/* Text area */}
-        <div className="border border-zinc-800 rounded-lg bg-[#111319] mb-6">
+        <motion.div 
+          className="border border-zinc-800 rounded-lg bg-[#111319] mb-6 overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
           <Textarea 
             value={projectData.concept}
             onChange={handleConceptChange}
@@ -185,15 +218,25 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
             </Button>
             <div>{conceptCharCount} / 12000</div>
           </div>
-        </div>
+        </motion.div>
         
         {/* Optional settings (only shown for AI option) */}
         {projectData.conceptOption === 'ai' && (
-          <div className="mb-8">
+          <motion.div 
+            className="mb-8"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.4 }}
+          >
             <h2 className="text-xl font-medium mb-4 text-white">Optional settings</h2>
             
             <div className="space-y-6">
-              <div>
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+              >
                 <label className="flex items-center text-sm text-zinc-400 mb-2 gap-1">
                   SPECIAL REQUESTS
                   <Info className="h-4 w-4" />
@@ -204,15 +247,19 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                   placeholder="Anything from '80s atmosphere' to 'plot twists' or 'a car chase'"
                   className="w-full bg-[#1E222B] border-zinc-800 text-white focus-visible:ring-zinc-700"
                 />
-              </div>
+              </motion.div>
               
-              <div>
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.15 }}
+              >
                 <label className="text-sm text-zinc-400 mb-2 block">FORMAT</label>
                 <div className="flex gap-2">
                   <Button
                     type="button"
                     variant={projectData.format === 'custom' ? 'default' : 'outline'}
-                    className={`rounded-full ${projectData.format === 'custom' ? 'bg-blue-600 text-white' : 'bg-transparent border-zinc-700 text-zinc-400'}`}
+                    className={`rounded-full transition-all duration-300 ${projectData.format === 'custom' ? 'bg-blue-600 text-white' : 'bg-transparent border-zinc-700 text-zinc-400'}`}
                     onClick={() => handleFormatChange('custom')}
                   >
                     Custom
@@ -220,7 +267,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                   <Button
                     type="button"
                     variant={projectData.format === 'short' ? 'default' : 'outline'}
-                    className={`rounded-full ${projectData.format === 'short' ? 'bg-blue-600 text-white' : 'bg-transparent border-zinc-700 text-zinc-400'}`}
+                    className={`rounded-full transition-all duration-300 ${projectData.format === 'short' ? 'bg-blue-600 text-white' : 'bg-transparent border-zinc-700 text-zinc-400'}`}
                     onClick={() => handleFormatChange('short')}
                   >
                     Short Film
@@ -228,16 +275,20 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                   <Button
                     type="button"
                     variant={projectData.format === 'commercial' ? 'default' : 'outline'}
-                    className={`rounded-full ${projectData.format === 'commercial' ? 'bg-blue-600 text-white' : 'bg-transparent border-zinc-700 text-zinc-400'}`}
+                    className={`rounded-full transition-all duration-300 ${projectData.format === 'commercial' ? 'bg-blue-600 text-white' : 'bg-transparent border-zinc-700 text-zinc-400'}`}
                     onClick={() => handleFormatChange('commercial')}
                   >
                     Commercial
                   </Button>
                 </div>
-              </div>
+              </motion.div>
               
               {projectData.format === 'custom' && (
-                <div>
+                <motion.div
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                >
                   <label className="text-sm text-zinc-400 mb-2 block">CUSTOM FORMAT</label>
                   <Input
                     value={projectData.customFormat || ''}
@@ -245,7 +296,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                     placeholder="How should the AI shape your story?"
                     className="w-full bg-[#1E222B] border-zinc-800 text-white focus-visible:ring-zinc-700"
                   />
-                </div>
+                </motion.div>
               )}
               
               {/* Commercial-specific fields */}
@@ -317,25 +368,29 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                 </>
               )}
               
-              <div>
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+              >
                 <h3 className="text-lg font-medium mb-3 text-white">Speech</h3>
                 <div className="flex items-center justify-between">
                   <label className="flex items-center text-sm text-zinc-400 gap-1">
                     ADD VOICEOVER
                     <Info className="h-4 w-4" />
                   </label>
-                  <button 
+                  <div 
                     onClick={handleVoiceoverToggle}
-                    className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out ${projectData.addVoiceover ? 'bg-blue-600' : 'bg-zinc-700'}`}
+                    className={`w-12 h-6 rounded-full p-1 transition-all duration-300 cursor-pointer ${projectData.addVoiceover ? 'bg-blue-600' : 'bg-zinc-700'}`}
                   >
-                    <span 
-                      className={`block w-4 h-4 rounded-full transition-transform duration-200 ease-in-out ${projectData.addVoiceover ? 'bg-white transform translate-x-6' : 'bg-zinc-400'}`}
+                    <div 
+                      className={`block w-4 h-4 rounded-full bg-white transition-transform duration-300 ${projectData.addVoiceover ? 'transform translate-x-6' : ''}`}
                     />
-                  </button>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>
