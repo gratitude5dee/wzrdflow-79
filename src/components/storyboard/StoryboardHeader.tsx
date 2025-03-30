@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Settings, FileCode, Users, Music, Mic, Play, Share, Undo, Redo } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import CreditsDisplay from '@/components/CreditsDisplay';
 
 interface StoryboardHeaderProps {
   viewMode: 'studio' | 'storyboard' | 'editor';
@@ -49,6 +50,7 @@ const StoryboardHeader = ({ viewMode, setViewMode }: StoryboardHeaderProps) => {
         
         {/* Right section with action buttons */}
         <div className="flex items-center gap-2">
+          <CreditsDisplay showTooltip={true} />
           <Button 
             variant="ghost" 
             className={iconBtnClass}

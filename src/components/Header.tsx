@@ -4,6 +4,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { ViewModeSelector } from '@/components/home/ViewModeSelector';
+import CreditsDisplay from '@/components/CreditsDisplay';
 
 interface HeaderProps {
   viewMode: 'studio' | 'storyboard' | 'editor';
@@ -43,6 +44,7 @@ const Header = ({ viewMode, setViewMode }: HeaderProps) => {
         <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
 
         <div className="flex items-center gap-3">
+          <CreditsDisplay showButton={true} />
           <Button 
             variant="ghost" 
             className="bg-[#1D2130] hover:bg-[#262B3D] text-white transition-all-std glow-button-subtle"
