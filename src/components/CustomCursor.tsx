@@ -8,6 +8,7 @@ interface TrailParticle {
     x: number;
     y: number;
     timestamp: number;
+    rotation: number; // Added rotation for more dynamic trails
 }
 
 const MAX_HOLD_DURATION = 1500; // Max duration for scaling effect (ms)
@@ -28,6 +29,16 @@ const CustomCursor: React.FC = () => {
     const blurAmount = isMouseDown ? 4 + chargeProgress * 8 : 2; // Increase blur
     const glowIntensity = 0.5 + chargeProgress * 1.5; // Control glow via shadow opacity
 
+    // Dynamic glow colors
+    const glowColorCore = `rgba(180, 210, 255, ${0.6 + chargeProgress * 0.4})`;
+    const glowColorMid = `rgba(100, 150, 255, ${0.4 + chargeProgress * 0.4})`;
+    const glowColorOuter = `rgba(59, 130, 246, ${0.2 + chargeProgress * 0.3})`;
+
+    // Enhanced multi-layered box shadow for more dramatic glow
+    const dynamicBoxShadow = `0 0 ${blurAmount * 0.4}px ${blurAmount * 0.2}px ${glowColorCore}, 
+                             0 0 ${blurAmount * 1}px ${blurAmount * 0.5}px ${glowColorMid}, 
+                             0 0 ${blurAmount * 2.5}px ${blurAmount * 1}px ${glowColorOuter}`;
+
     // Add trail particles when moving while mouse is down
     React.useEffect(() => {
         if (isMouseDown && isMoving) {
@@ -35,7 +46,13 @@ const CustomCursor: React.FC = () => {
             if (now - lastTrailTimeRef.current > TRAIL_INTERVAL) {
                 setTrails(prev => [
                     ...prev,
-                    { id: now + Math.random(), x, y, timestamp: now }
+                    { 
+                        id: now + Math.random(), 
+                        x, 
+                        y, 
+                        timestamp: now,
+                        rotation: Math.random() * 90 - 45 // Random rotation between -45 and 45 degrees
+                    }
                 ]);
                 lastTrailTimeRef.current = now;
             }
@@ -65,7 +82,7 @@ const CustomCursor: React.FC = () => {
                     y: y - 8,
                     width: '16px',
                     height: '16px',
-                    boxShadow: `0 0 ${blurAmount * 1.5}px ${blurAmount * 0.75}px rgba(70, 130, 255, ${glowIntensity * 0.5})`, // Dynamic glow
+                    boxShadow: dynamicBoxShadow,
                     filter: `blur(${blurAmount}px)`,
                 }}
                 initial={{ scale: 0, opacity: 0 }}
@@ -91,7 +108,7 @@ const CustomCursor: React.FC = () => {
                             x: particle.x - 0.5, // Center the particle
                             y: particle.y - 2,
                             background: 'radial-gradient(circle, rgba(150, 180, 255, 0.8) 0%, rgba(59, 130, 246, 0) 70%)', // Lightning gradient
-                            rotate: `${Math.random() * 90 - 45}deg`, // Random rotation
+                            rotate: `${particle.rotation}deg`, // Random rotation
                         }}
                         initial={{ opacity: 0.7, scale: 0.8 }}
                         animate={{ opacity: 0.7, scale: 0.8 }} // Keep initial state while visible
