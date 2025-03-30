@@ -9,8 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Edit, Copy, Image, Play, RefreshCw, MoreHorizontal, Trash2, Loader2 } from 'lucide-react';
+import { Edit, Copy, Image, Play, RefreshCw, MoreHorizontal, Trash2, Loader2, Wand2, AlertCircle } from 'lucide-react';
 import { ShotDetails } from '@/types/storyboardTypes';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface ShotCardProps {
   shot: ShotDetails;
@@ -43,19 +45,39 @@ const ShotCard = ({ shot, onUpdate, onDelete }: ShotCardProps) => {
   const [soundEffects, setSoundEffects] = useState(shot.sound_effects || '');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // New state for AI generation features
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(shot.image_status === 'generating');
+  const [localVisualPrompt, setLocalVisualPrompt] = useState(shot.visual_prompt || '');
+  const [localImageUrl, setLocalImageUrl] = useState(shot.image_url || null);
+  const [localImageStatus, setLocalImageStatus] = useState(shot.image_status || 'pending');
+  
+  // Ref to prevent unnecessary updates from realtime
+  const isGeneratingRef = useRef(false);
 
   // Track the last saved values to avoid unnecessary updates
   const lastSavedRef = useRef({
     shotType: shot.shot_type,
     promptIdea: shot.prompt_idea,
     dialogue: shot.dialogue,
-    soundEffects: shot.sound_effects
+    soundEffects: shot.sound_effects,
+    visualPrompt: shot.visual_prompt
   });
 
   // Debounced values
   const debouncedPrompt = useDebounce(promptIdea, 750);
   const debouncedDialogue = useDebounce(dialogue, 750);
   const debouncedSoundEffects = useDebounce(soundEffects, 750);
+  const debouncedVisualPrompt = useDebounce(localVisualPrompt, 750);
+
+  // Effect to update local state when props change (e.g., initial load)
+  useEffect(() => {
+    setLocalVisualPrompt(shot.visual_prompt || '');
+    setLocalImageUrl(shot.image_url || null);
+    setLocalImageStatus(shot.image_status || 'pending');
+    setIsGeneratingImage(shot.image_status === 'generating');
+  }, [shot.id, shot.visual_prompt, shot.image_url, shot.image_status]); // Depend on shot.id to reset for new shots
 
   // Update fields when shot prop changes
   useEffect(() => {
@@ -68,9 +90,38 @@ const ShotCard = ({ shot, onUpdate, onDelete }: ShotCardProps) => {
       shotType: shot.shot_type,
       promptIdea: shot.prompt_idea,
       dialogue: shot.dialogue,
-      soundEffects: shot.sound_effects
+      soundEffects: shot.sound_effects,
+      visualPrompt: shot.visual_prompt
     };
   }, [shot.id]); // Only update if shot ID changes (new shot)
+
+  // Subscribe to Realtime updates for this specific shot
+  useEffect(() => {
+    if (!shot.id) return;
+
+    const channel = supabase
+      .channel(`shot-${shot.id}-updates`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'shots', filter: `id=eq.${shot.id}` },
+        (payload) => {
+          console.log(`Realtime update for shot ${shot.id}:`, payload.new);
+          const updatedShot = payload.new as ShotDetails;
+          // Only update if we aren't actively generating on the client side
+          if (!isGeneratingRef.current) {
+            setLocalVisualPrompt(updatedShot.visual_prompt || '');
+            setLocalImageUrl(updatedShot.image_url || null);
+            setLocalImageStatus(updatedShot.image_status || 'pending');
+            setIsGeneratingImage(updatedShot.image_status === 'generating');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [shot.id]);
 
   // Effect for debounced updates
   useEffect(() => {
@@ -92,6 +143,11 @@ const ShotCard = ({ shot, onUpdate, onDelete }: ShotCardProps) => {
         updates.sound_effects = debouncedSoundEffects;
         hasChanges = true;
       }
+      
+      if (debouncedVisualPrompt !== lastSavedRef.current.visualPrompt) {
+        updates.visual_prompt = debouncedVisualPrompt;
+        hasChanges = true;
+      }
 
       if (hasChanges) {
         setIsSaving(true);
@@ -101,7 +157,8 @@ const ShotCard = ({ shot, onUpdate, onDelete }: ShotCardProps) => {
             ...lastSavedRef.current,
             promptIdea: debouncedPrompt,
             dialogue: debouncedDialogue,
-            soundEffects: debouncedSoundEffects
+            soundEffects: debouncedSoundEffects,
+            visualPrompt: debouncedVisualPrompt
           };
         } finally {
           setIsSaving(false);
@@ -110,7 +167,7 @@ const ShotCard = ({ shot, onUpdate, onDelete }: ShotCardProps) => {
     };
 
     updateIfChanged();
-  }, [debouncedPrompt, debouncedDialogue, debouncedSoundEffects]);
+  }, [debouncedPrompt, debouncedDialogue, debouncedSoundEffects, debouncedVisualPrompt]);
 
   const handleShotTypeChange = async (value: string) => {
     if (value !== lastSavedRef.current.shotType) {
@@ -121,6 +178,87 @@ const ShotCard = ({ shot, onUpdate, onDelete }: ShotCardProps) => {
         lastSavedRef.current.shotType = value;
       } finally {
         setIsSaving(false);
+      }
+    }
+  };
+
+  const handleGenerateVisualPrompt = async () => {
+    if (!shot.id) {
+      toast.error("Cannot generate prompt: Shot ID is missing.");
+      return;
+    }
+    setIsGeneratingPrompt(true);
+    isGeneratingRef.current = true;
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-visual-prompt', {
+        body: { shot_id: shot.id }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data.visual_prompt) {
+        setLocalVisualPrompt(data.visual_prompt); // Update local state immediately
+        toast.success("Visual prompt generated!");
+        // No need to call onUpdate, the function updated the DB
+      } else {
+        throw new Error(data?.error || "Failed to generate visual prompt.");
+      }
+    } catch (error: any) {
+      console.error("Error generating visual prompt:", error);
+      toast.error(`Prompt generation failed: ${error.message}`);
+    } finally {
+      setIsGeneratingPrompt(false);
+      isGeneratingRef.current = false;
+    }
+  };
+
+  const handleGenerateImage = async () => {
+    if (!shot.id) {
+      toast.error("Cannot generate image: Shot ID is missing.");
+      return;
+    }
+    if (!localVisualPrompt) {
+      toast.warning("Please generate or enter a visual prompt first.");
+      return;
+    }
+
+    setIsGeneratingImage(true);
+    setLocalImageStatus('generating'); // Optimistic UI update
+    isGeneratingRef.current = true;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-shot-image', {
+        body: { shot_id: shot.id }
+      });
+
+      if (error) {
+        setLocalImageStatus('failed');
+        throw error;
+      }
+
+      if (data?.success && data.image_url) {
+        toast.success("Image generated successfully!");
+      } else {
+        setLocalImageStatus('failed');
+        throw new Error(data?.error || "Image generation failed to start or complete.");
+      }
+    } catch (error: any) {
+      console.error("Error generating image:", error);
+      toast.error(`Image generation failed: ${error.message}`);
+      setLocalImageStatus('failed');
+    } finally {
+      isGeneratingRef.current = false;
+      // Re-check status after the call in case it completed very quickly
+      const { data: currentState } = await supabase
+        .from('shots')
+        .select('image_status, image_url')
+        .eq('id', shot.id)
+        .single();
+        
+      if (currentState) {
+        setLocalImageStatus(currentState.image_status || 'failed');
+        setLocalImageUrl(currentState.image_url || null);
+        setIsGeneratingImage(currentState.image_status === 'generating');
       }
     }
   };
@@ -153,30 +291,47 @@ const ShotCard = ({ shot, onUpdate, onDelete }: ShotCardProps) => {
   };
 
   const getImageStatusDisplay = () => {
-    switch (shot.image_status) {
+    switch (localImageStatus) {
       case 'generating':
         return (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/70">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-400 mx-auto mb-2" />
-              <p className="text-sm text-white">Generating image...</p>
+              <Loader2 className="w-8 h-8 animate-spin text-purple-400 mx-auto mb-2" />
+              <p className="text-sm text-white font-medium">Generating image...</p>
+              <p className="text-xs text-zinc-400">(This can take a minute)</p>
             </div>
           </div>
         );
       case 'failed':
         return (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/70">
-            <div className="text-center">
-              <p className="text-sm text-red-400 mb-2">Image generation failed</p>
-              <Button size="sm" variant="outline" className="border-red-800 bg-red-900/50 text-red-300">
+          <div className="absolute inset-0 flex items-center justify-center bg-red-900/70 backdrop-blur-sm">
+            <div className="text-center p-2">
+              <AlertCircle className="w-6 h-6 text-red-300 mx-auto mb-1" />
+              <p className="text-sm text-white font-medium mb-2">Generation failed</p>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="bg-red-700/80 hover:bg-red-600 text-xs h-7 px-2"
+                onClick={handleGenerateImage}
+                disabled={isGeneratingImage || isGeneratingPrompt}
+              >
                 <RefreshCw className="w-3 h-3 mr-1" />
                 Retry
               </Button>
             </div>
           </div>
         );
+      case 'completed':
+        return null; // Image is shown
+      case 'pending':
       default:
-        return null;
+        return (
+          !localImageUrl && (
+            <div className="absolute inset-0 flex items-center justify-center bg-[#0F1219]">
+              <Image className="w-8 h-8 text-gray-700 opacity-50" />
+            </div>
+          )
+        );
     }
   };
 
@@ -189,171 +344,184 @@ const ShotCard = ({ shot, onUpdate, onDelete }: ShotCardProps) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="w-72 cursor-grab active:cursor-grabbing perspective"
+      className="w-72 cursor-grab active:cursor-grabbing perspective group/shotcard"
       whileHover={{ scale: 1.02 }}
       transition={{ type: "spring", stiffness: 400, damping: 15 }}
     >
-      <Card className="bg-[#0A0D16] border border-[#1D2130] rounded-lg overflow-hidden shadow-xl card-3d">
-        <div className="aspect-video bg-[#0F1219] relative flex items-center justify-center group">
-          <div className="absolute top-2 left-2">
-            <span className="text-sm bg-black/60 px-2 py-1 rounded-full text-white">
+      <Card className="bg-[#0A0D16] border border-[#1D2130] rounded-lg overflow-hidden shadow-xl card-3d relative">
+        {/* Saving Indicator */}
+        {isSaving && (
+          <div className="absolute top-1 right-1 z-20">
+            <div className="text-[10px] bg-blue-900/80 px-1.5 py-0.5 rounded-full text-blue-300 flex items-center backdrop-blur-sm">
+              <Loader2 className="w-2 h-2 animate-spin mr-1" />
+              Saving...
+            </div>
+          </div>
+        )}
+
+        <div className="aspect-video bg-[#0F1219] relative flex items-center justify-center group/image">
+          {/* Shot Number */}
+          <div className="absolute top-2 left-2 z-10">
+            <span className="text-sm bg-black/60 px-2 py-1 rounded-full text-white backdrop-blur-sm">
               #{shot.shot_number}
             </span>
           </div>
           
-          {/* Image or placeholder */}
-          {shot.image_url ? (
-            <img 
-              src={shot.image_url} 
-              alt={`Shot ${shot.shot_number}`} 
-              className="w-full h-full object-cover"
+          {/* Image */}
+          {localImageUrl && localImageStatus === 'completed' ? (
+            <img
+              src={localImageUrl}
+              alt={`Shot ${shot.shot_number}`}
+              className="w-full h-full object-cover transition-opacity duration-300"
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-[#0F1219]">
-              <Image className="w-8 h-8 text-gray-700 opacity-50" />
-            </div>
-          )}
+          ) : null}
           
-          {/* Status overlay for generating/failed */}
+          {/* Status Overlay */}
           {getImageStatusDisplay()}
           
-          {/* Action buttons overlay */}
-          <div className="absolute inset-0 bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <div className="flex gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="rounded-full bg-white/10 hover:bg-white/20 p-2 h-auto w-auto glow-icon-button"
-                    >
-                      <Edit className="w-4 h-4 text-white" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Edit shot details</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="rounded-full bg-white/10 hover:bg-white/20 p-2 h-auto w-auto glow-icon-button"
-                    >
-                      <Copy className="w-4 h-4 text-white" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Duplicate shot</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="rounded-full bg-white/10 hover:bg-white/20 p-2 h-auto w-auto glow-icon-button"
-                    >
-                      <RefreshCw className="w-4 h-4 text-white" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Generate new image</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="rounded-full bg-red-500/20 hover:bg-red-500/40 p-2 h-auto w-auto"
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        handleDeleteShot(); 
-                      }}
-                      disabled={isDeleting}
-                    >
-                      {isDeleting ? (
-                        <Loader2 className="w-4 h-4 text-white animate-spin" />
-                      ) : (
-                        <Trash2 className="w-4 h-4 text-red-400" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Delete shot</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-          
-          {/* Saving indicator */}
-          {isSaving && (
-            <div className="absolute bottom-2 right-2">
-              <div className="text-xs bg-black/60 px-2 py-1 rounded-full text-blue-300 flex items-center">
-                <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                Saving...
+          {/* Action Buttons Overlay - Shown on hover, but not during generation/failure */}
+          {localImageStatus !== 'generating' && localImageStatus !== 'failed' && (
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex items-end justify-center p-2 opacity-0 group-hover/shotcard:opacity-100 transition-opacity duration-300 z-10">
+              <div className="flex gap-1 bg-black/50 backdrop-blur-sm p-1 rounded-lg">
+                {/* Generate/Regenerate Prompt Button */}
+                <TooltipProvider delayDuration={100}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-md bg-white/10 hover:bg-white/20 p-1.5 h-auto w-auto glow-icon-button"
+                        onClick={handleGenerateVisualPrompt}
+                        disabled={isGeneratingPrompt || isGeneratingImage}
+                      >
+                        {isGeneratingPrompt ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Wand2 className="w-4 h-4 text-white" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>{localVisualPrompt ? 'Regenerate Visual Prompt' : 'Generate Visual Prompt'}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                {/* Generate/Regenerate Image Button */}
+                <TooltipProvider delayDuration={100}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-md bg-white/10 hover:bg-white/20 p-1.5 h-auto w-auto glow-icon-button"
+                        onClick={handleGenerateImage}
+                        disabled={!localVisualPrompt || isGeneratingImage || isGeneratingPrompt}
+                      >
+                        {isGeneratingImage ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <RefreshCw className="w-4 h-4 text-white" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>{localImageUrl ? 'Regenerate Image' : 'Generate Image'}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                {/* Delete Button */}
+                <TooltipProvider delayDuration={100}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-md bg-red-500/20 hover:bg-red-500/40 p-1.5 h-auto w-auto"
+                        onClick={(e) => { e.stopPropagation(); handleDeleteShot(); }}
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Trash2 className="w-4 h-4 text-red-400" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom"><p>Delete shot</p></TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
           )}
         </div>
         
+        {/* Card Content (Inputs) */}
         <div className="p-4 space-y-3 card-content">
+          {/* Visual Prompt Display */}
           <div>
-            <p className="text-xs text-zinc-500 uppercase mb-2 font-medium">Shot Type</p>
+            <p className="text-xs text-zinc-500 uppercase mb-1 font-medium flex items-center justify-between">
+              Visual Prompt
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={handleGenerateVisualPrompt} disabled={isGeneratingPrompt || isGeneratingImage} className="text-purple-400 hover:text-purple-300 disabled:opacity-50">
+                      <Wand2 className="w-3 h-3"/>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top"><p>Generate/Regenerate</p></TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </p>
+            <Textarea
+              placeholder="AI generated visual prompt appears here..."
+              className="bg-[#141824] border-[#2D3343] text-white min-h-[40px] rounded-md text-xs resize-none leading-snug"
+              value={localVisualPrompt}
+              onChange={(e) => setLocalVisualPrompt(e.target.value)}
+              readOnly={isGeneratingPrompt}
+            />
+          </div>
+          
+          {/* Shot Type */}
+          <div>
+            <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Shot Type</p>
             <Select value={shotType} onValueChange={handleShotTypeChange}>
-              <SelectTrigger className="bg-[#141824] border-[#2D3343] text-white h-8 text-sm">
+              <SelectTrigger className="bg-[#141824] border-[#2D3343] text-white h-8 text-xs">
                 <SelectValue placeholder="Select shot type" />
               </SelectTrigger>
               <SelectContent className="bg-[#141824] border-[#2D3343] text-white">
                 <SelectItem value="wide">Wide Shot</SelectItem>
                 <SelectItem value="medium">Medium Shot</SelectItem>
                 <SelectItem value="close">Close-up</SelectItem>
-                <SelectItem value="extreme">Extreme Close-up</SelectItem>
-                <SelectItem value="aerial">Aerial/Drone Shot</SelectItem>
+                <SelectItem value="extreme_close_up">Extreme Close-up</SelectItem>
+                <SelectItem value="establishing">Establishing Shot</SelectItem>
                 <SelectItem value="pov">POV Shot</SelectItem>
+                <SelectItem value="over_the_shoulder">Over-the-Shoulder</SelectItem>
+                <SelectItem value="dutch_angle">Dutch Angle</SelectItem>
+                <SelectItem value="low_angle">Low Angle</SelectItem>
+                <SelectItem value="high_angle">High Angle</SelectItem>
+                <SelectItem value="aerial">Aerial/Drone</SelectItem>
                 <SelectItem value="tracking">Tracking Shot</SelectItem>
+                <SelectItem value="insert">Insert Shot</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
+          {/* Prompt Idea */}
           <div>
-            <p className="text-xs text-zinc-500 uppercase mb-2 font-medium">Prompt</p>
+            <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Description / Idea</p>
             <Textarea 
-              placeholder="Describe your shot..." 
-              className="bg-[#141824] border-[#2D3343] text-white min-h-[60px] rounded-md text-sm resize-none"
+              placeholder="Describe the shot's content or purpose..." 
+              className="bg-[#141824] border-[#2D3343] text-white min-h-[50px] rounded-md text-xs resize-none leading-snug"
               value={promptIdea}
               onChange={(e) => setPromptIdea(e.target.value)}
             />
           </div>
           
+          {/* Dialogue */}
           <div>
-            <p className="text-xs text-zinc-500 uppercase mb-2 font-medium">Character Dialogue</p>
+            <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Dialogue</p>
             <Input 
-              placeholder="Add character dialogue..." 
-              className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-sm"
+              placeholder="Character dialogue..." 
+              className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-xs"
               value={dialogue}
               onChange={(e) => setDialogue(e.target.value)}
             />
           </div>
           
+          {/* Sound Effects */}
           <div>
-            <p className="text-xs text-zinc-500 uppercase mb-2 font-medium">Sound Effects</p>
+            <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Sound Effects</p>
             <Input 
-              placeholder='E.g., "Ocean waves..."' 
-              className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-sm"
+              placeholder='E.g., "Footsteps on gravel..."' 
+              className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-xs"
               value={soundEffects}
               onChange={(e) => setSoundEffects(e.target.value)}
             />
