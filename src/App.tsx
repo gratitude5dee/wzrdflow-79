@@ -17,9 +17,6 @@ import { useState } from "react";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Adding viewMode state to the App component
-  const [viewMode, setViewMode] = useState<'studio' | 'storyboard' | 'editor'>('storyboard');
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -47,6 +44,11 @@ const App = () => {
               <Route path="/editor/:projectId" element={
                 <ProtectedRoute>
                   <Index viewMode="editor" />
+                </ProtectedRoute>
+              } />
+              <Route path="/storyboard/:projectId" element={
+                <ProtectedRoute>
+                  <Index viewMode="storyboard" />
                 </ProtectedRoute>
               } />
               <Route path="/shot-editor" element={

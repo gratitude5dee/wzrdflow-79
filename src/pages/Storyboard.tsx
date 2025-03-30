@@ -1,8 +1,7 @@
-
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, AlertCircle } from 'lucide-react';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { motion } from 'framer-motion';
 import StoryboardHeader from '@/components/storyboard/StoryboardHeader';
@@ -18,7 +17,8 @@ interface StoryboardPageProps {
 }
 
 const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { projectId } = useParams<{ projectId?: string }>();
+  const navigate = useNavigate();
   const [scenes, setScenes] = useState<SceneDetails[]>([]);
   const [projectDetails, setProjectDetails] = useState<ProjectDetails | null>(null);
   const [characters, setCharacters] = useState<CharacterDetails[]>([]);
@@ -26,73 +26,93 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [sidebarData, setSidebarData] = useState<SidebarData | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!projectId) {
-        toast.error("Project ID not found in URL.");
-        setIsLoading(false);
-        return;
+  // Memoize fetchData to prevent unnecessary re-renders
+  const fetchData = useCallback(async () => {
+    if (!projectId) {
+      console.error("StoryboardPage: Project ID is missing");
+      toast.error("Project ID not found. Redirecting to home page.");
+      setIsLoading(false);
+      navigate('/home');
+      return;
+    }
+
+    console.log(`StoryboardPage: Fetching data for project ID: ${projectId}`);
+    setIsLoading(true);
+    try {
+      // Fetch project, scenes, and characters in parallel
+      const [projectRes, scenesRes, charactersRes] = await Promise.all([
+        supabase.from('projects').select('id, title, description, video_style').eq('id', projectId).single(),
+        supabase.from('scenes').select('*').eq('project_id', projectId).order('scene_number', { ascending: true }),
+        supabase.from('characters').select('*').eq('project_id', projectId)
+      ]);
+
+      // Process Project
+      if (projectRes.error) {
+        throw new Error(projectRes.error.message || 'Failed to fetch project details.');
       }
+      const fetchedProject = projectRes.data as ProjectDetails;
+      setProjectDetails(fetchedProject);
+      console.log("StoryboardPage: Fetched Project:", fetchedProject);
 
-      setIsLoading(true);
-      try {
-        // Fetch project, scenes, and characters in parallel
-        const [projectRes, scenesRes, charactersRes] = await Promise.all([
-          supabase.from('projects').select('id, title, description, video_style').eq('id', projectId).single(),
-          supabase.from('scenes').select('*').eq('project_id', projectId).order('scene_number', { ascending: true }),
-          supabase.from('characters').select('*').eq('project_id', projectId)
-        ]);
+      // Process Scenes
+      if (scenesRes.error) {
+        throw new Error(scenesRes.error.message || 'Failed to fetch scenes.');
+      }
+      const fetchedScenes = (scenesRes.data || []) as SceneDetails[];
+      setScenes(fetchedScenes);
+      console.log(`StoryboardPage: Fetched ${fetchedScenes.length} Scenes:`, fetchedScenes);
 
-        // Process Project
-        if (projectRes.error || !projectRes.data) {
-          throw new Error(projectRes.error?.message || 'Failed to fetch project details.');
-        }
-        setProjectDetails(projectRes.data as ProjectDetails);
+      // Set initial selected scene - prefer scene 1 if it exists
+      const initialScene = fetchedScenes.find(s => s.scene_number === 1) || 
+                          (fetchedScenes.length > 0 ? fetchedScenes[0] : null);
+      setSelectedScene(initialScene);
+      console.log("StoryboardPage: Initial Selected Scene:", initialScene);
 
-        // Process Scenes
-        if (scenesRes.error) {
-          throw new Error(scenesRes.error.message || 'Failed to fetch scenes.');
-        }
-        const fetchedScenes = (scenesRes.data || []) as SceneDetails[];
-        setScenes(fetchedScenes);
+      // Process Characters
+      if (charactersRes.error) {
+        throw new Error(charactersRes.error.message || 'Failed to fetch characters.');
+      }
+      const fetchedCharacters = (charactersRes.data || []) as CharacterDetails[];
+      setCharacters(fetchedCharacters);
+      console.log(`StoryboardPage: Fetched ${fetchedCharacters.length} Characters:`, fetchedCharacters);
 
-        // Set initial selected scene (scene 1 or first available)
-        const initialScene = fetchedScenes.length > 0 ? fetchedScenes[0] : null;
-        setSelectedScene(initialScene);
+      // Prepare Initial Sidebar Data
+      setSidebarData({
+        projectTitle: fetchedProject.title,
+        projectDescription: fetchedProject.description,
+        sceneDescription: initialScene?.description ?? null,
+        sceneLocation: initialScene?.location ?? null,
+        sceneLighting: initialScene?.lighting ?? null,
+        sceneWeather: initialScene?.weather ?? null,
+        videoStyle: fetchedProject.video_style ?? null,
+        characters: fetchedCharacters
+      });
+      console.log("StoryboardPage: Initial Sidebar Data Set");
 
-        // Process Characters
-        if (charactersRes.error) {
-          throw new Error(charactersRes.error.message || 'Failed to fetch characters.');
-        }
-        setCharacters((charactersRes.data || []) as CharacterDetails[]);
-
-        // Prepare Initial Sidebar Data
-        setSidebarData({
-          projectTitle: projectRes.data.title,
-          projectDescription: projectRes.data.description,
-          sceneDescription: initialScene?.description ?? null,
-          sceneLocation: initialScene?.location ?? null,
-          sceneLighting: initialScene?.lighting ?? null,
-          sceneWeather: initialScene?.weather ?? null,
-          videoStyle: projectRes.data.video_style ?? null,
-          characters: (charactersRes.data || []) as CharacterDetails[]
+      // If there are no scenes, show a toast to help guide the user
+      if (fetchedScenes.length === 0) {
+        toast.info("No scenes found. You can add a scene using the + button.", {
+          duration: 5000,
         });
-
-      } catch (error: any) {
-        console.error("Error fetching storyboard data:", error);
-        toast.error(`Failed to load storyboard: ${error.message}`);
-        setProjectDetails(null);
-        setScenes([]);
-        setCharacters([]);
-        setSelectedScene(null);
-        setSidebarData(null);
-      } finally {
-        setIsLoading(false);
       }
-    };
 
+    } catch (error: any) {
+      console.error("Error fetching storyboard data:", error);
+      toast.error(`Failed to load storyboard: ${error.message}`);
+      setProjectDetails(null);
+      setScenes([]);
+      setCharacters([]);
+      setSelectedScene(null);
+      setSidebarData(null);
+    } finally {
+      setIsLoading(false);
+      console.log("StoryboardPage: Fetching complete.");
+    }
+  }, [projectId, navigate]);
+
+  useEffect(() => {
     fetchData();
-  }, [projectId]);
+  }, [fetchData]);
 
   // Function to update scene details in the database
   const handleSceneUpdate = async (sceneId: string | undefined, updates: Partial<Omit<SceneDetails, 'id' | 'project_id' | 'scene_number'>>) => {
@@ -207,7 +227,7 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
   };
 
   // Render logic
-  if (isLoading) {
+  if (isLoading && !projectDetails) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#0A0D16] text-white">
         <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
@@ -216,10 +236,13 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
     );
   }
 
-  if (!projectDetails || !projectId) {
+  if (!projectDetails && !isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0A0D16] text-white">
-        <p>Could not load project data. Please check the project ID or go back.</p>
+      <div className="flex flex-col items-center justify-center h-screen bg-[#0A0D16] text-white p-6">
+        <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Error Loading Project</h2>
+        <p className="text-zinc-400 mb-6">Could not load project data. The project ID might be missing or invalid.</p>
+        <Button onClick={() => navigate('/home')}>Go to Projects</Button>
       </div>
     );
   }

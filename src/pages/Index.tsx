@@ -4,7 +4,8 @@ import LeftSidebar from '../components/LeftSidebar';
 import Canvas from '../components/Canvas';
 import BottomStatusBar from '../components/BottomStatusBar';
 import { ReactFlowProvider } from 'reactflow';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import 'reactflow/dist/style.css';
 import StoryboardPage from './Storyboard';
 import ShotEditor from './ShotEditor'; 
@@ -14,7 +15,15 @@ interface IndexProps {
 }
 
 const Index = ({ viewMode: initialViewMode }: IndexProps) => {
+  const { projectId } = useParams<{ projectId?: string }>();
   const [viewMode, setViewMode] = useState<'studio' | 'storyboard' | 'editor'>(initialViewMode || 'storyboard');
+  
+  // Log the projectId to help with debugging
+  useEffect(() => {
+    if (projectId) {
+      console.log(`Index: Loaded with projectId: ${projectId}`);
+    }
+  }, [projectId]);
 
   return (
     <ReactFlowProvider>
@@ -29,11 +38,17 @@ const Index = ({ viewMode: initialViewMode }: IndexProps) => {
         )}
         
         {viewMode === 'storyboard' && (
-          <StoryboardPage viewMode={viewMode} setViewMode={setViewMode} />
+          <StoryboardPage 
+            viewMode={viewMode} 
+            setViewMode={setViewMode} 
+          />
         )}
         
         {viewMode === 'editor' && (
-          <ShotEditor viewMode={viewMode} setViewMode={setViewMode} />
+          <ShotEditor 
+            viewMode={viewMode} 
+            setViewMode={setViewMode} 
+          />
         )}
         
         <BottomStatusBar />
