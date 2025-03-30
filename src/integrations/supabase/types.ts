@@ -458,6 +458,50 @@ export type Database = {
           },
         ]
       }
+      storylines: {
+        Row: {
+          created_at: string
+          description: string
+          full_story: string
+          generated_by: string | null
+          id: string
+          is_selected: boolean | null
+          project_id: string
+          tags: string[] | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          full_story: string
+          generated_by?: string | null
+          id?: string
+          is_selected?: boolean | null
+          project_id: string
+          tags?: string[] | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          full_story?: string
+          generated_by?: string | null
+          id?: string
+          is_selected?: boolean | null
+          project_id?: string
+          tags?: string[] | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storylines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       track_items: {
         Row: {
           created_at: string | null
