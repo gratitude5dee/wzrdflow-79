@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ProjectData, ProjectSetupTab, Character } from './types';
 import { supabase } from '@/integrations/supabase/client';
