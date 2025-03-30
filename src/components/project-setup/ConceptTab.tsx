@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, FileText } from 'lucide-react';
+import { RefreshCw, FileText, Info, Plus, ArrowClockwise } from 'lucide-react';
 import { type ProjectData } from './ProjectSetupWizard';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ConceptTabProps {
   projectData: ProjectData;
@@ -13,6 +15,7 @@ interface ConceptTabProps {
 interface ExampleConcept {
   title: string;
   description: string;
+  type: 'logline' | 'storyline';
 }
 
 const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
@@ -27,16 +30,19 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
 
   const exampleConcepts: ExampleConcept[] = [
     {
-      title: 'Veil of Mist',
-      description: 'A group of adventurers discovers a utopia hidden within a fog-shrouded island and must choose between preserving its secrets or revealing it to the world.'
+      title: 'Forgotten Melody',
+      description: 'A musician\'s rediscovered composition sparks a journey through love, betrayal, and the hidden glamour of the music industry.',
+      type: 'logline'
     },
     {
-      title: 'Warbound',
-      description: 'Stranded in no man\'s land, two soldiers from opposing sides form an unlikely bond as they fight for survival.'
+      title: 'Virtual Nightmare',
+      description: 'A virtual reality platform turns dreams into nightmares as users are trapped within it, forcing a group of tech-savvy strangers to unite and escape before their minds are lost forever.',
+      type: 'logline'
     },
     {
-      title: 'Lost in Cosmos',
-      description: 'An astronaut\'s accidental journey through a wormhole leads to an alien conspiracy that threatens Earth\'s existence.'
+      title: 'Holiday Hearts',
+      description: 'At a cozy ski resort, a group of strangers arrives for the holidays, each carrying their own hopes and worries. As their paths cross, unexpected connections form, transforming the season.',
+      type: 'storyline'
     }
   ];
 
@@ -95,58 +101,91 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <div className="mb-10">
-        <h1 className="text-3xl font-semibold mb-6 text-white">Input your concept</h1>
+    <div className="flex flex-col min-h-full bg-[#111319]">
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-6 text-white">Input your concept</h1>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div 
-            className={`p-6 rounded-lg border ${conceptOption === 'ai' ? 'border-blue-600 bg-[#080C1A]' : 'border-zinc-700 bg-zinc-900'} cursor-pointer flex items-start gap-3`}
-            onClick={() => setConceptOption('ai')}
-          >
-            <div className="p-2 bg-[#111525] rounded">
-              <RefreshCw className="h-5 w-5 text-white" />
+        <div className="flex mb-6">
+          <div className="flex-1 grid grid-cols-1 gap-4 md:grid-cols-2">
+            {/* Option cards */}
+            <div 
+              className={`p-6 rounded-lg ${conceptOption === 'ai' ? 'bg-[#00183F] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3`}
+              onClick={() => setConceptOption('ai')}
+            >
+              <div className="p-2 text-blue-400">
+                <RefreshCw className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className={`text-lg font-medium ${conceptOption === 'ai' ? 'text-blue-400' : 'text-white'}`}>
+                  Develop concept with AI
+                </h3>
+                <p className="text-sm text-zinc-400">AI involvement in script editing and writing</p>
+              </div>
             </div>
-            <div>
-              <h3 className={`text-lg font-medium ${conceptOption === 'ai' ? 'text-blue-400' : 'text-white'}`}>Develop concept with AI</h3>
-              <p className="text-sm text-zinc-400">AI involvement in script editing and writing</p>
-            </div>
-          </div>
-          
-          <div 
-            className={`p-6 rounded-lg border ${conceptOption === 'manual' ? 'border-blue-600 bg-[#080C1A]' : 'border-zinc-700 bg-zinc-900'} cursor-pointer flex items-start gap-3`}
-            onClick={() => setConceptOption('manual')}
-          >
-            <div className="p-2 bg-[#111525] rounded">
-              <FileText className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h3 className={`text-lg font-medium ${conceptOption === 'manual' ? 'text-blue-400' : 'text-white'}`}>Stick to the script</h3>
-              <p className="text-sm text-zinc-400">Visualize your idea or script as written</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex flex-col gap-6">
-          <div className="w-full">
-            <div className="border border-zinc-800/50 rounded-lg p-1 mb-6 bg-[#111319]">
-              <Textarea 
-                value={projectData.concept}
-                onChange={handleConceptChange}
-                placeholder="Input anything from a full script, a few scenes, or a story..."
-                className="min-h-[200px] bg-transparent border-none focus-visible:ring-0 resize-none text-white placeholder:text-zinc-600"
-              />
-              <div className="flex justify-between items-center px-3 py-2 text-sm text-zinc-500">
-                <Button variant="outline" size="sm" className="h-8 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Upload Text
-                </Button>
-                <div>{conceptCharCount} / 12000</div>
+            
+            <div 
+              className={`p-6 rounded-lg ${conceptOption === 'manual' ? 'bg-[#00183F] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3`}
+              onClick={() => setConceptOption('manual')}
+            >
+              <div className="p-2 text-zinc-400">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className={`text-lg font-medium ${conceptOption === 'manual' ? 'text-blue-400' : 'text-white'}`}>
+                  Stick to the script
+                </h3>
+                <p className="text-sm text-zinc-400">Visualize your idea or script as written</p>
               </div>
             </div>
           </div>
+          
+          {/* Examples section (only visible on desktop) */}
+          <div className="hidden lg:block lg:w-[350px] ml-6">
+            <div className="mb-4 flex justify-between items-center">
+              <h2 className="font-semibold text-zinc-300">EXAMPLES</h2>
+              <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-zinc-200">
+                <ArrowClockwise className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              {exampleConcepts.map((concept, index) => (
+                <div 
+                  key={index} 
+                  className="bg-[#1E222B] rounded-lg p-4 cursor-pointer hover:bg-[#252A36] transition-colors"
+                  onClick={() => handleUseExampleConcept(concept)}
+                >
+                  <div className="flex justify-between">
+                    <h3 className="font-medium text-white">{concept.title}</h3>
+                    <span className="text-xs text-zinc-500 uppercase px-2 py-0.5 rounded border border-zinc-800">
+                      {concept.type}
+                    </span>
+                  </div>
+                  <p className="text-sm text-zinc-400 mt-2 line-clamp-3">{concept.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
         
+        {/* Text area */}
+        <div className="border border-zinc-800 rounded-lg bg-[#111319] mb-6">
+          <Textarea 
+            value={projectData.concept}
+            onChange={handleConceptChange}
+            placeholder="Input anything from a full script, a few scenes, or a story..."
+            className="min-h-[200px] bg-transparent border-none focus-visible:ring-0 resize-none text-white placeholder:text-zinc-600"
+          />
+          <div className="flex justify-between items-center px-3 py-2 text-sm text-zinc-500 border-t border-zinc-800">
+            <Button variant="outline" size="sm" className="h-8 px-3 bg-[#1E222B] border-zinc-800 text-zinc-400 hover:bg-zinc-800">
+              <FileText className="h-4 w-4 mr-2" />
+              Upload Text
+            </Button>
+            <div>{conceptCharCount} / 12000</div>
+          </div>
+        </div>
+        
+        {/* Optional settings (only shown for AI option) */}
         {conceptOption === 'ai' && (
           <div className="mb-8">
             <h2 className="text-xl font-medium mb-4 text-white">Optional settings</h2>
@@ -155,15 +194,13 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
               <div>
                 <label className="flex items-center text-sm text-zinc-400 mb-2 gap-1">
                   SPECIAL REQUESTS
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <Info className="h-4 w-4" />
                 </label>
                 <Input
                   value={projectData.specialRequests || ''}
                   onChange={handleSpecialRequestsChange}
                   placeholder="Anything from '80s atmosphere' to 'plot twists' or 'a car chase'"
-                  className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                  className="w-full bg-[#1E222B] border-zinc-800 text-white focus-visible:ring-zinc-700"
                 />
               </div>
               
@@ -204,7 +241,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                     value={projectData.customFormat || ''}
                     onChange={handleCustomFormatChange}
                     placeholder="How should the AI shape your story?"
-                    className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                    className="w-full bg-[#1E222B] border-zinc-800 text-white focus-visible:ring-zinc-700"
                   />
                 </div>
               )}
@@ -218,7 +255,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                       value={projectData.product || ''}
                       onChange={handleProductChange}
                       placeholder="What are you advertising?"
-                      className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                      className="w-full bg-[#1E222B] border-zinc-800 text-white focus-visible:ring-zinc-700"
                     />
                   </div>
                   
@@ -228,7 +265,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                       value={projectData.targetAudience || ''}
                       onChange={handleTargetAudienceChange}
                       placeholder="Who are you advertising to?"
-                      className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                      className="w-full bg-[#1E222B] border-zinc-800 text-white focus-visible:ring-zinc-700"
                     />
                   </div>
                   
@@ -238,7 +275,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                       value={projectData.mainMessage || ''}
                       onChange={handleMainMessageChange}
                       placeholder="What do you want your audience to remember?"
-                      className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                      className="w-full bg-[#1E222B] border-zinc-800 text-white focus-visible:ring-zinc-700"
                     />
                   </div>
                   
@@ -248,7 +285,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                       value={projectData.callToAction || ''}
                       onChange={handleCallToActionChange}
                       placeholder="What do you want your audience to do?"
-                      className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                      className="w-full bg-[#1E222B] border-zinc-800 text-white focus-visible:ring-zinc-700"
                     />
                   </div>
                 </div>
@@ -262,7 +299,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                       value={projectData.genre}
                       onChange={handleGenreChange}
                       placeholder="This defines the overall style or category of your story"
-                      className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                      className="w-full bg-[#1E222B] border-zinc-800 text-white focus-visible:ring-zinc-700"
                     />
                   </div>
                   
@@ -272,7 +309,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                       value={projectData.tone}
                       onChange={handleToneChange}
                       placeholder="This shapes the mood and emotional impact of your story"
-                      className="w-full bg-zinc-900 border-zinc-800 text-white focus-visible:ring-zinc-700"
+                      className="w-full bg-[#1E222B] border-zinc-800 text-white focus-visible:ring-zinc-700"
                     />
                   </div>
                 </>
@@ -283,9 +320,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                 <div className="flex items-center justify-between">
                   <label className="flex items-center text-sm text-zinc-400 gap-1">
                     ADD VOICEOVER
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <Info className="h-4 w-4" />
                   </label>
                   <button 
                     onClick={handleVoiceoverToggle}
