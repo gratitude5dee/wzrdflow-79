@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -128,10 +129,18 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9 }}
+      whileHover={{ 
+        translateY: -5, 
+        rotateX: '3deg', 
+        rotateY: '2deg', 
+        scale: 1.02,
+        transition: { duration: 0.2 } 
+      }}
       style={style}
       ref={setNodeRef}
       className={cn(
         "relative flex flex-col glass-card rounded-lg overflow-hidden w-[230px] min-h-[300px]",
+        "transform-style-3d transition-all-std hover:shadow-glow-purple-md",
         isExpanded && "min-h-[400px] w-[320px]"
       )}
     >
@@ -145,30 +154,43 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
       </div>
       
       {/* Expand/Collapse button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-2 right-2 z-20 h-6 w-6 p-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity"
-        onClick={() => setIsExpanded(!isExpanded)}
+      <motion.div
+        whileHover={{ scale: 1.2, rotate: 0 }}
+        whileTap={{ scale: 0.9 }}
       >
-        <Expand className="h-4 w-4 text-white" />
-      </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 right-2 z-20 h-6 w-6 p-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <Expand className="h-4 w-4 text-white" />
+        </Button>
+      </motion.div>
       
       {/* Delete button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute bottom-2 right-2 z-20 h-6 w-6 p-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
-        onClick={validateAndDelete}
-        disabled={isDeleting}
+      <motion.div
+        whileHover={{ scale: 1.2, rotate: 0 }}
+        whileTap={{ scale: 0.9 }}
       >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute bottom-2 right-2 z-20 h-6 w-6 p-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
+          onClick={validateAndDelete}
+          disabled={isDeleting}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </motion.div>
 
       {/* Shot number badge */}
-      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-amber-800/80 backdrop-blur-sm text-amber-100 text-xs px-2 py-0.5 rounded-full">
+      <motion.div 
+        className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-amber-800/80 backdrop-blur-sm text-amber-100 text-xs px-2 py-0.5 rounded-full"
+        whileHover={{ scale: 1.1 }}
+      >
         Shot {shot.shot_number}
-      </div>
+      </motion.div>
 
       {/* Image section */}
       <div className="flex-shrink-0">

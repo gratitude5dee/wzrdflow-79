@@ -72,6 +72,13 @@ export default {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
+			boxShadow: {
+				'glow-purple-md': '0 0 15px rgba(147, 51, 234, 0.5), 0 0 25px rgba(147, 51, 234, 0.2)',
+				'glow-blue-md': '0 0 15px rgba(47, 123, 188, 0.5), 0 0 25px rgba(47, 123, 188, 0.2)',
+			},
+			transitionDuration: {
+				'std': '300ms',
+			},
 			keyframes: {
 				'accordion-down': {
 					from: {
@@ -115,7 +122,57 @@ export default {
 			backgroundImage: {
 				'noise': 'url("/noise.png")',
 			}
+		},
+		// Custom utilities for 3D transforms
+		transformStyle: {
+			'3d': 'preserve-3d',
+			'flat': 'flat',
+		},
+		perspective: {
+			'none': 'none',
+			'500': '500px',
+			'1000': '1000px',
+			'2000': '2000px',
+		},
+		backfaceVisibility: {
+			'visible': 'visible',
+			'hidden': 'hidden',
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [
+		require("tailwindcss-animate"),
+		// Add plugin for custom 3D transform utilities
+		function({ addUtilities }) {
+			const newUtilities = {
+				'.transform-style-3d': {
+					'transform-style': 'preserve-3d',
+				},
+				'.transform-style-flat': {
+					'transform-style': 'flat',
+				},
+				'.perspective-none': {
+					'perspective': 'none',
+				},
+				'.perspective-500': {
+					'perspective': '500px',
+				},
+				'.perspective-1000': {
+					'perspective': '1000px',
+				},
+				'.perspective-2000': {
+					'perspective': '2000px',
+				},
+				'.backface-visible': {
+					'backface-visibility': 'visible',
+				},
+				'.backface-hidden': {
+					'backface-visibility': 'hidden',
+				},
+				'.transition-all-std': {
+					'transition': 'all 300ms',
+				},
+			};
+			addUtilities(newUtilities);
+		}
+	],
 } satisfies Config;

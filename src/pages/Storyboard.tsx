@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Plus, Loader2, AlertCircle } from 'lucide-react';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import StoryboardHeader from '@/components/storyboard/StoryboardHeader';
 import StoryboardSidebar from '@/components/storyboard/StoryboardSidebar';
 import ShotsRow from '@/components/storyboard/ShotsRow';
@@ -309,7 +309,12 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
         <ResizablePanel defaultSize={80}>
           <div className="p-6 h-full overflow-y-auto relative">
             {scenes.length === 0 ? (
-              <div className="text-center text-zinc-500 mt-20">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }} 
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="text-center text-zinc-500 mt-20"
+              >
                 <AlertCircle className="mx-auto w-12 h-12 text-zinc-600 mb-4" />
                 <p className="text-xl mb-2">No scenes found</p>
                 <p className="text-sm mb-6">Add scenes manually or generate them in Project Setup.</p>
@@ -320,30 +325,46 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
                 >
                   <Plus className="w-4 h-4 mr-2" /> Add First Scene
                 </Button>
-              </div>
+              </motion.div>
             ) : (
-              scenes.map(scene => (
-                <div 
-                  key={scene.id} 
-                  onClick={() => handleSelectScene(scene)} 
-                  className={`${selectedScene?.id === scene.id ? 'border-l-2 border-purple-500 pl-4 -ml-4 mb-12' : 'mb-12'}`}
-                >
-                  <ShotsRow
-                    sceneId={scene.id}
-                    sceneNumber={scene.scene_number}
-                    projectId={projectId} 
-                    onSceneDelete={handleDeleteScene}
-                    isSelected={selectedScene?.id === scene.id}
-                  />
-                </div>
-              ))
+              <AnimatePresence initial={false}>
+                {scenes.map((scene, index) => (
+                  <motion.div 
+                    key={scene.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.2, delay: index * 0.05 }}
+                    onClick={() => handleSelectScene(scene)} 
+                    className={`${selectedScene?.id === scene.id ? 'border-l-2 border-purple-500 pl-4 -ml-4 mb-12' : 'mb-12'}`}
+                  >
+                    <ShotsRow
+                      sceneId={scene.id}
+                      sceneNumber={scene.scene_number}
+                      projectId={projectId} 
+                      onSceneDelete={handleDeleteScene}
+                      isSelected={selectedScene?.id === scene.id}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             )}
             {/* Floating Action Button to Add Scene */}
             <motion.button
               onClick={addScene}
               className="fixed bottom-6 right-6 rounded-full h-14 w-14 bg-gradient-to-br from-purple-600 to-indigo-600 p-0 flex items-center justify-center shadow-lg hover:scale-105 transition-transform z-20"
-              whileHover={{ scale: 1.1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              whileHover={{ 
+                scale: 1.1, 
+                rotate: 15,
+                boxShadow: "0px 0px 20px 0px rgba(147, 51, 234, 0.5)"
+              }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 400, 
+                damping: 10 
+              }}
             >
               <Plus className="w-6 h-6 text-white" />
               <span className="sr-only">Add a scene</span>

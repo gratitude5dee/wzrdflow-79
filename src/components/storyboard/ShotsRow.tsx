@@ -179,7 +179,14 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
   };
 
   return (
-    <div className={`p-4 rounded-lg transition-all duration-300 ${isSelected ? 'bg-[#111827]/50 ring-1 ring-purple-500/30' : 'hover:bg-[#111827]/30'}`}>
+    <motion.div 
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+      className={`p-4 rounded-lg transition-all duration-300 ${isSelected ? 'bg-[#111827]/50 ring-1 ring-purple-500/30' : 'hover:bg-[#111827]/30'}`}
+    >
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-bold text-[#FFB628] glow-text-gold font-serif cursor-pointer hover:opacity-80">
           SCENE {sceneNumber}
@@ -221,7 +228,7 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
       </div>
 
       <ScrollArea className="pb-4">
-        <div className="flex space-x-6 pb-4 px-2 min-h-[180px]">
+        <div className="flex space-x-6 pb-4 px-2 min-h-[180px] perspective-1000">
           {isLoading ? (
             <div className="flex items-center justify-center w-full text-zinc-500">
               <span className="animate-spin mr-2">◌</span> Loading shots...
@@ -244,12 +251,20 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
               <SortableContext items={shots.map(shot => shot.id)} strategy={horizontalListSortingStrategy}>
                 <AnimatePresence>
                   {shots.map((shot) => (
-                    <ShotCard
+                    <motion.div
                       key={shot.id}
-                      shot={shot}
-                      onUpdate={(updates) => handleShotUpdate(shot.id, updates)}
-                      onDelete={() => handleDeleteShot(shot.id)}
-                    />
+                      layout
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ShotCard
+                        shot={shot}
+                        onUpdate={(updates) => handleShotUpdate(shot.id, updates)}
+                        onDelete={() => handleDeleteShot(shot.id)}
+                      />
+                    </motion.div>
                   ))}
                 </AnimatePresence>
               </SortableContext>
@@ -257,7 +272,7 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
           )}
         </div>
       </ScrollArea>
-    </div>
+    </motion.div>
   );
 };
 
