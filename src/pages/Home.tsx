@@ -34,7 +34,7 @@ const Home = () => {
       try {
         const { data, error: fetchError } = await supabase
           .from('projects')
-          .select('id, title, description, updated_at, created_at, is_private, thumbnail_url')
+          .select('id, title, description, updated_at, created_at')
           .eq('user_id', user.id)
           .order('updated_at', { ascending: false });
 
@@ -44,8 +44,8 @@ const Home = () => {
           id: p.id,
           title: p.title || 'Untitled Project',
           updated_at: p.updated_at || new Date().toISOString(),
-          is_private: p.is_private !== undefined ? p.is_private : true,
-          thumbnail_url: p.thumbnail_url || null,
+          is_private: true, // Default to private since we don't have this field yet
+          thumbnail_url: null, // We don't have thumbnails yet
           description: p.description || null
         }));
 
