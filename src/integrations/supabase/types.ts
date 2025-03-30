@@ -345,33 +345,96 @@ export type Database = {
       }
       projects: {
         Row: {
+          add_voiceover: boolean | null
           aspect_ratio: string | null
+          call_to_action: string | null
+          cinematic_inspiration: string | null
+          concept_option: string | null
+          concept_text: string | null
           created_at: string | null
+          custom_format_description: string | null
           description: string | null
+          format: string | null
+          genre: string | null
           id: string
+          main_message: string | null
+          product_name: string | null
+          selected_storyline_id: string | null
+          special_requests: string | null
+          style_reference_asset_id: string | null
+          target_audience: string | null
           title: string
+          tone: string | null
           updated_at: string | null
           user_id: string
+          video_style: string | null
         }
         Insert: {
+          add_voiceover?: boolean | null
           aspect_ratio?: string | null
+          call_to_action?: string | null
+          cinematic_inspiration?: string | null
+          concept_option?: string | null
+          concept_text?: string | null
           created_at?: string | null
+          custom_format_description?: string | null
           description?: string | null
+          format?: string | null
+          genre?: string | null
           id?: string
+          main_message?: string | null
+          product_name?: string | null
+          selected_storyline_id?: string | null
+          special_requests?: string | null
+          style_reference_asset_id?: string | null
+          target_audience?: string | null
           title?: string
+          tone?: string | null
           updated_at?: string | null
           user_id: string
+          video_style?: string | null
         }
         Update: {
+          add_voiceover?: boolean | null
           aspect_ratio?: string | null
+          call_to_action?: string | null
+          cinematic_inspiration?: string | null
+          concept_option?: string | null
+          concept_text?: string | null
           created_at?: string | null
+          custom_format_description?: string | null
           description?: string | null
+          format?: string | null
+          genre?: string | null
           id?: string
+          main_message?: string | null
+          product_name?: string | null
+          selected_storyline_id?: string | null
+          special_requests?: string | null
+          style_reference_asset_id?: string | null
+          target_audience?: string | null
           title?: string
+          tone?: string | null
           updated_at?: string | null
           user_id?: string
+          video_style?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_selected_storyline_id_fkey"
+            columns: ["selected_storyline_id"]
+            isOneToOne: false
+            referencedRelation: "storylines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_style_reference_asset_id_fkey"
+            columns: ["style_reference_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shared_videos: {
         Row: {

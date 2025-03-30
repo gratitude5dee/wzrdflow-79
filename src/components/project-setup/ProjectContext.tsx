@@ -70,54 +70,57 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
+      console.log('Saving project data:', projectData);
+      console.log('Current user:', user);
+      
+      const projectPayload = {
+        user_id: user.id,
+        title: projectData.title || 'Untitled Project',
+        concept_text: projectData.concept,
+        concept_option: projectData.conceptOption,
+        format: projectData.format,
+        custom_format_description: projectData.customFormat,
+        genre: projectData.genre,
+        tone: projectData.tone,
+        add_voiceover: projectData.addVoiceover,
+        special_requests: projectData.specialRequests,
+        product_name: projectData.product,
+        target_audience: projectData.targetAudience,
+        main_message: projectData.mainMessage,
+        call_to_action: projectData.callToAction
+      };
+      
+      console.log('Project payload:', projectPayload);
+
       // If project already exists, update it
       if (projectId) {
         const { error } = await supabase
           .from('projects')
-          .update({
-            title: projectData.title,
-            concept_text: projectData.concept,
-            concept_option: projectData.conceptOption,
-            format: projectData.format,
-            custom_format_description: projectData.customFormat,
-            genre: projectData.genre,
-            tone: projectData.tone,
-            add_voiceover: projectData.addVoiceover,
-            special_requests: projectData.specialRequests,
-            product_name: projectData.product,
-            target_audience: projectData.targetAudience,
-            main_message: projectData.mainMessage,
-            call_to_action: projectData.callToAction
-          })
+          .update(projectPayload)
           .eq('id', projectId);
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating project:', error);
+          throw error;
+        }
+        
+        toast.success("Project updated successfully");
         return projectId;
       } else {
         // Create new project
         const { data: project, error } = await supabase
           .from('projects')
-          .insert({
-            user_id: user.id,
-            title: projectData.title || 'Untitled Project',
-            concept_text: projectData.concept,
-            concept_option: projectData.conceptOption,
-            format: projectData.format,
-            custom_format_description: projectData.customFormat,
-            genre: projectData.genre,
-            tone: projectData.tone,
-            add_voiceover: projectData.addVoiceover,
-            special_requests: projectData.specialRequests,
-            product_name: projectData.product,
-            target_audience: projectData.targetAudience,
-            main_message: projectData.mainMessage,
-            call_to_action: projectData.callToAction
-          })
+          .insert(projectPayload)
           .select()
           .single();
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error creating project:', error);
+          throw error;
+        }
+        
         setProjectId(project.id);
+        toast.success("Project created successfully");
         return project.id;
       }
     } catch (error: any) {
