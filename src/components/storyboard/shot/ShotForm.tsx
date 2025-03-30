@@ -8,6 +8,7 @@ import { ImagePlus, Loader2 } from 'lucide-react';
 import { useAIGeneration } from './useAIGeneration';
 import { useAudioGeneration } from './useAudioGeneration';
 import ShotAudio from './ShotAudio';
+import { ImageStatus, AudioStatus } from '@/types/storyboardTypes';
 
 interface ShotFormProps {
   id: string;
@@ -16,9 +17,9 @@ interface ShotFormProps {
   dialogue: string | null; 
   soundEffects: string | null;
   visualPrompt: string;
-  imageStatus: string;
+  imageStatus: ImageStatus;
   audioUrl: string | null;
-  audioStatus: 'pending' | 'generating' | 'completed' | 'failed';
+  audioStatus: AudioStatus;
   isGeneratingPrompt: boolean;
   isGeneratingImage: boolean;
   isGeneratingAudio: boolean;
@@ -28,11 +29,11 @@ interface ShotFormProps {
   onDialogueChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSoundEffectsChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   setLocalVisualPrompt: (prompt: string) => void;
-  setLocalImageStatus: (status: string) => void;
+  setLocalImageStatus: (status: ImageStatus) => void;
   setIsGeneratingPrompt: (isGenerating: boolean) => void;
   setIsGeneratingImage: (isGenerating: boolean) => void;
   setLocalAudioUrl: (url: string | null) => void;
-  setLocalAudioStatus: (status: 'pending' | 'generating' | 'completed' | 'failed') => void;
+  setLocalAudioStatus: (status: AudioStatus) => void;
   setIsGeneratingAudio: (isGenerating: boolean) => void;
 }
 

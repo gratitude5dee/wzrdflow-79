@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { ShotDetails, ImageStatus } from '@/types/storyboardTypes';
+import { ShotDetails, ImageStatus, AudioStatus } from '@/types/storyboardTypes';
 import { useDebounce } from '@/hooks/use-debounce';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -14,7 +14,7 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
   const [localImageUrl, setLocalImageUrl] = useState(shot.image_url || null);
   const [localImageStatus, setLocalImageStatus] = useState<ImageStatus>(shot.image_status || 'pending');
   const [localAudioUrl, setLocalAudioUrl] = useState(shot.audio_url || null);
-  const [localAudioStatus, setLocalAudioStatus] = useState(shot.audio_status || 'pending');
+  const [localAudioStatus, setLocalAudioStatus] = useState<AudioStatus>(shot.audio_status || 'pending');
   
   // UI state
   const [isDeleting, setIsDeleting] = useState(false);
@@ -80,7 +80,7 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
           }
           
           if (updatedShot.audio_status && updatedShot.audio_status !== localAudioStatus) {
-            setLocalAudioStatus(updatedShot.audio_status);
+            setLocalAudioStatus(updatedShot.audio_status as AudioStatus);
             setIsGeneratingAudio(updatedShot.audio_status === 'generating');
           }
         })

@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Play, Pause, Loader2, VolumeX, Volume2, Headphones } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { AudioStatus } from '@/types/storyboardTypes';
 
 interface ShotAudioProps {
   audioUrl: string | null;
-  status: 'pending' | 'generating' | 'completed' | 'failed';
+  status: AudioStatus;
   isGenerating: boolean;
   hasDialogue: boolean;
   onGenerateAudio: () => void;

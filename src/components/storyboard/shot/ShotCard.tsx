@@ -1,12 +1,24 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useShotCardState } from './useShotCardState';
 import ShotForm from './ShotForm';
 import ShotImage from './ShotImage';
-import { ShotDetails } from '@/types/storyboardTypes';
+import { ShotDetails, ImageStatus } from '@/types/storyboardTypes';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -83,7 +95,7 @@ export const ShotCard = ({ shot, onDelete, onUpdate }: ShotCardProps) => {
     >
       <div className="flex-1 h-[200px] flex items-center justify-center relative">
         <ShotImage
-          shotId={shot.id}
+          shotNumber={shot.shot_number}
           imageUrl={localImageUrl}
           imageStatus={localImageStatus}
           isGenerating={isGeneratingImage}
@@ -108,30 +120,38 @@ export const ShotCard = ({ shot, onDelete, onUpdate }: ShotCardProps) => {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <Button.Root>
-            <Button.Trigger
-              variant="destructive"
-              size="sm"
-              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:bg-red-500/5 data-[state=open]:text-red-500"
-            >
-              Delete
-            </Button.Trigger>
-            <Button.Portal>
-              <Button.Content className="bg-red-500 text-red-50">
-                Are you sure?
-              </Button.Content>
-            </Button.Portal>
-            <Button.Cancel className="ButtonCancel">Cancel</Button.Cancel>
-            <Button.Action
-              className="ButtonAction"
-              onClick={() => {
-                setIsDeleting(true);
-                onDelete();
-              }}
-            >
-              Confirm
-            </Button.Action>
-          </Button.Root>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-zinc-900 border-zinc-800">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This shot will be permanently deleted.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="bg-zinc-800 border-zinc-700 text-zinc-300">Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-red-600 hover:bg-red-700"
+                  onClick={() => {
+                    setIsDeleting(true);
+                    onDelete();
+                  }}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -154,7 +174,7 @@ export const ShotCard = ({ shot, onDelete, onUpdate }: ShotCardProps) => {
           onDialogueChange={(e) => setDialogue(e.target.value)}
           onSoundEffectsChange={(e) => setSoundEffects(e.target.value)}
           setLocalVisualPrompt={setLocalVisualPrompt}
-          setLocalImageStatus={setLocalImageStatus}
+          setLocalImageStatus={(status) => setLocalImageStatus(status as ImageStatus)}
           setIsGeneratingPrompt={setIsGeneratingPrompt}
           setIsGeneratingImage={setIsGeneratingImage}
           setLocalAudioUrl={setLocalAudioUrl}

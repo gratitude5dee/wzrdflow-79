@@ -6,29 +6,19 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ImageStatus } from '@/types/storyboardTypes';
 
 interface ShotImageProps {
-  shotNumber: number;
+  shotNumber?: number;
   imageUrl: string | null;
   imageStatus: ImageStatus;
-  isGeneratingImage: boolean;
-  isGeneratingPrompt: boolean;
-  isDeleting: boolean;
-  hasVisualPrompt: boolean;
-  onGeneratePrompt: () => Promise<void>;
-  onGenerateImage: () => Promise<void>;
-  onDelete: () => void;
+  isGenerating: boolean;
+  shotType: string;
 }
 
 const ShotImage: React.FC<ShotImageProps> = ({
   shotNumber,
   imageUrl,
   imageStatus,
-  isGeneratingImage,
-  isGeneratingPrompt,
-  isDeleting,
-  hasVisualPrompt,
-  onGeneratePrompt,
-  onGenerateImage,
-  onDelete
+  isGenerating,
+  shotType
 }) => {
   const getImageStatusDisplay = () => {
     switch (imageStatus) {
@@ -48,16 +38,6 @@ const ShotImage: React.FC<ShotImageProps> = ({
             <div className="text-center p-2">
               <AlertCircle className="w-6 h-6 text-red-300 mx-auto mb-1" />
               <p className="text-sm text-white font-medium mb-2">Generation failed</p>
-              <Button
-                size="sm"
-                variant="destructive"
-                className="bg-red-700/80 hover:bg-red-600 text-xs h-7 px-2"
-                onClick={onGenerateImage}
-                disabled={isGeneratingImage || isGeneratingPrompt}
-              >
-                <RefreshCw className="w-3 h-3 mr-1" />
-                Retry
-              </Button>
             </div>
           </div>
         );
@@ -76,78 +56,25 @@ const ShotImage: React.FC<ShotImageProps> = ({
   return (
     <div className="aspect-video bg-[#0F1219] relative flex items-center justify-center group/image">
       {/* Shot Number */}
-      <div className="absolute top-2 left-2 z-10">
-        <span className="text-sm bg-black/60 px-2 py-1 rounded-full text-white backdrop-blur-sm">
-          #{shotNumber}
-        </span>
-      </div>
+      {shotNumber && (
+        <div className="absolute top-2 left-2 z-10">
+          <span className="text-sm bg-black/60 px-2 py-1 rounded-full text-white backdrop-blur-sm">
+            #{shotNumber}
+          </span>
+        </div>
+      )}
 
       {/* Image */}
       {imageUrl && imageStatus === 'completed' && (
         <img
           src={imageUrl}
-          alt={`Shot ${shotNumber}`}
+          alt={`Shot ${shotNumber || ''}`}
           className="w-full h-full object-cover transition-opacity duration-300"
         />
       )}
 
       {/* Status Overlay */}
       {getImageStatusDisplay()}
-
-      {/* Action Buttons Overlay - Shown on hover, but not during generation/failure */}
-      {imageStatus !== 'generating' && imageStatus !== 'failed' && (
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex items-end justify-center p-2 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 z-10">
-          <div className="flex gap-1 bg-black/50 backdrop-blur-sm p-1 rounded-lg">
-            {/* Generate AI Image Button */}
-            <TooltipProvider delayDuration={100}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-md bg-white/10 hover:bg-white/20 p-1.5 h-auto w-auto glow-icon-button"
-                    onClick={onGenerateImage}
-                    disabled={!hasVisualPrompt || isGeneratingImage || isGeneratingPrompt}
-                  >
-                    {isGeneratingImage ? (
-                      <Loader2 className="w-4 h-4 text-white animate-spin" />
-                    ) : (
-                      <RefreshCw className="w-4 h-4 text-white" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>{imageUrl ? 'Regenerate Image' : 'Generate Image'}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            {/* Delete Button */}
-            <TooltipProvider delayDuration={100}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-md bg-red-500/20 hover:bg-red-500/40 p-1.5 h-auto w-auto"
-                    onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? (
-                      <Loader2 className="w-4 h-4 text-white animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4 text-red-400" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>Delete shot</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

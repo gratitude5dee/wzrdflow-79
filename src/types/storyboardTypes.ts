@@ -1,6 +1,8 @@
-
 // Image status to track generation progress
 export type ImageStatus = 'pending' | 'prompt_ready' | 'generating' | 'completed' | 'failed';
+
+// Audio status to track generation progress
+export type AudioStatus = 'pending' | 'generating' | 'completed' | 'failed';
 
 export interface ShotDetails {
   id: string;
@@ -14,7 +16,10 @@ export interface ShotDetails {
   sound_effects: string | null;
   image_url: string | null;
   image_status: ImageStatus;
+  audio_url: string | null;
+  audio_status: AudioStatus;
   luma_generation_id: string | null;
+  failure_reason?: string | null;
   created_at?: string;
   updated_at?: string;
 }

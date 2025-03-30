@@ -1,13 +1,15 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { AudioStatus } from '@/types/storyboardTypes';
 
 interface UseAudioGenerationProps {
   shotId: string;
   isGeneratingRef: React.MutableRefObject<boolean>;
   setIsGeneratingAudio: (isGenerating: boolean) => void;
   setLocalAudioUrl: (url: string | null) => void;
-  setLocalAudioStatus: (status: 'pending' | 'generating' | 'completed' | 'failed') => void;
+  setLocalAudioStatus: (status: AudioStatus) => void;
 }
 
 export const useAudioGeneration = ({
