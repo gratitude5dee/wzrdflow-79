@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -108,10 +109,10 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
           <div className="flex-1 grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Option cards */}
             <div 
-              className={`p-6 rounded-lg ${conceptOption === 'ai' ? 'bg-[#00183F] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3`}
+              className={`p-6 rounded-lg ${conceptOption === 'ai' ? 'bg-[#001036] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3`}
               onClick={() => setConceptOption('ai')}
             >
-              <div className="p-2 text-blue-400">
+              <div className={`p-2 ${conceptOption === 'ai' ? 'text-blue-400' : 'text-zinc-400'}`}>
                 <RefreshCw className="h-5 w-5" />
               </div>
               <div>
@@ -123,10 +124,10 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
             </div>
             
             <div 
-              className={`p-6 rounded-lg ${conceptOption === 'manual' ? 'bg-[#00183F] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3`}
+              className={`p-6 rounded-lg ${conceptOption === 'manual' ? 'bg-[#001036] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3`}
               onClick={() => setConceptOption('manual')}
             >
-              <div className="p-2 text-zinc-400">
+              <div className={`p-2 ${conceptOption === 'manual' ? 'text-blue-400' : 'text-zinc-400'}`}>
                 <FileText className="h-5 w-5" />
               </div>
               <div>

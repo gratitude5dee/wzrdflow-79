@@ -12,7 +12,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import ProjectSetupHeader from './ProjectSetupHeader';
 import { ArrowRight, ChevronRight } from 'lucide-react';
 
-type ProjectSetupTab = 'concept' | 'settings' | 'breakdown';
+type ProjectSetupTab = 'concept' | 'storyline' | 'settings' | 'breakdown';
 
 export interface ProjectData {
   title: string;
@@ -57,7 +57,7 @@ const ProjectSetupWizard = () => {
   };
 
   const handleNext = () => {
-    const tabs: ProjectSetupTab[] = ['concept', 'settings', 'breakdown'];
+    const tabs: ProjectSetupTab[] = ['concept', 'storyline', 'settings', 'breakdown'];
     const currentIndex = tabs.indexOf(activeTab);
     
     if (currentIndex < tabs.length - 1) {
@@ -68,7 +68,7 @@ const ProjectSetupWizard = () => {
   };
 
   const handleBack = () => {
-    const tabs: ProjectSetupTab[] = ['concept', 'settings', 'breakdown'];
+    const tabs: ProjectSetupTab[] = ['concept', 'storyline', 'settings', 'breakdown'];
     const currentIndex = tabs.indexOf(activeTab);
     
     if (currentIndex > 0) {
@@ -123,9 +123,10 @@ const ProjectSetupWizard = () => {
     }
   };
 
-  // Tab configuration
+  // Tab configuration with new 'storyline' tab
   const tabs: Array<{ id: ProjectSetupTab; label: string }> = [
     { id: 'concept', label: 'CONCEPT' },
+    { id: 'storyline', label: 'STORYLINE' },
     { id: 'settings', label: 'SETTINGS & CAST' },
     { id: 'breakdown', label: 'BREAKDOWN' }
   ];
@@ -137,25 +138,31 @@ const ProjectSetupWizard = () => {
       
       {/* Tabs Navigation */}
       <div className="border-b border-zinc-800 bg-[#0F1219]">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-center">
+        <div className="container mx-auto">
+          <div className="flex">
             {tabs.map((tab, index) => (
-              <button
+              <div 
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-8 relative transition-all duration-200 flex items-center ${
-                  activeTab === tab.id
-                    ? 'text-white bg-[#0050E4]'
-                    : 'text-zinc-400'
+                className={`relative ${
+                  index > 0 ? 'flex-1' : ''
                 }`}
               >
-                {tab.label}
-                {index < tabs.length - 1 && (
-                  <ChevronRight className={`ml-2 h-4 w-4 ${
-                    activeTab === tab.id ? 'text-white' : 'text-zinc-600'
-                  }`} />
-                )}
-              </button>
+                <button
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`py-4 px-6 w-full relative transition-all duration-200 flex items-center justify-center ${
+                    activeTab === tab.id
+                      ? 'text-white font-medium bg-[#0050E4]'
+                      : 'text-zinc-400'
+                  }`}
+                >
+                  {tab.label}
+                  {index < tabs.length - 1 && (
+                    <ChevronRight className={`ml-2 h-4 w-4 ${
+                      activeTab === tab.id ? 'text-white' : 'text-zinc-600'
+                    }`} />
+                  )}
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -164,6 +171,7 @@ const ProjectSetupWizard = () => {
       {/* Tab Content */}
       <div className="flex-1 overflow-auto bg-[#111319]">
         {activeTab === 'concept' && <ConceptTab projectData={projectData} updateProjectData={handleUpdateProjectData} />}
+        {activeTab === 'storyline' && <StorylineTab projectData={projectData} updateProjectData={handleUpdateProjectData} />}
         {activeTab === 'settings' && <SettingsTab projectData={projectData} updateProjectData={handleUpdateProjectData} />}
         {activeTab === 'breakdown' && <BreakdownTab projectData={projectData} updateProjectData={handleUpdateProjectData} />}
       </div>
