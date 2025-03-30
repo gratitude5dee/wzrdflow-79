@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import ShotCard from './ShotCard';
+import ShotCard from './shot/ShotCard'; // Updated import path
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ShotDetails } from '@/types/storyboardTypes';
