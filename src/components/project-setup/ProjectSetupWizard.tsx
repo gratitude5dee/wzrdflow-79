@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConceptTab from './ConceptTab';
@@ -10,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/providers/AuthProvider';
 import ProjectSetupHeader from './ProjectSetupHeader';
-import { ArrowRight, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronRight, ArrowLeft } from 'lucide-react';
 
 type ProjectSetupTab = 'concept' | 'storyline' | 'settings' | 'breakdown';
 
@@ -55,7 +54,7 @@ const ProjectSetupWizard = () => {
     // Default to AI mode
     conceptOption: 'ai'
   });
-
+  
   const handleUpdateProjectData = (data: Partial<ProjectData>) => {
     setProjectData(prev => ({ ...prev, ...data }));
   };
@@ -142,6 +141,8 @@ const ProjectSetupWizard = () => {
 
   // Get the current visible tabs
   const visibleTabs = getVisibleTabs();
+  const isLastTab = activeTab === visibleTabs[visibleTabs.length - 1];
+  const isFirstTab = activeTab === visibleTabs[0];
 
   return (
     <div className="min-h-screen flex flex-col bg-[#111319]">
@@ -164,7 +165,9 @@ const ProjectSetupWizard = () => {
                   className={`py-4 px-6 w-full relative transition-all duration-200 flex items-center justify-center ${
                     activeTab === tab
                       ? 'text-white font-medium bg-[#0050E4]'
-                      : 'text-zinc-400'
+                      : index < visibleTabs.indexOf(activeTab) 
+                        ? 'text-blue-400 bg-[#131B2E]'
+                        : 'text-zinc-400'
                   }`}
                 >
                   {tab === 'concept' ? 'CONCEPT' : 
@@ -172,10 +175,13 @@ const ProjectSetupWizard = () => {
                    tab === 'settings' ? 'SETTINGS & CAST' : 'BREAKDOWN'}
                   {index < visibleTabs.length - 1 && (
                     <ChevronRight className={`ml-2 h-4 w-4 ${
-                      activeTab === tab ? 'text-white' : 'text-zinc-600'
+                      activeTab === tab || index < visibleTabs.indexOf(activeTab) ? 'text-white' : 'text-zinc-600'
                     }`} />
                   )}
                 </button>
+                {activeTab === tab && (
+                  <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500"></div>
+                )}
               </div>
             ))}
           </div>
@@ -191,21 +197,44 @@ const ProjectSetupWizard = () => {
       </div>
 
       {/* Footer with navigation buttons */}
-      <div className="border-t border-zinc-800 p-4 flex justify-between">
+      <div className="border-t border-zinc-800 p-4 flex justify-between items-center">
         <Button
           onClick={handleBack}
-          variant="ghost"
-          className={`text-white hover:bg-zinc-800 ${activeTab === 'concept' ? 'invisible' : ''}`}
+          variant="outline"
+          className={`text-white border-zinc-700 hover:bg-zinc-800 hover:text-white flex items-center gap-2 ${isFirstTab ? 'opacity-0 pointer-events-none' : ''}`}
         >
+          <ArrowLeft className="h-4 w-4" />
           Back
         </Button>
+        
+        <div className="flex-1 flex justify-center">
+          <div className="flex space-x-2">
+            {visibleTabs.map((tab, i) => (
+              <div 
+                key={i}
+                className={`w-2 h-2 rounded-full ${
+                  i === visibleTabs.indexOf(activeTab) 
+                    ? 'bg-blue-500' 
+                    : i < visibleTabs.indexOf(activeTab)
+                      ? 'bg-blue-800'
+                      : 'bg-zinc-700'
+                }`}
+              ></div>
+            ))}
+          </div>
+        </div>
+        
         <Button
           onClick={handleNext}
           disabled={isCreating}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8 ml-auto"
+          className={`px-8 flex items-center gap-2 ${
+            isLastTab 
+              ? 'bg-green-600 hover:bg-green-700 text-white' 
+              : 'bg-blue-600 hover:bg-blue-700 text-white'
+          }`}
         >
-          {isCreating ? 'Creating...' : activeTab === visibleTabs[visibleTabs.length - 1] ? 'Start' : 'Next'}
-          {activeTab !== visibleTabs[visibleTabs.length - 1] && <ArrowRight className="ml-2 h-4 w-4" />}
+          {isCreating ? 'Creating...' : isLastTab ? 'Start Project' : 'Next'}
+          {!isLastTab && <ArrowRight className="h-4 w-4" />}
         </Button>
       </div>
     </div>
