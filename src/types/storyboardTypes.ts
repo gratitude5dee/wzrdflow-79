@@ -25,6 +25,8 @@ export interface CharacterDetails {
   image_url: string | null;
 }
 
+export type ImageStatus = 'pending' | 'generating' | 'completed' | 'failed';
+
 export interface ShotDetails {
   id: string;
   scene_id: string;
@@ -36,7 +38,7 @@ export interface ShotDetails {
   dialogue: string | null;
   sound_effects: string | null;
   image_url: string | null;
-  image_status: 'pending' | 'generating' | 'completed' | 'failed';
+  image_status: ImageStatus;
   luma_generation_id: string | null;
 }
 

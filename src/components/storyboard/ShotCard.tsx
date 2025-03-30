@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
@@ -10,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Edit, Copy, Image, Play, RefreshCw, MoreHorizontal, Trash2, Loader2, Wand2, AlertCircle } from 'lucide-react';
-import { ShotDetails } from '@/types/storyboardTypes';
+import { ShotDetails, ImageStatus } from '@/types/storyboardTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -51,7 +50,7 @@ const ShotCard = ({ shot, onUpdate, onDelete }: ShotCardProps) => {
   const [isGeneratingImage, setIsGeneratingImage] = useState(shot.image_status === 'generating');
   const [localVisualPrompt, setLocalVisualPrompt] = useState(shot.visual_prompt || '');
   const [localImageUrl, setLocalImageUrl] = useState(shot.image_url || null);
-  const [localImageStatus, setLocalImageStatus] = useState(shot.image_status || 'pending');
+  const [localImageStatus, setLocalImageStatus] = useState<ImageStatus>(shot.image_status || 'pending');
   
   // Ref to prevent unnecessary updates from realtime
   const isGeneratingRef = useRef(false);
@@ -256,9 +255,11 @@ const ShotCard = ({ shot, onUpdate, onDelete }: ShotCardProps) => {
         .single();
         
       if (currentState) {
-        setLocalImageStatus(currentState.image_status || 'failed');
+        // Make sure we handle the type correctly
+        const updatedStatus: ImageStatus = (currentState.image_status || 'failed') as ImageStatus;
+        setLocalImageStatus(updatedStatus);
         setLocalImageUrl(currentState.image_url || null);
-        setIsGeneratingImage(currentState.image_status === 'generating');
+        setIsGeneratingImage(updatedStatus === 'generating');
       }
     }
   };
