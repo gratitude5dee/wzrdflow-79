@@ -690,7 +690,7 @@ const Landing = () => {
             </div>
           </div>
         </div>
-      </section>
+      </footer>
       
       {/* Video Modal */}
       {isVideoModalOpen && (
