@@ -21,15 +21,15 @@ export async function saveStorylineData(
   storylineData: StorylineResponseData,
   isSelected: boolean,
   analysisData: AnalysisResponseData | null
-) {
+): Promise<SaveResult> {
   // Results to return
-  const results = {
+  const results: SaveResult = {
     storyline_id: '',
     scene_count: 0,
     character_count: 0,
     characters: [],
     updatedSettings: {} as Record<string, any>,
-    inserted_shot_ids: [] as string[] // Add this to track created shots
+    inserted_shot_ids: [] as string[]
   };
 
   // If generating the initial selected storyline, deselect others first
