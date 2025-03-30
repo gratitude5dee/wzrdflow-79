@@ -53,10 +53,9 @@ const Home = () => {
       } catch (err: any) {
         console.error('Error fetching projects:', err);
         setError('Failed to load projects. Please try again.');
-        toast({
-          title: "Error loading projects",
-          description: err.message || "An unknown error occurred",
-          variant: "destructive"
+        // Show toast notification for error
+        toast.error("Error loading projects", {
+          description: err.message || "An unknown error occurred"
         });
       } finally {
         setIsLoading(false);
