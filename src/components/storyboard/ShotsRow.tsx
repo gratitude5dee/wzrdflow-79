@@ -9,22 +9,28 @@ import { Plus } from 'lucide-react';
 import ShotCard from './ShotCard';
 
 interface ShotsRowProps {
+  sceneId: string;
   sceneNumber: number;
 }
 
-const ShotsRow = ({ sceneNumber }: ShotsRowProps) => {
-  // Initial shot items
-  const [shots, setShots] = useState([
-    { id: `scene-${sceneNumber}-shot-1`, number: 1 },
-    { id: `scene-${sceneNumber}-shot-2`, number: 2 },
-    { id: `scene-${sceneNumber}-shot-3`, number: 3 }
+// Mock shot type for now
+interface Shot {
+  id: string;
+  number: number;
+  // Add other shot properties like type, prompt, etc.
+}
+
+const ShotsRow = ({ sceneId, sceneNumber }: ShotsRowProps) => {
+  // Initial placeholder shot items - In future, fetch based on sceneId
+  const [shots, setShots] = useState<Shot[]>([
+    { id: `${sceneId}-shot-1`, number: 1 },
+    { id: `${sceneId}-shot-2`, number: 2 },
+    { id: `${sceneId}-shot-3`, number: 3 }
   ]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
+      activationConstraint: { distance: 8 },
     })
   );
 
@@ -43,16 +49,19 @@ const ShotsRow = ({ sceneNumber }: ShotsRowProps) => {
 
   const addShot = () => {
     const newShotNumber = shots.length + 1;
+    const newShotId = `${sceneId}-shot-${Date.now()}`; // Use timestamp for uniqueness
     setShots([
       ...shots,
-      { id: `scene-${sceneNumber}-shot-${newShotNumber}`, number: newShotNumber }
+      { id: newShotId, number: newShotNumber }
     ]);
   };
 
   return (
-    <div className="mb-12">
+    <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-[#FFB628] glow-text-gold font-serif">SCENE {sceneNumber}</h2>
+        <h2 className="text-2xl font-bold text-[#FFB628] glow-text-gold font-serif cursor-pointer hover:opacity-80">
+          SCENE {sceneNumber}
+        </h2>
         <Button 
           onClick={addShot}
           className="bg-purple-600 hover:bg-purple-700 text-white shadow-glow-purple"
@@ -67,11 +76,11 @@ const ShotsRow = ({ sceneNumber }: ShotsRowProps) => {
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <SortableContext items={shots.map(shot => shot.id)} strategy={horizontalListSortingStrategy}>
               <AnimatePresence>
-                {shots.map((shot) => (
+                {shots.map((shot, index) => (
                   <ShotCard
                     key={shot.id}
                     id={shot.id}
-                    shotNumber={shot.number}
+                    shotNumber={index + 1} // Display sequential number
                   />
                 ))}
               </AnimatePresence>
