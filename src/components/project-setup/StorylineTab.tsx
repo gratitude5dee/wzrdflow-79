@@ -29,42 +29,50 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
   const [characterCount, setCharacterCount] = useState(0);
   const [selectedStoryline, setSelectedStoryline] = useState<Storyline | null>(null);
   const [alternativeStorylines, setAlternativeStorylines] = useState<Storyline[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const { user } = useAuth();
-  const { projectId, saveProjectData } = useProject();
+  const { projectId: contextProjectId, saveProjectData } = useProject();
   const navigate = useNavigate();
   const params = useParams();
-  const id = params.id || projectId;
+  
+  // Determine the project ID to use (URL param takes precedence)
+  const currentProjectId = params.id || contextProjectId;
 
-  // Fetch selected storyline when component mounts or when projectId changes
+  // Fetch storylines when component mounts or when project ID changes
   useEffect(() => {
-    if (id) {
+    if (currentProjectId) {
       fetchStorylines();
+    } else {
+      // If no project ID, clear state and stop loading
+      setSelectedStoryline(null);
+      setAlternativeStorylines([]);
+      setIsLoading(false);
     }
-  }, [id]);
+  }, [currentProjectId]);
 
   const fetchStorylines = async () => {
+    if (!currentProjectId) return;
+
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      
-      // First, fetch the selected storyline
+      // Fetch selected storyline
       const { data: selectedData, error: selectedError } = await supabase
         .from('storylines')
         .select('*')
-        .eq('project_id', id)
+        .eq('project_id', currentProjectId)
         .eq('is_selected', true)
-        .single();
+        .maybeSingle(); // Use maybeSingle to handle not found gracefully
 
-      if (selectedError && selectedError.code !== 'PGRST116') { // Not found error
+      if (selectedError && selectedError.code !== 'PGRST116') { // Ignore 'not found' error
         throw selectedError;
       }
 
-      // Then fetch alternative storylines
+      // Fetch alternative storylines
       const { data: alternativesData, error: alternativesError } = await supabase
         .from('storylines')
         .select('*')
-        .eq('project_id', id)
+        .eq('project_id', currentProjectId)
         .eq('is_selected', false)
         .order('created_at', { ascending: false });
 
@@ -75,73 +83,108 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
       // Update states based on fetched data
       if (selectedData) {
         setSelectedStoryline(selectedData);
-        setCharacterCount(selectedData.full_story.length);
+        setCharacterCount(selectedData.full_story?.length || 0);
+      } else {
+        setSelectedStoryline(null);
+        setCharacterCount(0);
       }
 
       setAlternativeStorylines(alternativesData || []);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching storylines:", error);
-      toast.error("Failed to load storylines");
+      toast.error(`Failed to load storylines: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleStorylineChange = async (storyline: Storyline) => {
+  const handleStorylineChange = async (storylineToSelect: Storyline) => {
+    if (!currentProjectId || !storylineToSelect || storylineToSelect.is_selected) return;
+
+    const previousSelected = selectedStoryline; // Store previous for UI update
+
     try {
-      setSelectedStoryline(storyline);
-      setCharacterCount(storyline.full_story.length);
+      // Optimistic UI update
+      setSelectedStoryline(storylineToSelect);
+      setCharacterCount(storylineToSelect.full_story?.length || 0);
+      setAlternativeStorylines(prev => 
+        prev.filter(s => s.id !== storylineToSelect.id)
+          .concat(previousSelected ? [{ ...previousSelected, is_selected: false }] : [])
+      );
 
       // Update the is_selected flag in the database
-      const { error } = await supabase
+      const { error: selectError } = await supabase
         .from('storylines')
         .update({ is_selected: true })
-        .eq('id', storyline.id);
+        .eq('id', storylineToSelect.id);
 
-      if (error) {
-        throw error;
+      if (selectError) {
+        throw selectError;
       }
 
-      // Update locally - set the selected storyline and move the previous one to alternatives
-      if (selectedStoryline) {
-        // Add the previous selected storyline to alternatives
-        setAlternativeStorylines(prev => [
-          {...selectedStoryline, is_selected: false}, 
-          ...prev.filter(s => s.id !== storyline.id)
-        ]);
+      // Deselect the previous selected storyline if exists
+      if (previousSelected) {
+        const { error: deselectError } = await supabase
+          .from('storylines')
+          .update({ is_selected: false })
+          .eq('id', previousSelected.id);
+
+        if (deselectError) {
+          console.warn('Error deselecting previous storyline:', deselectError);
+          // Continue anyway as the main operation succeeded
+        }
       }
 
-      // Remove the new selected storyline from alternatives
-      setAlternativeStorylines(prev => prev.filter(s => s.id !== storyline.id));
+      // Update the project's selected_storyline_id
+      const { error: projectUpdateError } = await supabase
+        .from('projects')
+        .update({ selected_storyline_id: storylineToSelect.id })
+        .eq('id', currentProjectId);
 
-    } catch (error) {
-      console.error("Error updating selected storyline:", error);
-      toast.error("Failed to select storyline");
+      if (projectUpdateError) {
+        console.warn('Error updating project selected storyline:', projectUpdateError);
+        // Continue anyway as the main operation succeeded
+      }
+
+      toast.success("Storyline selected");
+
+    } catch (error: any) {
+      console.error("Error changing selected storyline:", error);
+      toast.error(`Failed to select storyline: ${error.message}`);
+      
+      // Revert UI changes on error
+      setSelectedStoryline(previousSelected);
+      setCharacterCount(previousSelected?.full_story?.length || 0);
+      setAlternativeStorylines(prev => 
+        prev.filter(s => s.id !== previousSelected?.id)
+          .concat(storylineToSelect ? [storylineToSelect] : [])
+      );
     }
   };
 
   const handleGenerateMore = async () => {
     // Ensure we have a project ID
-    let currentProjectId = id;
+    let effectiveProjectId = currentProjectId;
     
     // If no projectId, try to save the project first
-    if (!currentProjectId) {
+    if (!effectiveProjectId) {
+      toast.info("Saving project before generating...");
       try {
         const savedId = await saveProjectData();
         if (!savedId) {
           toast.error("Cannot generate storylines: Failed to save project");
           return;
         }
-        currentProjectId = savedId;
-      } catch (error) {
+        effectiveProjectId = savedId;
+      } catch (error: any) {
         console.error("Error saving project:", error);
         toast.error("Cannot generate storylines: Failed to save project");
         return;
       }
     }
 
-    if (!currentProjectId || !user) {
+    if (!effectiveProjectId || !user) {
       toast.error("Cannot generate storylines: missing project ID or user not logged in");
       return;
     }
@@ -149,36 +192,28 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
     try {
       setIsGenerating(true);
       
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('No active session found');
-      }
-
       // Call our edge function with a flag to generate alternative storylines
       const { data, error } = await supabase.functions.invoke('generate-storylines', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        },
         body: { 
-          project_id: currentProjectId,
+          project_id: effectiveProjectId,
           generate_alternative: true // Add flag to indicate this is for an alternative storyline
         }
       });
       
       if (error) {
-        throw error;
+        throw new Error(error.message || "Function invocation failed");
       }
       
-      if (data.success) {
+      // Check the success flag from the response
+      if (data && data.success) {
         toast.success(`Generated a new alternative storyline`);
         await fetchStorylines(); // Refresh storylines list
       } else {
-        throw new Error(data.error || 'Failed to generate alternative storyline');
+        throw new Error(data?.error || data?.message || 'Failed to generate alternative storyline');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating alternative storyline:", error);
-      toast.error("Failed to generate alternative storyline");
+      toast.error(`Failed to generate alternative: ${error.message}`);
     } finally {
       setIsGenerating(false);
     }
@@ -217,7 +252,7 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
                 variant="outline" 
                 className="bg-blue-950 border-blue-900 text-blue-400 hover:bg-blue-900"
                 onClick={handleGenerateMore}
-                disabled={isGenerating}
+                disabled={isGenerating || isLoading || !currentProjectId}
                 size="sm"
               >
                 {isGenerating ? (
@@ -234,14 +269,14 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
               </Button>
             </div>
             
-            {isLoading ? (
+            {isLoading && !selectedStoryline && alternativeStorylines.length === 0 ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
               </div>
             ) : alternativeStorylines.length === 0 ? (
               <div className="text-center py-8 text-zinc-400">
                 <p>No alternative storylines yet.</p>
-                <p className="mt-2">Click "Generate alternative" to create different storyline options based on your concept.</p>
+                <p className="mt-2 text-sm">Click "Generate alternative" to create different storyline options based on your concept.</p>
               </div>
             ) : (
               alternativeStorylines.map((storyline) => (
@@ -251,7 +286,7 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
                   onClick={() => handleStorylineChange(storyline)}
                 >
                   <h3 className="font-medium mb-2">{storyline.title}</h3>
-                  <p className="text-sm text-zinc-400 mb-3">{storyline.description}</p>
+                  <p className="text-sm text-zinc-400 mb-3 line-clamp-3">{storyline.description}</p>
                   <div className="flex flex-wrap gap-2">
                     {storyline.tags && storyline.tags.map((tag, tagIndex) => (
                       <Badge 
@@ -269,9 +304,9 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
 
           {/* Main Storyline Editor - Now spans 2 columns */}
           <div className="md:col-span-2">
-            <div className="bg-black rounded-lg border border-zinc-800 p-6">
+            <div className="bg-black rounded-lg border border-zinc-800 p-6 min-h-[400px]">
               {isLoading ? (
-                <div className="flex justify-center items-center py-20">
+                <div className="flex justify-center items-center h-full py-20">
                   <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                   <span className="ml-3 text-zinc-400">Loading your storyline...</span>
                 </div>
@@ -298,14 +333,14 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
                   </div>
                 </>
               ) : (
-                <div className="text-center py-16 text-zinc-400">
+                <div className="text-center py-16 text-zinc-400 h-full flex flex-col justify-center items-center">
                   <p className="text-xl font-medium mb-2">No storyline available</p>
-                  <p className="mb-8">A storyline should have been generated during project setup.</p>
+                  <p className="mb-8 text-sm">A storyline should have been generated during project setup.</p>
                   <Button 
                     variant="outline" 
                     className="bg-blue-950 border-blue-900 text-blue-400 hover:bg-blue-900"
                     onClick={handleGenerateMore}
-                    disabled={isGenerating}
+                    disabled={isGenerating || !currentProjectId}
                   >
                     {isGenerating ? (
                       <>

@@ -12,7 +12,7 @@ interface ClaudeResponseData {
         tags: string[];
         full_story: string;
     };
-    scene_breakdown: {
+    scene_breakdown?: {
         scene_number: number;
         title: string;
         description: string;
@@ -35,7 +35,7 @@ function safeParseJson(jsonString: string): ClaudeResponseData | null {
             return JSON.parse(jsonString);
         } catch (error2) {
             console.error('Failed to parse JSON directly:', error2.message);
-            console.error('Original content:', jsonString); // Log the problematic content
+            console.error('Original content being parsed:', jsonString);
             return null; // Return null if parsing fails completely
         }
     }
@@ -88,24 +88,19 @@ serve(async (req) => {
             return errorResponse('Server configuration error: Anthropic API key not found', 500);
         }
 
-        // Construct prompt for Claude
-        const systemPrompt = `You are a professional screenwriter and AI assistant specialized in creative storytelling and video production planning.
-Your task is to generate ONE compelling storyline based on the provided project details AND create a detailed scene breakdown for that specific storyline.
-
+        // Construct prompt for Claude - adjust based on whether we're generating an alternative
+        let systemPrompt = `You are a professional screenwriter and AI assistant specialized in creative storytelling and video production planning.
+Your task is to generate ONE compelling storyline based on the provided project details.
 Follow these instructions precisely:
-1.  **Storyline Generation:** Create ONE unique storyline. Do NOT provide multiple options.
+1.  **Storyline Generation:** Create ONE unique storyline. Do NOT provide multiple options unless specifically asked for an alternative.
     *   The storyline should align with the provided concept, genre, tone, and format.
     *   It must have a clear beginning, middle, and end.
+${!generate_alternative ? `
 2.  **Scene Breakdown:** Based ONLY on the storyline you generated, create a detailed scene breakdown.
     *   Number the scenes sequentially starting from 1.
-    *   Generate between 5 and 10 scenes, appropriate for the story's length and format (e.g., fewer for a commercial, more for a short film).
-    *   For each scene, provide:
-        *   \`scene_number\` (integer)
-        *   \`title\` (string): A concise title for the scene.
-        *   \`description\` (string): A detailed description of the action, dialogue cues, mood, and key visuals.
-        *   \`location\` (string, optional): A specific location (e.g., "INT. COFFEE SHOP - DAY"). Infer if not provided.
-        *   \`lighting\` (string, optional): Description of lighting (e.g., "Warm afternoon sun", "Moody, low-key"). Infer if not provided.
-        *   \`weather\` (string, optional): Relevant weather conditions (e.g., "Rainy", "Clear sky"). Infer if not provided.
+    *   Generate between 5 and 10 scenes, appropriate for the story's length and format.
+    *   For each scene, provide: \`scene_number\`, \`title\`, \`description\`, optional \`location\`, \`lighting\`, \`weather\`.
+` : ''}
 3.  **Output Format:** Your entire response MUST be a single JSON object. Do NOT include any text outside the JSON structure. The JSON structure must be exactly:
     \`\`\`json
     {
@@ -114,7 +109,7 @@ Follow these instructions precisely:
         "description": "One-paragraph summary (max 200 characters).",
         "tags": ["relevant", "keyword", "tags"],
         "full_story": "Detailed story outline (3-5 paragraphs)."
-      },
+      }${!generate_alternative ? `,
       "scene_breakdown": [
         {
           "scene_number": 1,
@@ -123,27 +118,20 @@ Follow these instructions precisely:
           "location": "Location details...",
           "lighting": "Lighting details...",
           "weather": "Weather details..."
-        },
+        }
         // ... more scene objects
-      ]
+      ]` : ''}
     }
     \`\`\`
-Ensure the \`description\` in \`primary_storyline\` is concise (max 200 chars). Make \`full_story\` comprehensive. Tags should be relevant keywords. Ensure all fields in the \`scene_breakdown\` array adhere to the specified types.`;
+Ensure the \`description\` in \`primary_storyline\` is concise (max 200 chars). Make \`full_story\` comprehensive. Tags should be relevant keywords.${!generate_alternative ? ' Ensure all fields in the `scene_breakdown` array adhere to the specified types.' : ''}`;
 
-        const userPrompt = `Generate a storyline and scene breakdown for the following project:
-Project Title: ${project.title || 'Untitled Project'}
+        let userPrompt = `${generate_alternative ? 'Please generate a *different* storyline based on the same project details provided previously. Ensure it offers a distinct take or variation. Do NOT include a scene breakdown.\n\n' : 'Generate a storyline and scene breakdown for the following project:\n\n'}Project Title: ${project.title || 'Untitled Project'}
 Concept/Input: ${project.concept_text || 'No concept provided. Create something imaginative based on other details.'}
 Genre: ${project.genre || 'Not specified'}
 Tone: ${project.tone || 'Not specified'}
 Format: ${project.format || 'Not specified'}
-${project.format === 'custom' && project.custom_format_description ? `Custom Format Details: ${project.custom_format_description}` : ''}
-${project.special_requests ? `Special Requests: ${project.special_requests}` : ''}
-${project.product_name ? `Product/Service: ${project.product_name}` : ''}
-${project.target_audience ? `Target Audience: ${project.target_audience}` : ''}
-${project.main_message ? `Main Message: ${project.main_message}` : ''}
-${project.call_to_action ? `Call to Action: ${project.call_to_action}` : ''}
-
-Generate ONE storyline and its corresponding scene breakdown in the specified JSON format.`;
+${project.format === 'custom' && project.custom_format_description ? `Custom Format Details: ${project.custom_format_description}\n` : ''}${project.special_requests ? `Special Requests: ${project.special_requests}\n` : ''}${project.product_name ? `Product/Service: ${project.product_name}\n` : ''}${project.target_audience ? `Target Audience: ${project.target_audience}\n` : ''}${project.main_message ? `Main Message: ${project.main_message}\n` : ''}${project.call_to_action ? `Call to Action: ${project.call_to_action}\n` : ''}
+Generate ONE storyline ${!generate_alternative ? 'and its corresponding scene breakdown ' : ''}in the specified JSON format.`;
 
         console.log('Sending request to Anthropic API...');
         
@@ -157,7 +145,7 @@ Generate ONE storyline and its corresponding scene breakdown in the specified JS
             },
             body: JSON.stringify({
                 model: 'claude-3-5-sonnet-20240620',
-                max_tokens: 4000,
+                max_tokens: generate_alternative ? 1500 : 4000, // Fewer tokens for alternatives
                 system: systemPrompt,
                 messages: [{ role: 'user', content: userPrompt }]
             })
@@ -183,17 +171,12 @@ Generate ONE storyline and its corresponding scene breakdown in the specified JS
         // Parse JSON safely
         const responseData: ClaudeResponseData | null = safeParseJson(content);
 
-        if (!responseData) {
-            return errorResponse('Failed to parse response from Claude', 500, { raw_content: content });
+        if (!responseData || !responseData.primary_storyline) {
+            console.error('Failed to parse response or missing primary_storyline:', { raw_content: content });
+            return errorResponse('Failed to parse valid storyline from Claude', 500, { raw_content: content });
         }
 
-        // Validate structure
-        if (!responseData.primary_storyline || !Array.isArray(responseData.scene_breakdown)) {
-            console.error('Unexpected format from Claude API:', responseData);
-            return errorResponse('Unexpected format from Claude API', 500, { received: responseData });
-        }
-
-        console.log('Successfully parsed storyline and scenes from Claude response');
+        console.log('Successfully parsed storyline from Claude response');
 
         // Determine if this is the initial storyline or an alternative
         const isSelected = !generate_alternative;
@@ -235,8 +218,11 @@ Generate ONE storyline and its corresponding scene breakdown in the specified JS
         }
         console.log(`Storyline ${storyline.id} inserted successfully.`);
 
-        // Insert scenes linked to the new storyline
-        if (responseData.scene_breakdown.length > 0) {
+        let scenes = [];
+        let scene_count = 0;
+
+        // Only insert scenes if it's NOT an alternative generation AND scene_breakdown exists
+        if (!generate_alternative && responseData.scene_breakdown && Array.isArray(responseData.scene_breakdown) && responseData.scene_breakdown.length > 0) {
             console.log(`Inserting ${responseData.scene_breakdown.length} scenes for storyline ${storyline.id}...`);
             const scenesToInsert = responseData.scene_breakdown.map(scene => ({
                 project_id: project_id,
@@ -249,18 +235,19 @@ Generate ONE storyline and its corresponding scene breakdown in the specified JS
                 weather: scene.weather || null
             }));
 
-            const { data: scenes, error: scenesError } = await supabaseClient
+            const { data: insertedScenes, error: scenesError } = await supabaseClient
                 .from('scenes')
                 .insert(scenesToInsert)
                 .select();
 
             if (scenesError) {
                 console.error('Error inserting scenes:', scenesError);
-                // Attempt to clean up the storyline if scenes failed? Or just report error?
-                // For now, just report the error but the storyline might remain.
+                // Consider cleanup or just report error
                 return errorResponse('Failed to save scenes', 500, scenesError.message);
             }
-            console.log(`${scenes?.length ?? 0} scenes inserted successfully.`);
+            scenes = insertedScenes || [];
+            scene_count = scenes.length;
+            console.log(`${scene_count} scenes inserted successfully.`);
 
             // If this was the initial selected storyline, update the project record
             if (isSelected) {
@@ -275,27 +262,18 @@ Generate ONE storyline and its corresponding scene breakdown in the specified JS
                     // Non-critical, proceed
                 }
             }
-
-            return successResponse({
-                success: true,
-                storyline: storyline,
-                scenes: scenes,
-                scene_count: scenes?.length ?? 0,
-                is_alternative: generate_alternative
-            });
-
-        } else {
-            console.warn('No scenes were generated in the breakdown.');
-            // Return success but indicate no scenes were created
-            return successResponse({
-                success: true,
-                storyline: storyline,
-                scenes: [],
-                scene_count: 0,
-                is_alternative: generate_alternative,
-                message: "Storyline generated, but no scenes were included in the breakdown."
-            });
+        } else if (!generate_alternative) {
+            console.warn('Scene breakdown was expected but not found or empty in the response.');
         }
+
+        return successResponse({
+            success: true,
+            storyline: storyline,
+            scenes: scenes,
+            scene_count: scene_count,
+            is_alternative: generate_alternative,
+            message: scene_count === 0 && !generate_alternative ? "Storyline generated, but no scenes were included or parsed." : undefined
+        });
 
     } catch (error) {
         console.error('Error in generate-storylines function:', error);
