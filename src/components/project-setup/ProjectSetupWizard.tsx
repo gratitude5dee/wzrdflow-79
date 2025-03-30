@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConceptTab from './ConceptTab';
@@ -56,13 +57,22 @@ const ProjectSetupWizard = () => {
   };
 
   const handleNext = () => {
-    const tabs: ProjectSetupTab[] = ['concept', 'storyline', 'settings', 'breakdown'];
+    const tabs: ProjectSetupTab[] = ['concept', 'settings', 'breakdown'];
     const currentIndex = tabs.indexOf(activeTab);
     
     if (currentIndex < tabs.length - 1) {
       setActiveTab(tabs[currentIndex + 1]);
     } else {
       handleCreateProject();
+    }
+  };
+
+  const handleBack = () => {
+    const tabs: ProjectSetupTab[] = ['concept', 'settings', 'breakdown'];
+    const currentIndex = tabs.indexOf(activeTab);
+    
+    if (currentIndex > 0) {
+      setActiveTab(tabs[currentIndex - 1]);
     }
   };
 
@@ -121,7 +131,7 @@ const ProjectSetupWizard = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#111319]">
       {/* Header */}
       <ProjectSetupHeader />
       
@@ -135,7 +145,7 @@ const ProjectSetupWizard = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-4 px-8 relative transition-all duration-200 flex items-center ${
                   activeTab === tab.id
-                    ? 'text-white bg-[#0F1219]'
+                    ? 'text-white bg-[#0B0D14]'
                     : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
@@ -159,15 +169,25 @@ const ProjectSetupWizard = () => {
       </div>
 
       {/* Footer with navigation buttons */}
-      <div className="border-t border-zinc-800 p-4 flex justify-end">
-        <Button
-          onClick={handleNext}
-          disabled={isCreating}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8"
-        >
-          {isCreating ? 'Creating...' : activeTab === 'breakdown' ? 'Start' : 'Next'}
-          {activeTab !== 'breakdown' && <ArrowRight className="ml-2 h-4 w-4" />}
-        </Button>
+      <div className="border-t border-zinc-800 p-4 flex justify-between">
+        {activeTab !== 'concept' && (
+          <Button
+            onClick={handleBack}
+            className="bg-transparent hover:bg-zinc-800 text-white border border-zinc-700"
+          >
+            Back
+          </Button>
+        )}
+        <div className={activeTab === 'concept' ? 'ml-auto' : ''}>
+          <Button
+            onClick={handleNext}
+            disabled={isCreating}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+          >
+            {isCreating ? 'Creating...' : activeTab === 'breakdown' ? 'Start' : 'Next'}
+            {activeTab !== 'breakdown' && <ArrowRight className="ml-2 h-4 w-4" />}
+          </Button>
+        </div>
       </div>
     </div>
   );
