@@ -5,6 +5,12 @@ export type ImageStatus = 'pending' | 'prompt_ready' | 'generating' | 'completed
 // Audio status to track generation progress
 export type AudioStatus = 'pending' | 'generating' | 'completed' | 'failed';
 
+// Generation status to track API progress
+export type GenerationStatus = 'pending' | 'submitted' | 'dreaming' | 'completed' | 'failed';
+
+// Generation provider
+export type GenerationProvider = 'claude' | 'luma_image' | 'luma_video';
+
 export interface ShotDetails {
   id: string;
   scene_id: string;
@@ -23,6 +29,39 @@ export interface ShotDetails {
   failure_reason?: string | null;
   created_at?: string;
   updated_at?: string;
+}
+
+// Generation details interface
+export interface GenerationDetails {
+  id: string;
+  user_id: string;
+  project_id: string;
+  shot_id: string | null;
+  api_provider: GenerationProvider;
+  external_request_id: string | null;
+  request_payload: Record<string, any>;
+  status: GenerationStatus;
+  failure_reason: string | null;
+  result_media_asset_id: string | null;
+  callback_received_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Media asset interface
+export interface MediaAsset {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  storage_provider: string;
+  storage_path: string | null;
+  cdn_url: string | null;
+  file_name: string;
+  mime_type: string;
+  size_bytes: number | null;
+  asset_type: 'image' | 'video' | 'audio';
+  purpose: 'upload' | 'generation_result' | 'character_ref' | 'style_ref';
+  created_at: string;
 }
 
 // Project details interface

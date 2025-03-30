@@ -210,6 +210,76 @@ export type Database = {
         }
         Relationships: []
       }
+      generations: {
+        Row: {
+          api_provider: string
+          callback_received_at: string | null
+          created_at: string
+          external_request_id: string | null
+          failure_reason: string | null
+          id: string
+          project_id: string | null
+          request_payload: Json
+          result_media_asset_id: string | null
+          shot_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_provider: string
+          callback_received_at?: string | null
+          created_at?: string
+          external_request_id?: string | null
+          failure_reason?: string | null
+          id?: string
+          project_id?: string | null
+          request_payload: Json
+          result_media_asset_id?: string | null
+          shot_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_provider?: string
+          callback_received_at?: string | null
+          created_at?: string
+          external_request_id?: string | null
+          failure_reason?: string | null
+          id?: string
+          project_id?: string | null
+          request_payload?: Json
+          result_media_asset_id?: string | null
+          shot_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generations_result_media_asset_id_fkey"
+            columns: ["result_media_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generations_shot_id_fkey"
+            columns: ["shot_id"]
+            isOneToOne: false
+            referencedRelation: "shots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       keyframes: {
         Row: {
           created_at: string | null
@@ -241,6 +311,59 @@ export type Database = {
             columns: ["track_item_id"]
             isOneToOne: false
             referencedRelation: "track_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_assets: {
+        Row: {
+          asset_type: string
+          cdn_url: string | null
+          created_at: string
+          file_name: string
+          id: string
+          mime_type: string
+          project_id: string | null
+          purpose: string
+          size_bytes: number | null
+          storage_path: string | null
+          storage_provider: string | null
+          user_id: string
+        }
+        Insert: {
+          asset_type: string
+          cdn_url?: string | null
+          created_at?: string
+          file_name: string
+          id?: string
+          mime_type: string
+          project_id?: string | null
+          purpose: string
+          size_bytes?: number | null
+          storage_path?: string | null
+          storage_provider?: string | null
+          user_id: string
+        }
+        Update: {
+          asset_type?: string
+          cdn_url?: string | null
+          created_at?: string
+          file_name?: string
+          id?: string
+          mime_type?: string
+          project_id?: string | null
+          purpose?: string
+          size_bytes?: number | null
+          storage_path?: string | null
+          storage_provider?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_assets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]

@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { initiateLumaImageGeneration } from "../_shared/luma.ts";
+import { initiateLumaVideoGeneration } from "../_shared/luma.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
@@ -21,19 +21,19 @@ serve(async (req) => {
   }
 
   try {
-    const { shot_id } = await req.json();
+    const { shot_id, image_url } = await req.json();
 
-    if (!shot_id) {
+    if (!shot_id || !image_url) {
       return new Response(
-        JSON.stringify({ success: false, error: "Missing shot ID" }),
+        JSON.stringify({ success: false, error: "Missing shot ID or image URL" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Get shot information including the visual prompt
+    // Get shot information
     const { data: shot, error: shotError } = await supabase
       .from("shots")
-      .select("id, project_id, visual_prompt, image_status")
+      .select("id, project_id")
       .eq("id", shot_id)
       .single();
 
@@ -45,23 +45,7 @@ serve(async (req) => {
       );
     }
 
-    // Check if shot already has a visual prompt
-    if (!shot.visual_prompt || shot.visual_prompt.trim() === "") {
-      return new Response(
-        JSON.stringify({ success: false, error: "Shot doesn't have a visual prompt" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    console.log(`[Shot ${shot_id}] Starting image generation process.`);
-
-    // Update shot status to generating
-    await supabase
-      .from("shots")
-      .update({ image_status: "generating" })
-      .eq("id", shot_id);
-
-    console.log(`[Shot ${shot_id}] Status updated to 'generating'. Visual prompt: ${shot.visual_prompt.substring(0, 60)}...`);
+    console.log(`[Shot ${shot_id}] Starting video generation process from image.`);
 
     // Get the user information to associate the generation with
     const { data: authData, error: authError } = await supabase.auth.getUser(
@@ -76,24 +60,14 @@ serve(async (req) => {
       );
     }
 
-    // Get project's aspect ratio (default to 16:9 if not found)
-    const { data: project, error: projectError } = await supabase
-      .from("projects")
-      .select("aspect_ratio")
-      .eq("id", shot.project_id)
-      .single();
-
-    const aspectRatio = project?.aspect_ratio || "16:9";
-
     try {
-      // Call the helper function to initiate the Luma image generation
-      const result = await initiateLumaImageGeneration({
+      // Call the helper function to initiate the Luma video generation
+      const result = await initiateLumaVideoGeneration({
         supabase,
         userId: authData.user.id,
         shotId: shot_id,
         projectId: shot.project_id,
-        prompt: shot.visual_prompt,
-        aspectRatio
+        imageUrl: image_url
       });
 
       return new Response(
@@ -101,19 +75,8 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     } catch (error) {
-      console.error(`[Shot ${shot_id}] Error in generate-shot-image: ${error}`);
+      console.error(`[Shot ${shot_id}] Error in generate-video-from-image: ${error}`);
       
-      // Update shot status to failed
-      await supabase
-        .from("shots")
-        .update({ 
-          image_status: "failed",
-          failure_reason: error.message
-        })
-        .eq("id", shot_id);
-        
-      console.log(`[Shot ${shot_id}] Status updated to 'failed' with reason: ${error.message}`);
-
       return new Response(
         JSON.stringify({ success: false, error: error.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

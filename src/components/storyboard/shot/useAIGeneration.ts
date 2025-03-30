@@ -10,7 +10,7 @@ interface UseAIGenerationProps {
   setIsGeneratingPrompt: (isGenerating: boolean) => void;
   setIsGeneratingImage: (isGenerating: boolean) => void;
   setLocalVisualPrompt: (prompt: string) => void;
-  setLocalImageStatus: (status: ImageStatus) => void; // Changed from string to ImageStatus
+  setLocalImageStatus: (status: ImageStatus) => void;
   localVisualPrompt: string;
 }
 

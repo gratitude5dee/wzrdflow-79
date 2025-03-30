@@ -1,150 +1,196 @@
 
-/**
- * Shared helper functions for Luma API interactions
- */
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-interface LumaGenerationResponse {
-    id: string;
-    state: 'pending' | 'processing' | 'completed' | 'failed';
-    created_at: string;
+const LUMA_API_KEY = Deno.env.get("LUMA_API_KEY");
+const LUMA_API_URL = "https://api.lumalabs.ai/v0";
+
+// Types for the function parameters
+interface LumaImageGenerationParams {
+  supabase: ReturnType<typeof createClient>;
+  userId: string;
+  shotId: string;
+  projectId: string;
+  prompt: string;
+  aspectRatio: string;
 }
 
-interface LumaCompletedResponse extends LumaGenerationResponse {
-    state: 'completed';
-    assets: {
-        video?: string | null; 
-        image?: string | null;
-    };
+interface LumaVideoGenerationParams {
+  supabase: ReturnType<typeof createClient>;
+  userId: string;
+  shotId: string;
+  projectId: string;
+  imageUrl: string;
 }
 
-interface LumaFailedResponse extends LumaGenerationResponse {
-    state: 'failed';
-    failure_reason: string | null;
-}
+// Function to initiate image generation with Luma
+export async function initiateLumaImageGeneration({
+  supabase,
+  userId,
+  shotId,
+  projectId,
+  prompt,
+  aspectRatio = "16:9"
+}: LumaImageGenerationParams) {
+  if (!LUMA_API_KEY) {
+    throw new Error("Luma API key is not configured");
+  }
 
-/**
- * Initiates an image generation request with Luma Labs API.
- * @param lumaApiKey Your Luma API key.
- * @param visualPrompt The prompt for image generation.
- * @param aspectRatio Aspect ratio (e.g., "16:9", "3:4"). Defaults to "16:9".
- * @param userId Optional user ID for Luma API tracking.
- * @returns The initial Luma generation response containing the ID and state.
- */
-export async function initiateLumaImageGeneration(
-    lumaApiKey: string,
-    visualPrompt: string,
-    aspectRatio: string = "16:9",
-    userId?: string | null
-): Promise<LumaGenerationResponse> {
-    console.log(`Calling Luma API (photon-flash-1, ${aspectRatio}) with prompt: ${visualPrompt.substring(0, 100)}...`);
-    const lumaApiUrl = "https://api.lumalabs.ai/dream-machine/v1/generations/image"; // Image endpoint
+  // Determine aspect ratio dimensions
+  let width = 1024;
+  let height = 576; // Default 16:9
+  
+  if (aspectRatio === "1:1") {
+    width = 1024;
+    height = 1024;
+  } else if (aspectRatio === "4:3") {
+    width = 1024;
+    height = 768;
+  } else if (aspectRatio === "9:16") {
+    width = 576;
+    height = 1024;
+  }
 
-    const payload: any = {
-        prompt: visualPrompt,
-        aspect_ratio: aspectRatio,
-        model: "photon-flash-1", // Explicitly use photon-flash-1
-    };
+  try {
+    console.log(`Calling Luma API (photon-flash-1, ${aspectRatio}) with prompt: ${prompt.substring(0, 80)}...`);
+    console.log(`  with user_id: ${userId}`);
     
-    if (userId) {
-        payload.user_id = userId;
-        console.log(`  with user_id: ${userId}`);
-    }
-
-    const response = await fetch(lumaApiUrl, {
-        method: 'POST',
-        headers: {
-            'Authorization': `luma-api-key=${lumaApiKey}`, // Correct header format
-            'Content-Type': 'application/json',
-            'accept': 'application/json'
-        },
-        body: JSON.stringify(payload)
+    // Call Luma API to generate an image
+    const response = await fetch(`${LUMA_API_URL}/images/generations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${LUMA_API_KEY}`
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        model: "photon-flash-1", // Using the latest Photon model
+        width: width,
+        height: height,
+        num_images: 1
+      })
     });
 
-    const responseBodyText = await response.text();
-
     if (!response.ok) {
-        console.error(`Luma API Error (${response.status}):`, responseBodyText);
-        throw new Error(`Luma API Error (${response.status}): ${responseBodyText}`);
+      const errorText = await response.text();
+      throw new Error(`Luma API Error (${response.status}): ${errorText}`);
     }
 
-    const initialResponse: LumaGenerationResponse = JSON.parse(responseBodyText);
-    console.log(`Luma job submitted. Generation ID: ${initialResponse.id}, State: ${initialResponse.state}`);
-
-    if (!initialResponse.id) {
-        throw new Error("Luma API did not return a generation ID.");
+    const data = await response.json();
+    
+    if (!data.id) {
+      throw new Error("Luma API did not return a generation ID");
     }
 
-    return initialResponse;
+    // Store the generation record in our database
+    const { data: generation, error } = await supabase
+      .from("generations")
+      .insert({
+        user_id: userId,
+        project_id: projectId,
+        shot_id: shotId,
+        api_provider: "luma_image",
+        external_request_id: data.id,
+        request_payload: {
+          prompt,
+          model: "photon-flash-1",
+          width,
+          height
+        },
+        status: "submitted"
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`Error storing generation record: ${error.message}`);
+    }
+
+    return {
+      generation_id: generation?.id || null,
+      luma_generation_id: data.id,
+      status: "submitted"
+    };
+  } catch (error) {
+    throw error;
+  }
 }
 
-/**
- * Polls the Luma API for the result of a generation task.
- * @param lumaApiKey Your Luma API key.
- * @param generationId The ID of the generation task to poll.
- * @param maxAttempts Maximum number of polling attempts.
- * @param delay Delay between polling attempts in milliseconds.
- * @returns The completed Luma response containing the image URL or throws an error.
- */
-export async function pollLumaResult(
-    lumaApiKey: string,
-    generationId: string,
-    maxAttempts = 90, // Increase polling attempts (~4.5 mins)
-    delay = 3000
-): Promise<LumaCompletedResponse> {
-    console.log(`Polling Luma result (ID: ${generationId})...`);
-    const pollUrl = `https://api.lumalabs.ai/dream-machine/v1/generations/${generationId}`;
+// Function to initiate video generation with Luma
+export async function initiateLumaVideoGeneration({
+  supabase,
+  userId,
+  shotId,
+  projectId,
+  imageUrl
+}: LumaVideoGenerationParams) {
+  if (!LUMA_API_KEY) {
+    throw new Error("Luma API key is not configured");
+  }
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        console.log(`Poll attempt ${attempt}/${maxAttempts} for ${generationId}`);
-        try {
-            await new Promise(resolve => setTimeout(resolve, delay)); // Wait before polling
-
-            const response = await fetch(pollUrl, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `luma-api-key=${lumaApiKey}`,
-                    'accept': 'application/json'
-                }
-            });
-
-            const responseBodyText = await response.text();
-
-            if (!response.ok) {
-                // Log non-fatal errors but continue polling unless it's auth/not found
-                console.warn(`Luma Poll Status ${response.status} for ${generationId}:`, responseBodyText);
-                 if (response.status === 401 || response.status === 404) {
-                    throw new Error(`Luma Poll Error (${response.status}): ${responseBodyText}`);
-                }
-                continue; // Continue polling on other errors (like temporary server issues)
-            }
-
-            const pollData: LumaGenerationResponse = JSON.parse(responseBodyText);
-            console.log(`Luma Poll Status (ID: ${generationId}): ${pollData.state}`);
-
-            if (pollData.state === 'completed') {
-                const completedData = pollData as LumaCompletedResponse;
-                if (completedData.assets?.image) {
-                    console.log(`Polling complete. Image URL found for ${generationId}.`);
-                    return completedData;
-                } else {
-                    console.error('Luma generation completed but no image asset found:', completedData);
-                    throw new Error('Luma generation completed but the image URL is missing.');
-                }
-            } else if (pollData.state === 'failed') {
-                const failedData = pollData as LumaFailedResponse;
-                console.error('Luma generation failed:', failedData);
-                throw new Error(`Luma image generation failed: ${failedData.failure_reason || 'Unknown reason'}`);
-            }
-            // If pending or processing, continue to the next attempt
-
-        } catch (pollError) {
-            // Log errors during polling but allow retries
-            console.error(`Error during Luma poll attempt ${attempt} for ${generationId}:`, pollError);
-            if (attempt === maxAttempts) { // Throw only on the last attempt
-                throw new Error(`Failed to get Luma result after ${maxAttempts} attempts: ${pollError.message}`);
-            }
+  try {
+    console.log(`Calling Luma API (Ray-2 Flash) to generate video from image: ${imageUrl.substring(0, 80)}...`);
+    console.log(`  for shot_id: ${shotId}, user_id: ${userId}`);
+    
+    // Call Luma API to generate a video from the image
+    const response = await fetch(`${LUMA_API_URL}/videos/generations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${LUMA_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "ray-2-flash",
+        input_image_url: imageUrl,
+        animation_settings: {
+          motion_strength: 0.6, // Use moderate motion strength
+          camera_motion: "subtle_panning" // Subtle camera motion
         }
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Luma API Error (${response.status}): ${errorText}`);
     }
 
-    throw new Error(`Luma polling timed out after ${maxAttempts} attempts for generation ID: ${generationId}`);
+    const data = await response.json();
+    
+    if (!data.id) {
+      throw new Error("Luma API did not return a generation ID");
+    }
+
+    // Store the generation record in our database
+    const { data: generation, error } = await supabase
+      .from("generations")
+      .insert({
+        user_id: userId,
+        project_id: projectId,
+        shot_id: shotId,
+        api_provider: "luma_video",
+        external_request_id: data.id,
+        request_payload: {
+          model: "ray-2-flash",
+          input_image_url: imageUrl,
+          animation_settings: {
+            motion_strength: 0.6,
+            camera_motion: "subtle_panning"
+          }
+        },
+        status: "submitted"
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`Error storing generation record: ${error.message}`);
+    }
+
+    return {
+      generation_id: generation?.id || null,
+      luma_generation_id: data.id,
+      status: "submitted"
+    };
+  } catch (error) {
+    throw error;
+  }
 }
