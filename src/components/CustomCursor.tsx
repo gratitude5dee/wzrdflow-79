@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { useCustomCursor } from '@/hooks/useCustomCursor';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -18,8 +18,8 @@ const TRAIL_INTERVAL = 30; // How often to add a particle (ms)
 
 const CustomCursor: React.FC = () => {
     const { x, y, isMouseDown, isMoving, holdDuration } = useCustomCursor();
-    const [trails, setTrails] = useState<TrailParticle[]>([]);
-    const lastTrailTimeRef = useRef<number>(0);
+    const [trails, setTrails] = React.useState<TrailParticle[]>([]);
+    const lastTrailTimeRef = React.useRef<number>(0);
 
     // Calculate scale and opacity based on hold duration
     const chargeProgress = Math.min(holdDuration / MAX_HOLD_DURATION, 1);
@@ -29,7 +29,7 @@ const CustomCursor: React.FC = () => {
     const glowIntensity = 0.5 + chargeProgress * 1.5; // Control glow via shadow opacity
 
     // Add trail particles when moving while mouse is down
-    useEffect(() => {
+    React.useEffect(() => {
         if (isMouseDown && isMoving) {
             const now = Date.now();
             if (now - lastTrailTimeRef.current > TRAIL_INTERVAL) {
