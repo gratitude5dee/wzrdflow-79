@@ -14,19 +14,21 @@ const ProjectSetupHeader = () => {
     <header className="w-full bg-[#0B0D14] border-b border-[#1D2130] px-6 py-3 shadow-lg">
       <div className="flex justify-between items-center">
         <div className="flex items-center">
-          <h1 className="text-xl font-bold text-yellow-300 tracking-tight mr-2">WZRD.STUDIO</h1>
-          <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">ALPHA</span>
+          <h1 className="text-xl font-bold text-white tracking-tight mr-2">LTX</h1>
+          <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">Studio</span>
+          <span className="ml-6 text-zinc-400">Visualize your concept</span>
         </div>
         
         <div className="flex items-center gap-3">
           <Button 
             variant="ghost" 
-            className="bg-[#1D2130] hover:bg-[#262B3D] text-white"
-            onClick={handleBack}
+            className="bg-transparent hover:bg-transparent text-blue-500"
           >
-            <ChevronLeft className="mr-1 h-4 w-4" />
-            Back to Projects
+            Upgrade
           </Button>
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+            G
+          </div>
         </div>
       </div>
     </header>

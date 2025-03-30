@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, FileText } from 'lucide-react';
 import { type ProjectData } from './ProjectSetupWizard';
 
 interface ConceptTabProps {
@@ -98,36 +97,34 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <div className="mb-10">
-        <h1 className="text-3xl font-semibold mb-6">Input your concept</h1>
+        <h1 className="text-3xl font-semibold mb-6 text-white">Input your concept</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div 
-            className={`p-6 rounded-lg border ${conceptOption === 'ai' ? 'border-blue-600 bg-blue-950/30' : 'border-zinc-700 bg-zinc-900'} cursor-pointer`}
+            className={`p-6 rounded-lg border ${conceptOption === 'ai' ? 'border-blue-600 bg-[#080C1A]' : 'border-zinc-700 bg-zinc-900'} cursor-pointer`}
             onClick={() => setConceptOption('ai')}
           >
             <div className="flex items-start gap-3 mb-2">
-              <div className="p-2 bg-blue-800 rounded">
+              <div className="p-2 bg-[#111525] rounded">
                 <RefreshCw className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-medium text-blue-400">Develop concept with AI</h3>
+                <h3 className={`text-lg font-medium ${conceptOption === 'ai' ? 'text-blue-400' : 'text-white'}`}>Develop concept with AI</h3>
                 <p className="text-sm text-zinc-400">AI involvement in script editing and writing</p>
               </div>
             </div>
           </div>
           
           <div 
-            className={`p-6 rounded-lg border ${conceptOption === 'manual' ? 'border-zinc-600 bg-zinc-800/30' : 'border-zinc-700 bg-zinc-900'} cursor-pointer`}
+            className={`p-6 rounded-lg border ${conceptOption === 'manual' ? 'border-blue-600 bg-[#080C1A]' : 'border-zinc-700 bg-zinc-900'} cursor-pointer`}
             onClick={() => setConceptOption('manual')}
           >
             <div className="flex items-start gap-3 mb-2">
-              <div className="p-2 bg-zinc-700 rounded">
-                <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+              <div className="p-2 bg-[#111525] rounded">
+                <FileText className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-medium">Stick to the script</h3>
+                <h3 className={`text-lg font-medium ${conceptOption === 'manual' ? 'text-blue-400' : 'text-white'}`}>Stick to the script</h3>
                 <p className="text-sm text-zinc-400">Visualize your idea or script as written</p>
               </div>
             </div>
@@ -144,14 +141,10 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                 className="min-h-[200px] bg-transparent border-none focus-visible:ring-0 resize-none text-white placeholder:text-zinc-600"
               />
               <div className="flex justify-between items-center px-3 py-2 text-sm text-zinc-500">
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="h-8 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800">
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    Upload Text
-                  </Button>
-                </div>
+                <Button variant="outline" size="sm" className="h-8 px-3 bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Upload Text
+                </Button>
                 <div>{conceptCharCount} / 12000</div>
               </div>
             </div>
@@ -161,7 +154,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
           <div className="w-full md:w-[300px]">
             <div className="mb-4">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium">EXAMPLES</h2>
+                <h2 className="text-lg font-medium text-white">EXAMPLES</h2>
                 <Button variant="ghost" size="sm" className="text-zinc-400">
                   <RefreshCw className="h-4 w-4" />
                 </Button>
@@ -175,7 +168,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                     onClick={() => handleUseExampleConcept(example)}
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium">{example.title}</h3>
+                      <h3 className="font-medium text-white">{example.title}</h3>
                       <span className="text-[10px] bg-zinc-800 px-2 py-0.5 rounded text-zinc-400">LOGLINE</span>
                     </div>
                     <p className="text-sm text-zinc-400">{example.description}</p>
@@ -187,7 +180,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
         </div>
         
         <div className="mb-8">
-          <h2 className="text-xl font-medium mb-4">Optional settings</h2>
+          <h2 className="text-xl font-medium mb-4 text-white">Optional settings</h2>
           
           <div className="space-y-6">
             <div>
@@ -317,7 +310,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
             )}
             
             <div>
-              <h3 className="text-lg font-medium mb-3">Speech</h3>
+              <h3 className="text-lg font-medium mb-3 text-white">Speech</h3>
               <div className="flex items-center justify-between">
                 <label className="flex items-center text-sm text-zinc-400 gap-1">
                   ADD VOICEOVER

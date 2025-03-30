@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConceptTab from './ConceptTab';
@@ -10,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/providers/AuthProvider';
 import ProjectSetupHeader from './ProjectSetupHeader';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronRight } from 'lucide-react';
 
 type ProjectSetupTab = 'concept' | 'storyline' | 'settings' | 'breakdown';
 
@@ -117,49 +116,34 @@ const ProjectSetupWizard = () => {
   // Tab configuration
   const tabs: Array<{ id: ProjectSetupTab; label: string }> = [
     { id: 'concept', label: 'CONCEPT' },
-    { id: 'storyline', label: 'STORYLINE' },
     { id: 'settings', label: 'SETTINGS & CAST' },
     { id: 'breakdown', label: 'BREAKDOWN' }
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
       <ProjectSetupHeader />
       
       {/* Tabs Navigation */}
       <div className="border-b border-zinc-800 bg-[#0F1219]">
         <div className="container mx-auto px-4">
-          <div className="flex space-x-1">
-            {tabs.map((tab) => (
+          <div className="flex">
+            {tabs.map((tab, index) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-12 relative transition-all duration-200 ${
+                className={`py-4 px-8 relative transition-all duration-200 flex items-center ${
                   activeTab === tab.id
-                    ? 'text-white font-medium'
+                    ? 'text-white bg-[#0F1219]'
                     : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
                 {tab.label}
                 {activeTab === tab.id && (
-                  <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600" />
+                  <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600" />
                 )}
-                <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                  <svg 
-                    width="16" 
-                    height="16" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round"
-                    className={`${activeTab === tab.id ? 'text-white' : 'text-zinc-600'}`}
-                  >
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
-                </div>
+                <ChevronRight className={`ml-2 h-4 w-4 ${activeTab === tab.id ? 'text-white' : 'text-zinc-600'}`} />
               </button>
             ))}
           </div>
@@ -175,27 +159,11 @@ const ProjectSetupWizard = () => {
       </div>
 
       {/* Footer with navigation buttons */}
-      <div className="border-t border-zinc-800 p-4 flex justify-between">
-        {activeTab === 'breakdown' ? (
-          <Button
-            variant="outline"
-            onClick={() => setActiveTab('settings')}
-            className="border-zinc-700 text-white hover:bg-zinc-800"
-          >
-            Back
-          </Button>
-        ) : (
-          <div></div>
-        )}
-        
+      <div className="border-t border-zinc-800 p-4 flex justify-end">
         <Button
           onClick={handleNext}
           disabled={isCreating}
-          className={`${
-            activeTab === 'breakdown' 
-              ? 'bg-blue-600 hover:bg-blue-700' 
-              : 'bg-blue-600 hover:bg-blue-700'
-          } text-white px-8`}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-8"
         >
           {isCreating ? 'Creating...' : activeTab === 'breakdown' ? 'Start' : 'Next'}
           {activeTab !== 'breakdown' && <ArrowRight className="ml-2 h-4 w-4" />}
