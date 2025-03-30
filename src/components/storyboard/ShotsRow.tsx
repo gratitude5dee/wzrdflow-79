@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -11,6 +11,7 @@ import { ShotCard } from './shot'; // Updated import path
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ShotDetails } from '@/types/storyboardTypes';
+import { cn } from '@/lib/utils';
 
 interface ShotsRowProps {
   sceneId: string;
@@ -185,16 +186,21 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className={`p-4 rounded-lg transition-all duration-300 ${isSelected ? 'bg-[#111827]/50 ring-1 ring-purple-500/30' : 'hover:bg-[#111827]/30'}`}
+      className={cn(
+        "p-4 rounded-lg transition-all duration-300 mb-8 relative group",
+        isSelected 
+          ? "bg-purple-900/10 ring-1 ring-purple-500/30 shadow-lg" 
+          : "hover:bg-white/5"
+      )}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <h2 className="text-2xl font-bold text-[#FFB628] glow-text-gold font-serif cursor-pointer hover:opacity-80">
           SCENE {sceneNumber}
         </h2>
         <div className="flex space-x-2">
           <Button 
             onClick={addShot}
-            className="bg-purple-600 hover:bg-purple-700 text-white shadow-glow-purple"
+            className="bg-purple-600 hover:bg-purple-700 text-white shadow-glow-purple-sm transition-all-std"
             disabled={isLoading || isSavingOrder}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -210,6 +216,7 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
                     size="icon"
                     disabled={isDeleting}
                     onClick={handleDeleteScene}
+                    className="transition-all-std"
                   >
                     {isDeleting ? (
                       <span className="animate-spin">◌</span>
@@ -227,8 +234,8 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
         </div>
       </div>
 
-      <ScrollArea className="pb-4">
-        <div className="flex space-x-6 pb-4 px-2 min-h-[180px] perspective-1000">
+      <ScrollArea className="pb-3">
+        <div className="flex space-x-4 pb-3 px-2 min-h-[180px] perspective-1000 transform-style-3d">
           {isLoading ? (
             <div className="flex items-center justify-center w-full text-zinc-500">
               <span className="animate-spin mr-2">◌</span> Loading shots...
@@ -249,15 +256,15 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
           ) : (
             <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
               <SortableContext items={shots.map(shot => shot.id)} strategy={horizontalListSortingStrategy}>
-                <AnimatePresence>
-                  {shots.map((shot) => (
+                <AnimatePresence initial={false}>
+                  {shots.map((shot, index) => (
                     <motion.div
                       key={shot.id}
                       layout
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.2 }}
+                      transition={{ duration: 0.2, delay: index * 0.05 }}
                     >
                       <ShotCard
                         shot={shot}
@@ -271,6 +278,7 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
             </DndContext>
           )}
         </div>
+        <ScrollBar orientation="horizontal" className="h-2" />
       </ScrollArea>
     </motion.div>
   );

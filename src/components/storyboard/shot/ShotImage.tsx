@@ -1,10 +1,12 @@
 
 import React from 'react';
-import { Loader2, Wand2, Play } from 'lucide-react';
+import { Loader2, Wand2, Play, ImageOff, AlertTriangle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { ImageStatus } from '@/types/storyboardTypes';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 interface ShotImageProps {
   shotId: string;
@@ -52,93 +54,113 @@ const ShotImage: React.FC<ShotImageProps> = ({
     }
   };
 
-  // Loading or empty state
-  if (!imageUrl) {
+  const overlayBaseClass = "absolute inset-0 flex flex-col items-center justify-center text-center p-2 bg-gradient-to-t from-black/60 via-black/30 to-transparent";
+  const textClass = "text-xs text-zinc-400";
+  const buttonClass = "text-xs h-7 px-2 bg-black/40 border border-white/20 hover:bg-white/10 text-white backdrop-blur-sm transition-all-std";
+  const iconClass = "w-3 h-3 mr-1";
+
+  // Completed Image State
+  if (imageUrl && status === 'completed') {
     return (
-      <div className="w-full h-40 bg-zinc-900 flex flex-col items-center justify-center relative">
-        {status === 'generating' || isGenerating ? (
-          <div className="flex flex-col items-center justify-center gap-2">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-            <span className="text-xs text-zinc-400">Generating image...</span>
-          </div>
-        ) : status === 'failed' ? (
-          <div className="flex flex-col items-center justify-center gap-2">
-            <span className="text-xs text-red-400">Generation failed</span>
-            {hasVisualPrompt ? (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-xs bg-zinc-800 hover:bg-zinc-700 mt-1"
-                onClick={onGenerateImage}
-              >
-                Retry
-              </Button>
+      <div className="w-full aspect-video relative group/image overflow-hidden">
+        <motion.img 
+          src={imageUrl} 
+          alt="Shot visualization" 
+          className="w-full h-full object-cover"
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.3 }}
+        />
+        <motion.div 
+          className={cn(overlayBaseClass, "opacity-0 group-hover/image:opacity-100 transition-all duration-200")}
+          initial={{ opacity: 0 }}
+          whileHover={{ opacity: 1 }}
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            className={buttonClass}
+            onClick={handleGenerateVideo}
+            disabled={isGeneratingVideo}
+          >
+            {isGeneratingVideo ? (
+              <Loader2 className={cn(iconClass, "animate-spin")} />
             ) : (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-xs bg-zinc-800 hover:bg-zinc-700 mt-1"
-                onClick={onGenerateVisualPrompt}
-              >
-                Generate
-              </Button>
+              <Play className={cn(iconClass, "fill-current")} />
             )}
-          </div>
-        ) : hasVisualPrompt ? (
-          <div className="flex flex-col items-center justify-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-xs bg-zinc-800/50 hover:bg-zinc-700 mt-1"
-              onClick={onGenerateImage}
-              disabled={isGenerating}
-            >
-              <Wand2 className="h-3 w-3 mr-1" />
-              Generate Image
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-xs bg-zinc-800/50 hover:bg-zinc-700 mt-1"
-              onClick={onGenerateVisualPrompt}
-              disabled={isGenerating}
-            >
-              <Wand2 className="h-3 w-3 mr-1" />
-              Generate Prompt
-            </Button>
-          </div>
-        )}
+            Generate Video
+          </Button>
+        </motion.div>
       </div>
     );
   }
 
-  // Image with overlay options for video generation
+  // Loading/Generating/Pending/Failed States
   return (
-    <div className="w-full aspect-video relative group">
-      <img 
-        src={imageUrl} 
-        alt="Shot visualization" 
-        className="w-full h-full object-cover"
-      />
-      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-xs bg-black/50 hover:bg-black/70 border-white/20 text-white"
-          onClick={handleGenerateVideo}
-          disabled={isGeneratingVideo}
+    <div className="w-full aspect-video bg-zinc-900/50 backdrop-blur-sm flex flex-col items-center justify-center p-2 relative overflow-hidden border-b border-white/5">
+      {isGenerating || status === 'generating' ? (
+        <motion.div 
+          className="flex flex-col items-center justify-center gap-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
         >
-          {isGeneratingVideo ? (
-            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-          ) : (
-            <Play className="h-3 w-3 mr-1 fill-current" />
-          )}
-          Generate Video
-        </Button>
-      </div>
+          <Loader2 className="h-5 w-5 animate-spin text-blue-400 mb-1" />
+          <span className="text-xs text-zinc-300">Generating image...</span>
+        </motion.div>
+      ) : status === 'failed' ? (
+        <motion.div 
+          className="flex flex-col items-center justify-center gap-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <AlertTriangle className="h-5 w-5 text-red-400 mb-1" />
+          <span className="text-xs text-red-400 mb-2">Generation failed</span>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className={buttonClass}
+            onClick={hasVisualPrompt ? onGenerateImage : onGenerateVisualPrompt}
+          >
+            <RefreshCw className={iconClass} /> Retry
+          </Button>
+        </motion.div>
+      ) : status === 'prompt_ready' ? (
+        <motion.div 
+          className="flex flex-col items-center justify-center gap-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <span className={textClass}>Prompt ready</span>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className={cn(buttonClass, "text-purple-300 border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-200 mt-2")}
+            onClick={onGenerateImage}
+          >
+            <Wand2 className={iconClass}/> Generate Image
+          </Button>
+        </motion.div>
+      ) : ( // Status is 'pending'
+        <motion.div 
+          className="flex flex-col items-center justify-center gap-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <ImageOff className="h-5 w-5 text-zinc-500 mb-1" />
+          <span className={textClass}>No image yet</span>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className={cn(buttonClass, "text-blue-300 border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-200 mt-2")}
+            onClick={onGenerateVisualPrompt}
+          >
+            <Wand2 className={iconClass} /> Generate Prompt
+          </Button>
+        </motion.div>
+      )}
     </div>
   );
 };

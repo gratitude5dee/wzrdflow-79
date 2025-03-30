@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -7,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Settings, FileCode, Shirt, Mic, Music, Play, Trash2, ChevronDown } from 'lucide-react';
 import { SidebarData } from '@/types/storyboardTypes';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface StoryboardSidebarProps {
   data: SidebarData;
@@ -73,20 +75,23 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
     }
   };
 
+  const inputBaseClass = "glass-input rounded text-xs h-7 transition-all-fast placeholder:text-zinc-500";
+  const labelBaseClass = "text-[10px] font-medium uppercase text-zinc-400 mb-1 block";
+
   return (
-    <div className="w-full bg-[#0A0D16]/80 backdrop-blur-lg border-r border-white/10 text-white h-full">
+    <div className="w-full glass-panel border-r text-white h-full">
       <ScrollArea className="h-full">
-        <div className="p-6 space-y-6">
+        <div className="p-5 space-y-5">
           {/* Project Title and Description */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <h2 className="text-xl font-bold text-[#2F7BBC] mb-1 font-serif tracking-wide glow-text-blue">
+            <h2 className="text-lg font-bold text-[#2F7BBC] mb-1 font-serif tracking-wide glow-text-blue">
               {data.projectTitle || 'Project Title'}
             </h2>
-            <p className="text-zinc-400 text-sm mb-6 leading-relaxed line-clamp-3">
+            <p className="text-zinc-400 text-xs mb-5 leading-relaxed line-clamp-3">
               {data.projectDescription || 'No project description.'}
             </p>
           </motion.div>
@@ -97,13 +102,14 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
           >
-            <p className="text-xs text-zinc-500 uppercase mb-2 font-medium">Scene Description</p>
+            <label htmlFor="scene-desc" className={labelBaseClass}>Scene Description</label>
             <Textarea
+              id="scene-desc"
               value={sceneDesc}
               onChange={(e) => setSceneDesc(e.target.value)}
               onBlur={() => handleUpdate('description', sceneDesc)}
               placeholder="Describe the scene..."
-              className="glass-input text-white rounded-md text-sm min-h-[80px]"
+              className={cn(inputBaseClass, "min-h-[80px]")}
             />
           </motion.div>
 
@@ -111,17 +117,17 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
           <Collapsible
             open={openSections.location}
             onOpenChange={() => toggleSection('location')}
-            className="space-y-3"
+            className="space-y-2"
           >
             <CollapsibleTrigger asChild>
               <motion.div 
-                className="flex items-center justify-between cursor-pointer hover:text-blue-400 transition-colors mb-2"
+                className="flex items-center justify-between cursor-pointer hover:text-blue-400 transition-colors py-1"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-zinc-500" />
-                  <h3 className="text-zinc-200 font-medium text-sm">LOCATION</h3>
+                  <Settings className="w-3.5 h-3.5 text-zinc-500" />
+                  <h3 className="text-zinc-200 font-medium text-xs uppercase tracking-wider">Location</h3>
                 </div>
                 <motion.div
                   animate={{ rotate: openSections.location ? 180 : 0 }}
@@ -139,36 +145,39 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
                     initial="collapsed"
                     animate="open"
                     exit="collapsed"
-                    className="space-y-3 sidebar-content-glow pl-6"
+                    className="space-y-2 sidebar-content-glow pl-5"
                   >
                     <div>
-                      <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Description</p>
+                      <label htmlFor="location-desc" className={labelBaseClass}>Description</label>
                       <Input
+                        id="location-desc"
                         value={locationDesc}
                         onChange={(e) => setLocationDesc(e.target.value)}
                         onBlur={() => handleUpdate('location', locationDesc)}
                         placeholder="Describe the location..."
-                        className="glass-input rounded-md h-8 text-xs"
+                        className={inputBaseClass}
                       />
                     </div>
                     <div>
-                      <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Lighting</p>
+                      <label htmlFor="lighting-desc" className={labelBaseClass}>Lighting</label>
                       <Input
+                        id="lighting-desc"
                         value={lightingDesc}
                         onChange={(e) => setLightingDesc(e.target.value)}
                         onBlur={() => handleUpdate('lighting', lightingDesc)}
                         placeholder="Describe the lighting..."
-                        className="glass-input rounded-md h-8 text-xs"
+                        className={inputBaseClass}
                       />
                     </div>
                     <div>
-                      <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Weather</p>
+                      <label htmlFor="weather-desc" className={labelBaseClass}>Weather</label>
                       <Input
+                        id="weather-desc"
                         value={weatherDesc}
                         onChange={(e) => setWeatherDesc(e.target.value)}
                         onBlur={() => handleUpdate('weather', weatherDesc)}
                         placeholder="Describe the weather..."
-                        className="glass-input rounded-md h-8 text-xs"
+                        className={inputBaseClass}
                       />
                     </div>
                   </motion.div>
@@ -181,17 +190,17 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
           <Collapsible
             open={openSections.style}
             onOpenChange={() => toggleSection('style')}
-            className="space-y-3"
+            className="space-y-2"
           >
             <CollapsibleTrigger asChild>
               <motion.div 
-                className="flex items-center justify-between cursor-pointer hover:text-blue-400 transition-colors mb-2"
+                className="flex items-center justify-between cursor-pointer hover:text-blue-400 transition-colors py-1"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center gap-2">
-                  <FileCode className="w-4 h-4 text-zinc-500" />
-                  <h3 className="text-zinc-200 font-medium text-sm">STYLE</h3>
+                  <FileCode className="w-3.5 h-3.5 text-zinc-500" />
+                  <h3 className="text-zinc-200 font-medium text-xs uppercase tracking-wider">Style</h3>
                 </div>
                 <motion.div
                   animate={{ rotate: openSections.style ? 180 : 0 }}
@@ -209,11 +218,11 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
                     initial="collapsed"
                     animate="open"
                     exit="collapsed"
-                    className="sidebar-content-glow pl-6"
+                    className="sidebar-content-glow pl-5"
                   >
                     <div>
-                      <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Video Style</p>
-                      <p className="text-sm text-zinc-300 capitalize">{data.videoStyle || 'Not Set'}</p>
+                      <label className={labelBaseClass}>Video Style</label>
+                      <p className="text-xs text-zinc-300 capitalize">{data.videoStyle || 'Not Set'}</p>
                     </div>
                   </motion.div>
                 </CollapsibleContent>
@@ -225,17 +234,17 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
           <Collapsible
             open={openSections.clothing}
             onOpenChange={() => toggleSection('clothing')}
-            className="space-y-3"
+            className="space-y-2"
           >
             <CollapsibleTrigger asChild>
               <motion.div 
-                className="flex items-center justify-between cursor-pointer hover:text-blue-400 transition-colors mb-2"
+                className="flex items-center justify-between cursor-pointer hover:text-blue-400 transition-colors py-1"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center gap-2">
-                  <Shirt className="w-4 h-4 text-zinc-500" />
-                  <h3 className="text-zinc-200 font-medium text-sm">CLOTHING</h3>
+                  <Shirt className="w-3.5 h-3.5 text-zinc-500" />
+                  <h3 className="text-zinc-200 font-medium text-xs uppercase tracking-wider">Clothing</h3>
                 </div>
                 <motion.div
                   animate={{ rotate: openSections.clothing ? 180 : 0 }}
@@ -253,7 +262,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
                     initial="collapsed"
                     animate="open"
                     exit="collapsed"
-                    className="sidebar-content-glow pl-6"
+                    className="sidebar-content-glow pl-5"
                   >
                     <div className="bg-black/30 backdrop-blur-sm p-3 rounded-md border border-white/10">
                       <p className="text-zinc-400 text-xs mb-2">No clothing items specified for this scene yet.</p>
@@ -271,15 +280,18 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
           <Collapsible
             open={openSections.sound}
             onOpenChange={() => toggleSection('sound')}
-            className="pt-4 border-t border-white/5"
+            className="pt-3 border-t border-white/5"
           >
             <CollapsibleTrigger asChild>
               <motion.div 
-                className="flex items-center justify-between cursor-pointer hover:text-blue-400 transition-colors mb-2"
+                className="flex items-center justify-between cursor-pointer hover:text-blue-400 transition-colors py-1"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <h3 className="text-zinc-200 font-medium text-sm">SOUND</h3>
+                <div className="flex items-center gap-2">
+                  <Music className="w-3.5 h-3.5 text-zinc-500" />
+                  <h3 className="text-zinc-200 font-medium text-xs uppercase tracking-wider">Sound</h3>
+                </div>
                 <motion.div
                   animate={{ rotate: openSections.sound ? 180 : 0 }}
                   transition={{ duration: 0.2 }}
@@ -296,27 +308,24 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
                     initial="collapsed"
                     animate="open"
                     exit="collapsed"
-                    className="space-y-4 sidebar-content-glow pl-6"
+                    className="space-y-3 sidebar-content-glow pl-5"
                   >
                     {/* Voiceover Sub-section */}
                     <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Mic className="w-4 h-4 text-zinc-500" />
-                        <p className="text-zinc-300 font-medium text-xs uppercase">Voiceover</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Mic className="w-3.5 h-3.5 text-zinc-500" />
+                        <p className="text-zinc-300 font-medium text-[10px] uppercase">Voiceover</p>
                       </div>
-                      <div className="bg-black/30 backdrop-blur-sm border border-white/10 rounded-md p-3 flex items-center justify-between">
+                      <div className="glass-input rounded-md p-2 flex items-center justify-between">
                         <div className="text-xs text-zinc-400">No voiceover specified.</div>
                       </div>
                     </div>
                     {/* Scene Sound Sub-section */}
                     <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Music className="w-4 h-4 text-zinc-500" />
-                        <p className="text-zinc-300 font-medium text-xs uppercase">Scene Sound Effects</p>
-                      </div>
+                      <label className={labelBaseClass}>Scene Sound Effects</label>
                       <Input
                         placeholder='E.g., "Footsteps on gravel, distant siren..."'
-                        className="glass-input rounded-md h-8 text-xs"
+                        className={inputBaseClass}
                       />
                     </div>
                   </motion.div>

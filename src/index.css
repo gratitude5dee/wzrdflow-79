@@ -37,58 +37,63 @@
   }
  
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 224 71% 4%;
     --foreground: 210 40% 98%;
  
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
  
-    --popover: 222.2 84% 4.9%;
+    --popover: 226 71% 9%;
     --popover-foreground: 210 40% 98%;
  
     --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-foreground: 224 71% 10%;
  
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
  
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
  
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 217 33% 17%;
     --accent-foreground: 210 40% 98%;
  
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
  
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 217 33% 25%;
+    --input: 217 33% 20%;
+    --ring: 213 94% 68%;
   }
 }
 
 /* Global styles */
 body {
   position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: hsl(var(--background));
+  min-height: 100vh;
 }
 
 body::after {
   content: '';
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
   background-image: url('/noise.png');
-  opacity: 0.03;
+  opacity: 0.025;
   pointer-events: none;
   z-index: -10;
+  animation: noise 0.2s infinite;
 }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -96,12 +101,12 @@ body::after {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #374151;
-  border-radius: 5px;
+  background: rgba(55, 65, 81, 0.5);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4B5563;
+  background: rgba(75, 85, 99, 0.7);
 }
 
 /* 3D Card Effects */
@@ -111,11 +116,11 @@ body::after {
 
 .card-3d {
   transform-style: preserve-3d;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease-out;
 }
 
 .card-3d:hover {
-  transform: translateY(-5px) rotateX(5deg);
+  transform: translateY(-5px) rotateX(5deg) rotateY(2deg);
   box-shadow: 0 15px 25px -12px rgba(0, 0, 0, 0.5);
 }
 
@@ -188,6 +193,20 @@ body::after {
   }
 }
 
+@keyframes noise {
+  0% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -5%); }
+  20% { transform: translate(-10%, 5%); }
+  30% { transform: translate(5%, -10%); }
+  40% { transform: translate(-5%, 15%); }
+  50% { transform: translate(-10%, 5%); }
+  60% { transform: translate(15%, 0); }
+  70% { transform: translate(0, 10%); }
+  80% { transform: translate(-15%, 0); }
+  90% { transform: translate(10%, 5%); }
+  100% { transform: translate(0, 0); }
+}
+
 /* Font styles */
 @font-face {
   font-family: 'Cinzel';
@@ -230,5 +249,3 @@ body::after {
     @apply bg-background text-foreground;
   }
 }
-
-/* Add Google font link for Cinzel */

@@ -111,16 +111,31 @@ export default {
 					'50%': { 
 						textShadow: '0 0 8px rgba(255, 182, 40, 0.5), 0 0 15px rgba(255, 182, 40, 0.2)' 
 					}
+				},
+				'noise-animation': {
+					'0%': { transform: 'translate(0, 0)' },
+					'10%': { transform: 'translate(-5%, -5%)' },
+					'20%': { transform: 'translate(-10%, 5%)' },
+					'30%': { transform: 'translate(5%, -10%)' },
+					'40%': { transform: 'translate(-5%, 15%)' },
+					'50%': { transform: 'translate(-10%, 5%)' },
+					'60%': { transform: 'translate(15%, 0)' },
+					'70%': { transform: 'translate(0, 10%)' },
+					'80%': { transform: 'translate(-15%, 0)' },
+					'90%': { transform: 'translate(10%, 5%)' },
+					'100%': { transform: 'translate(0, 0)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'glow-pulse': 'glow-pulse 3s ease-in-out infinite',
-				'text-glow-pulse': 'text-glow-pulse 3s ease-in-out infinite'
+				'text-glow-pulse': 'text-glow-pulse 3s ease-in-out infinite',
+				'noise': 'noise-animation 0.2s infinite'
 			},
 			backgroundImage: {
 				'noise': 'url("/noise.png")',
+				'gradient-dark': 'radial-gradient(ellipse at bottom, hsl(224, 71%, 10%) 0%, hsl(224, 71%, 4%) 100%)'
 			}
 		},
 		// Custom utilities for 3D transforms
@@ -169,7 +184,25 @@ export default {
 					'backface-visibility': 'hidden',
 				},
 				'.transition-all-std': {
-					'transition': 'all 300ms',
+					'transition': 'all 300ms ease-out',
+				},
+				'.transition-all-fast': {
+					'transition': 'all 200ms ease-out',
+				},
+				'.glass-panel': {
+					'background-color': 'rgba(10, 13, 22, 0.8)',
+					'backdrop-filter': 'blur(12px)',
+					'border-color': 'rgba(255, 255, 255, 0.1)',
+				},
+				'.glass-card': {
+					'background-color': 'rgba(24, 24, 27, 0.6)',
+					'backdrop-filter': 'blur(8px)',
+					'border-color': 'rgba(255, 255, 255, 0.1)',
+				},
+				'.glass-input': {
+					'background-color': 'rgba(0, 0, 0, 0.3)',
+					'backdrop-filter': 'blur(4px)',
+					'border-color': 'rgba(255, 255, 255, 0.1)',
 				},
 			};
 			addUtilities(newUtilities);
