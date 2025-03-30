@@ -32,7 +32,7 @@ serve(async (req) => {
     // Fetch project details
     const { data: project, error: projectError } = await supabaseClient
       .from('projects')
-      .select('title, concept_text, genre, tone, format, custom_format_description, special_requests')
+      .select('title, concept_text, genre, tone, format, custom_format_description, special_requests, product_name, target_audience, main_message, call_to_action')
       .eq('id', project_id)
       .eq('user_id', user.id)
       .single();
@@ -48,30 +48,51 @@ serve(async (req) => {
       return errorResponse('Anthropic API key not found', 500);
     }
 
-    // Construct prompt for Claude
+    // Construct updated prompt for Claude that requests one storyline and scene breakdown
     const systemPrompt = `You are a professional screenwriter and storyteller.
-Generate 3 distinct and compelling storyline options based on the concept, genre, tone, and format provided.
-Your response should be in JSON format with the following structure:
-[
-  {
+Based on the concept, genre, tone, and format provided, you will:
+1. Generate ONE compelling primary storyline
+2. Create a detailed scene breakdown for that storyline
+
+Your response must be in JSON format with the following structure:
+{
+  "primary_storyline": {
     "title": "Title of the storyline",
     "description": "A short one-paragraph summary of the storyline (max 200 characters)",
     "tags": ["tag1", "tag2", "tag3"],
     "full_story": "A detailed story outline in 3-5 paragraphs"
   },
-  ...
-]
-Be creative and provide variety in the storylines so the user has distinct options to choose from.
-Ensure each storyline fits the requested genre, tone, and format.`;
+  "scene_breakdown": [
+    {
+      "scene_number": 1,
+      "title": "Scene title",
+      "description": "Detailed description of what happens in the scene",
+      "location": "Where the scene takes place, if applicable",
+      "lighting": "Lighting details, if relevant",
+      "weather": "Weather conditions, if relevant"
+    },
+    ...more scenes...
+  ]
+}
 
-    const userPrompt = `Generate 3 storyline options for my project with these details:
+Ensure your primary storyline fits the requested genre, tone, and format. For the scene breakdown:
+- Create logical scenes that flow naturally and advance the storyline
+- Include 5-10 scenes depending on the complexity of the story
+- Add sufficient detail in each scene description to guide content creation
+- Infer location, lighting, and weather information where appropriate`;
+
+    const userPrompt = `Create one primary storyline and scene breakdown for my project with these details:
 Title: ${project.title || 'Untitled Project'}
 Concept: ${project.concept_text || 'No concept provided'}
 Genre: ${project.genre || 'Not specified'}
 Tone: ${project.tone || 'Not specified'}
 Format: ${project.format || 'Not specified'}${project.format === 'custom' ? `\nCustom Format Description: ${project.custom_format_description || 'Not specified'}` : ''}${project.special_requests ? `\nSpecial Requests: ${project.special_requests}` : ''}
+${project.product_name ? `Product Name: ${project.product_name}` : ''}
+${project.target_audience ? `Target Audience: ${project.target_audience}` : ''}
+${project.main_message ? `Main Message: ${project.main_message}` : ''}
+${project.call_to_action ? `Call to Action: ${project.call_to_action}` : ''}
 
-Please provide three distinct storylines that match these requirements.`;
+Please provide a cohesive storyline with an engaging narrative and a detailed scene-by-scene breakdown.`;
 
     console.log('Sending request to Anthropic API...');
     
@@ -99,7 +120,7 @@ Please provide three distinct storylines that match these requirements.`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Claude API error:', errorText);
-      return errorResponse('Failed to generate storylines', 500, errorText);
+      return errorResponse('Failed to generate storyline and scenes', 500, errorText);
     }
 
     const claudeResponse = await response.json();
@@ -113,64 +134,96 @@ Please provide three distinct storylines that match these requirements.`;
 
     // Extract JSON from content - Claude might wrap it in ```json ... ``` or other markdown
     let jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/```\s*([\s\S]*?)\s*```/);
-    let storylinesJson;
+    let responseData;
     
     if (jsonMatch && jsonMatch[1]) {
       try {
-        storylinesJson = JSON.parse(jsonMatch[1]);
+        responseData = JSON.parse(jsonMatch[1]);
       } catch (error) {
         console.error('Failed to parse JSON from code block:', error);
         // Try to parse the entire response as JSON
         try {
-          storylinesJson = JSON.parse(content);
+          responseData = JSON.parse(content);
         } catch (error) {
           console.error('Failed to parse entire content as JSON:', error);
-          return errorResponse('Failed to parse storylines from Claude response', 500);
+          return errorResponse('Failed to parse response from Claude', 500);
         }
       }
     } else {
       // Try to parse the entire response as JSON
       try {
-        storylinesJson = JSON.parse(content);
+        responseData = JSON.parse(content);
       } catch (error) {
         console.error('Failed to parse content as JSON:', error);
-        return errorResponse('Failed to parse storylines from Claude response', 500, { content });
+        return errorResponse('Failed to parse response from Claude', 500, { content });
       }
     }
 
-    if (!Array.isArray(storylinesJson)) {
-      return errorResponse('Unexpected format from Claude API', 500, { received: storylinesJson });
+    // Validate that the response has the expected structure
+    if (!responseData.primary_storyline || !Array.isArray(responseData.scene_breakdown)) {
+      return errorResponse('Unexpected format from Claude API', 500, { received: responseData });
     }
 
-    console.log(`Successfully parsed ${storylinesJson.length} storylines from Claude response`);
+    console.log('Successfully parsed storyline and scenes from Claude response');
 
-    // Store storylines in the database
-    const savedStorylines = [];
-    for (const storyline of storylinesJson) {
-      const { error: insertError, data: newStoryline } = await supabaseClient
-        .from('storylines')
-        .insert({
-          project_id: project_id,
-          title: storyline.title,
-          description: storyline.description,
-          full_story: storyline.full_story,
-          tags: storyline.tags,
-          is_selected: false // None selected by default
-        })
-        .select()
-        .single();
+    // Start a transaction to insert both storyline and scenes
+    // First, insert the primary storyline
+    const { data: storyline, error: storylineError } = await supabaseClient
+      .from('storylines')
+      .insert({
+        project_id: project_id,
+        title: responseData.primary_storyline.title,
+        description: responseData.primary_storyline.description,
+        full_story: responseData.primary_storyline.full_story,
+        tags: responseData.primary_storyline.tags,
+        is_selected: true // Set as selected by default
+      })
+      .select()
+      .single();
 
-      if (insertError) {
-        console.error('Error inserting storyline:', insertError);
-      } else {
-        savedStorylines.push(newStoryline);
-      }
+    if (storylineError) {
+      console.error('Error inserting storyline:', storylineError);
+      return errorResponse('Failed to save storyline', 500, storylineError.message);
+    }
+
+    // Next, insert all scenes with reference to the project and storyline
+    const scenesToInsert = responseData.scene_breakdown.map(scene => ({
+      project_id: project_id,
+      storyline_id: storyline.id,
+      scene_number: scene.scene_number,
+      title: scene.title,
+      description: scene.description,
+      location: scene.location || null,
+      lighting: scene.lighting || null,
+      weather: scene.weather || null
+    }));
+
+    const { data: scenes, error: scenesError } = await supabaseClient
+      .from('scenes')
+      .insert(scenesToInsert)
+      .select();
+
+    if (scenesError) {
+      console.error('Error inserting scenes:', scenesError);
+      return errorResponse('Failed to save scenes', 500, scenesError.message);
+    }
+
+    // Set this storyline as the selected one in the project
+    const { error: projectUpdateError } = await supabaseClient
+      .from('projects')
+      .update({ selected_storyline_id: storyline.id })
+      .eq('id', project_id);
+
+    if (projectUpdateError) {
+      console.error('Error updating project with selected storyline:', projectUpdateError);
+      // This is not critical, so we continue even if it fails
     }
 
     return successResponse({ 
       success: true, 
-      storylines: savedStorylines,
-      total: savedStorylines.length
+      storyline: storyline,
+      scenes: scenes,
+      scene_count: scenes.length
     });
   } catch (error) {
     console.error('Error in generate-storylines function:', error);
