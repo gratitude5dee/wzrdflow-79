@@ -1,12 +1,8 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0';
 import { nanoid } from 'https://esm.sh/nanoid@5.0.4';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+import { authenticateRequest, AuthError } from '../_shared/auth.ts';
+import { corsHeaders, errorResponse, successResponse, handleCors } from '../_shared/response.ts';
 
 interface ShareWorkflowBody {
   workflowId: string;
@@ -17,20 +13,17 @@ interface ShareWorkflowBody {
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return handleCors();
   }
 
   try {
     // Only allow POST requests
     if (req.method !== 'POST') {
-      throw new Error('Method not allowed')
+      return errorResponse('Method not allowed', 405);
     }
 
-    // Get the JWT from the authorization header
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      throw new Error('Missing authorization header')
-    }
+    // Authenticate the request
+    const user = await authenticateRequest(req.headers);
 
     // Create Supabase client with service role key
     const supabaseClient = createClient(
@@ -42,26 +35,17 @@ Deno.serve(async (req) => {
           persistSession: false,
         },
       }
-    )
-
-    // Verify the JWT and get the user
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    )
-
-    if (authError || !user) {
-      throw new Error('Invalid token')
-    }
+    );
 
     // Parse and validate the request body
-    const { workflowId, title, description }: ShareWorkflowBody = await req.json()
+    const { workflowId, title, description }: ShareWorkflowBody = await req.json();
     
     if (!workflowId || !title) {
-      throw new Error('Missing required fields')
+      return errorResponse('Missing required fields', 400);
     }
 
     // Generate a unique share ID
-    const shareId = nanoid(10)
+    const shareId = nanoid(10);
 
     // Insert the shared workflow record
     const { data, error } = await supabaseClient
@@ -74,32 +58,24 @@ Deno.serve(async (req) => {
         share_id: shareId,
       })
       .select()
-      .single()
+      .single();
 
     if (error) {
-      console.error('Error creating shared workflow:', error)
-      throw new Error('Failed to create shared workflow')
+      console.error('Error creating shared workflow:', error);
+      return errorResponse('Failed to create shared workflow', 500, error.message);
     }
 
     // Return the share ID
-    return new Response(
-      JSON.stringify({ shareId }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    )
-
+    return successResponse({ shareId });
   } catch (error) {
-    console.error('Share workflow error:', error)
-    return new Response(
-      JSON.stringify({ 
-        error: error.message || 'Internal server error'
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: error.message === 'Invalid token' ? 401 : 400,
-      }
-    )
+    console.error('Share workflow error:', error);
+    
+    // Handle authentication errors specifically
+    if (error instanceof AuthError) {
+      return errorResponse(error.message, 401);
+    }
+    
+    // Handle other errors
+    return errorResponse(error.message || 'Failed to share workflow', 500);
   }
-})
+});

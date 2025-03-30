@@ -1,35 +1,29 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { authenticateRequest, AuthError } from '../_shared/auth.ts';
+import { corsHeaders, errorResponse, successResponse, handleCors } from '../_shared/response.ts';
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCors();
   }
 
   try {
-    // Check if request is authenticated
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
-    }
+    // Authenticate the request
+    await authenticateRequest(req.headers);
 
     // Retrieve FAL_KEY from the environment
     const falKey = Deno.env.get('FAL_KEY');
     if (!falKey) {
       console.error('FAL_KEY environment variable is not set');
-      throw new Error('Server configuration error');
+      return errorResponse('Server configuration error: FAL_KEY not set', 500);
     }
 
     // Parse the request body
     const { requestId } = await req.json();
     if (!requestId) {
-      throw new Error('requestId is required');
+      return errorResponse('requestId is required', 400);
     }
 
     console.log('Checking status for request:', requestId);
@@ -53,26 +47,24 @@ serve(async (req) => {
       } catch {
         errorMessage = 'Failed to check status from fal.ai: ' + responseText;
       }
-      throw new Error(errorMessage);
+      return errorResponse(errorMessage, 500);
     }
 
     const data = JSON.parse(responseText);
     
-    return new Response(JSON.stringify({
+    return successResponse({
       status: data.status,
       result: data.logs?.length ? data.logs[data.logs.length - 1]?.result : null,
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
     });
   } catch (error) {
     console.error('Edge function error:', error);
-    return new Response(
-      JSON.stringify({ error: error.message || 'Internal Server Error' }),
-      { 
-        status: error.message === 'Missing authorization header' ? 401 : 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    
+    // Handle authentication errors specifically
+    if (error instanceof AuthError) {
+      return errorResponse(error.message, 401);
+    }
+    
+    // Handle other errors
+    return errorResponse(error.message || 'Failed to poll fal.ai status', 500);
   }
 });

@@ -1,12 +1,8 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0';
 import { v4 as uuidv4 } from 'https://esm.sh/uuid@11.0.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { authenticateRequest, AuthError } from '../_shared/auth.ts';
+import { corsHeaders, errorResponse, successResponse, handleCors } from '../_shared/response.ts';
 
 interface CreateProjectBody {
   title: string;
@@ -17,20 +13,17 @@ interface CreateProjectBody {
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCors();
   }
 
   try {
     // Only allow POST requests
     if (req.method !== 'POST') {
-      throw new Error('Method not allowed');
+      return errorResponse('Method not allowed', 405);
     }
 
-    // Get the JWT from the authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
-    }
+    // Authenticate the request
+    const user = await authenticateRequest(req.headers);
 
     // Create Supabase client
     const supabaseClient = createClient(
@@ -44,20 +37,11 @@ Deno.serve(async (req) => {
       }
     );
 
-    // Verify the JWT and get the user
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-
-    if (authError || !user) {
-      throw new Error('Invalid token');
-    }
-
     // Parse and validate the request body
     const { title, description, aspectRatio }: CreateProjectBody = await req.json();
     
     if (!title) {
-      throw new Error('Missing required fields');
+      return errorResponse('Missing required fields', 400);
     }
 
     // Create project
@@ -74,7 +58,7 @@ Deno.serve(async (req) => {
 
     if (projectError) {
       console.error('Error creating project:', projectError);
-      throw new Error('Failed to create project');
+      return errorResponse('Failed to create project', 500, projectError.message);
     }
 
     // Ensure media storage bucket exists
@@ -99,23 +83,16 @@ Deno.serve(async (req) => {
     }
 
     // Return the project
-    return new Response(
-      JSON.stringify({ project }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
+    return successResponse({ project });
   } catch (error) {
     console.error('Create project error:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message || 'Internal server error'
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: error.message === 'Invalid token' ? 401 : 400,
-      }
-    );
+    
+    // Handle authentication errors specifically
+    if (error instanceof AuthError) {
+      return errorResponse(error.message, 401);
+    }
+    
+    // Handle other errors
+    return errorResponse(error.message || 'Failed to create project', 500);
   }
 });

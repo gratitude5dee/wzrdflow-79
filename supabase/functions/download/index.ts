@@ -1,46 +1,35 @@
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { authenticateRequest, AuthError } from '../_shared/auth.ts';
+import { corsHeaders, errorResponse, successResponse, handleCors } from '../_shared/response.ts';
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return handleCors();
   }
 
   try {
-    const url = new URL(req.url).searchParams.get('url')
+    // Authenticate the request
+    await authenticateRequest(req.headers);
+
+    const url = new URL(req.url).searchParams.get('url');
     
     if (!url) {
-      return new Response(
-        JSON.stringify({ error: 'URL parameter is required' }), 
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+      return errorResponse('URL parameter is required', 400);
     }
 
     // Validate URL
     try {
-      new URL(url)
+      new URL(url);
     } catch {
-      return new Response(
-        JSON.stringify({ error: 'Invalid URL provided' }), 
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+      return errorResponse('Invalid URL provided', 400);
     }
 
     // Fetch the file
-    const response = await fetch(url)
+    const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch file: ${response.statusText}`)
+      throw new Error(`Failed to fetch file: ${response.statusText}`);
     }
 
     // Stream the response
@@ -50,15 +39,17 @@ Deno.serve(async (req) => {
         'Content-Type': response.headers.get('Content-Type') || 'application/octet-stream',
         'Content-Disposition': `attachment; filename="download"`,
       },
-    })
+    });
 
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }), 
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    )
+    console.error('Download error:', error);
+    
+    // Handle authentication errors specifically
+    if (error instanceof AuthError) {
+      return errorResponse(error.message, 401);
+    }
+    
+    // Handle other errors
+    return errorResponse(error.message || 'Failed to download file', 500);
   }
-})
+});

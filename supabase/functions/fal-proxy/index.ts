@@ -1,23 +1,17 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { authenticateRequest, AuthError } from '../_shared/auth.ts';
+import { corsHeaders, errorResponse, successResponse, handleCors } from '../_shared/response.ts';
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCors();
   }
 
   try {
-    // Check if request is authenticated
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
-    }
+    // Authenticate the request
+    await authenticateRequest(req.headers);
 
     // Log the received request
     console.log('Received headers:', Object.fromEntries(req.headers.entries()));
@@ -26,7 +20,7 @@ serve(async (req) => {
     const falKey = Deno.env.get('FAL_KEY');
     if (!falKey) {
       console.error('FAL_KEY environment variable is not set');
-      throw new Error('Server configuration error: FAL_KEY not set');
+      return errorResponse('Server configuration error: FAL_KEY not set', 500);
     }
 
     // Parse and validate the request body
@@ -37,13 +31,13 @@ serve(async (req) => {
       input = body.input;
       mode = body.mode || 'queue'; // Default to queue mode if not specified
       
-      if (!endpoint) throw new Error('endpoint is required');
-      if (!input) throw new Error('input is required');
+      if (!endpoint) return errorResponse('endpoint is required', 400);
+      if (!input) return errorResponse('input is required', 400);
       
       console.log('Request body:', { endpoint, input, mode });
     } catch (e) {
       console.error('Failed to parse request:', e);
-      throw new Error('Invalid request body');
+      return errorResponse('Invalid request body', 400);
     }
 
     // Submit request to fal.ai
@@ -71,7 +65,7 @@ serve(async (req) => {
       } catch {
         errorMessage = `Failed to submit request to fal.ai (${response.status}): ${responseText}`;
       }
-      throw new Error(errorMessage);
+      return errorResponse(errorMessage, 500);
     }
 
     let data;
@@ -79,7 +73,7 @@ serve(async (req) => {
       data = JSON.parse(responseText);
     } catch (e) {
       console.error('Failed to parse fal.ai response:', e);
-      throw new Error('Invalid response from fal.ai');
+      return errorResponse('Invalid response from fal.ai', 500);
     }
     
     console.log('Sending response:', {
@@ -88,28 +82,20 @@ serve(async (req) => {
       result: data.result
     });
 
-    return new Response(
-      JSON.stringify({
-        requestId: data.request_id,
-        status: data.status,
-        result: data.result,
-      }), 
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
+    return successResponse({
+      requestId: data.request_id,
+      status: data.status,
+      result: data.result,
+    });
   } catch (error) {
     console.error('Edge function error:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message || 'Internal Server Error',
-        timestamp: new Date().toISOString(),
-      }),
-      { 
-        status: error.message === 'Missing authorization header' ? 401 : 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    
+    // Handle authentication errors specifically
+    if (error instanceof AuthError) {
+      return errorResponse(error.message, 401);
+    }
+    
+    // Handle other errors
+    return errorResponse(error.message || 'Failed to process fal.ai request', 500);
   }
 });
