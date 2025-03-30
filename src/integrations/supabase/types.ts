@@ -304,9 +304,11 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          claude_api_key: string | null
           created_at: string
           id: string
           last_wallet_connection: string | null
+          luma_api_key: string | null
           updated_at: string
           username: string | null
           wallet_address: string | null
@@ -315,9 +317,11 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          claude_api_key?: string | null
           created_at?: string
           id: string
           last_wallet_connection?: string | null
+          luma_api_key?: string | null
           updated_at?: string
           username?: string | null
           wallet_address?: string | null
@@ -326,9 +330,11 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          claude_api_key?: string | null
           created_at?: string
           id?: string
           last_wallet_connection?: string | null
+          luma_api_key?: string | null
           updated_at?: string
           username?: string | null
           wallet_address?: string | null
@@ -701,6 +707,12 @@ export type Database = {
       get_available_credits: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      is_authenticated_user: {
+        Args: {
+          requested_user_id: string
+        }
+        Returns: boolean
       }
       use_credits: {
         Args: {
