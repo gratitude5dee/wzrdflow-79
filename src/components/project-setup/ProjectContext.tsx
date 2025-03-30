@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ProjectData, ProjectSetupTab } from './types';
 import { supabase } from '@/integrations/supabase/client';
@@ -72,9 +73,9 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       return null;
     }
 
+    let currentProjectId = projectId;
     try {
       console.log('Saving project data:', projectData);
-      console.log('Current user:', user);
       
       const projectPayload = {
         user_id: user.id,
@@ -96,25 +97,27 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       console.log('Project payload:', projectPayload);
 
       // If project already exists, update it
-      if (projectId) {
+      if (currentProjectId) {
+        console.log(`Updating existing project ID: ${currentProjectId}`);
         const { error } = await supabase
           .from('projects')
           .update(projectPayload)
-          .eq('id', projectId);
+          .eq('id', currentProjectId);
           
         if (error) {
           console.error('Error updating project:', error);
           throw error;
         }
         
-        toast.success("Project updated successfully");
-        return projectId;
+        toast.info("Project data saved");
+        return currentProjectId;
       } else {
         // Create new project
+        console.log('Creating new project...');
         const { data: project, error } = await supabase
           .from('projects')
           .insert(projectPayload)
-          .select()
+          .select('id')
           .single();
           
         if (error) {
@@ -122,43 +125,56 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
           throw error;
         }
         
+        console.log(`New project created with ID: ${project.id}`);
         setProjectId(project.id);
+        currentProjectId = project.id;
         toast.success("Project created successfully");
         return project.id;
       }
     } catch (error: any) {
       console.error('Error saving project:', error);
-      toast.error("Failed to save project");
+      toast.error(`Failed to save project: ${error.message}`);
       return null;
     }
   };
 
   // Function to generate storyline using the generate-storylines Edge Function
-  const generateStoryline = async (projectId: string): Promise<boolean> => {
+  const generateStoryline = async (currentProjectId: string): Promise<boolean> => {
     if (!user) {
       toast.error("Please log in to generate storylines");
+      return false;
+    }
+    
+    if (!currentProjectId) {
+      toast.error("Cannot generate storyline without a project ID");
       return false;
     }
 
     try {
       setIsGenerating(true);
+      console.log(`Invoking generate-storylines for project: ${currentProjectId}`);
       
       const { data, error } = await supabase.functions.invoke('generate-storylines', {
-        body: { project_id: projectId }
+        body: { project_id: currentProjectId }
       });
       
       if (error) {
-        console.error('Error generating storylines:', error);
-        toast.error("Failed to generate storylines");
+        console.error('Error invoking generate-storylines function:', error);
+        toast.error(`Storyline generation failed: ${error.message}`);
         return false;
       }
       
-      console.log('Storyline generation successful:', data);
-      toast.success(`Storyline generated with ${data.scene_count} scenes`);
+      console.log('Storyline generation function response:', data);
+      if (data.success === false) {
+        toast.error(`Storyline generation failed: ${data.error || 'Unknown error'}`);
+        return false;
+      }
+      
+      toast.success(`Storyline generated with ${data.scene_count ?? 0} scenes`);
       return true;
     } catch (error: any) {
       console.error('Error in generateStoryline:', error);
-      toast.error("Failed to generate storylines");
+      toast.error(`Storyline generation failed: ${error.message}`);
       return false;
     } finally {
       setIsGenerating(false);
@@ -188,16 +204,15 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       // Save final project data if needed
       const savedProjectId = await saveProjectData();
       if (!savedProjectId) {
-        throw new Error("Failed to save project data");
+        throw new Error("Failed to save project data before completing setup");
       }
       
-      toast.success("Project created successfully");
+      toast.success("Project setup complete!");
       
-      // Navigate to the editor with the new project ID
-      // This will be done at the component level
+      // Navigation happens in the NavigationFooter component
     } catch (error: any) {
-      console.error('Error creating project:', error);
-      toast.error("Failed to create project");
+      console.error('Error completing project setup:', error);
+      toast.error(`Failed to complete project setup: ${error.message}`);
     } finally {
       setIsCreating(false);
     }

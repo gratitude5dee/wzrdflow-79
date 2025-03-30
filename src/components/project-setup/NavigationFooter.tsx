@@ -16,61 +16,69 @@ const NavigationFooter = () => {
     isGenerating,
     generateStoryline,
     projectData,
-    handleCreateProject 
+    handleCreateProject,
+    projectId
   } = useProject();
 
   const visibleTabs = getVisibleTabs();
-  const isLastTab = activeTab === visibleTabs[visibleTabs.length - 1];
-  const isFirstTab = activeTab === visibleTabs[0];
+  const currentTabIndex = visibleTabs.indexOf(activeTab);
+  const isLastTab = currentTabIndex === visibleTabs.length - 1;
+  const isFirstTab = currentTabIndex === 0;
 
   const handleNext = async () => {
-    const tabs = getVisibleTabs();
-    const currentIndex = tabs.indexOf(activeTab);
+    let nextTab = activeTab;
+    let proceed = true;
     
-    // If currently on concept tab, save project data before proceeding
+    // Logic for saving and generating
     if (activeTab === 'concept') {
       const savedProjectId = await saveProjectData();
       if (!savedProjectId) {
-        // If saving failed, don't proceed
-        return;
-      }
-      
-      // If using AI generation, call the generate-storylines function before proceeding
-      if (projectData.conceptOption === 'ai') {
-        const success = await generateStoryline(savedProjectId);
-        if (!success) {
-          // If generation failed, we still proceed to the next tab but show an error
-          // The error toast is already shown in the generateStoryline function
+        proceed = false;
+      } else if (projectData.conceptOption === 'ai') {
+        // Only generate if AI option is selected and project saved
+        const generationSuccess = await generateStoryline(savedProjectId);
+        if (!generationSuccess) {
+          console.warn("Storyline generation failed, but proceeding to next tab.");
         }
       }
-    }
-    
-    if (currentIndex < tabs.length - 1) {
-      setActiveTab(tabs[currentIndex + 1]);
-    } else {
-      const result = await handleCreateProject();
-      // Navigate after successful project creation
-      const projectId = await saveProjectData();
-      if (projectId) {
-        navigate(`/editor/${projectId}`);
+      
+      // Proceed to next tab if saving was successful
+      if (proceed && currentTabIndex < visibleTabs.length - 1) {
+        nextTab = visibleTabs[currentTabIndex + 1];
       }
+    } else if (isLastTab) {
+      // If on the last tab, attempt to finalize the project
+      await handleCreateProject();
+      // Navigate only if project creation/final save was successful
+      const finalProjectId = await saveProjectData();
+      if (finalProjectId) {
+        navigate(`/editor/${finalProjectId}`);
+      }
+      return; // Exit after attempting to navigate
+    } else {
+      // For other tabs, just move to the next one
+      if (currentTabIndex < visibleTabs.length - 1) {
+        nextTab = visibleTabs[currentTabIndex + 1];
+      }
+    }
+
+    // Update active tab if needed and if proceed flag is true
+    if (proceed && nextTab !== activeTab) {
+      setActiveTab(nextTab);
     }
   };
 
   const handleBack = () => {
-    const tabs = getVisibleTabs();
-    const currentIndex = tabs.indexOf(activeTab);
-    
-    if (currentIndex > 0) {
-      setActiveTab(tabs[currentIndex - 1]);
+    if (currentTabIndex > 0) {
+      setActiveTab(visibleTabs[currentTabIndex - 1]);
     }
   };
 
   // Determine the button text based on various states
   const getNextButtonText = () => {
     if (isGenerating) return "Generating...";
-    if (isCreating) return "Creating...";
-    if (isLastTab) return "Start Project";
+    if (isCreating) return "Saving...";
+    if (isLastTab) return "Go to Editor";
     return "Next";
   };
 
@@ -79,7 +87,7 @@ const NavigationFooter = () => {
 
   return (
     <motion.div 
-      className="border-t border-zinc-800 p-4 flex justify-between items-center"
+      className="border-t border-zinc-800 p-4 flex justify-between items-center bg-[#0F1219]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.2, duration: 0.3 }}
@@ -87,7 +95,10 @@ const NavigationFooter = () => {
       <Button
         onClick={handleBack}
         variant="outline"
-        className={`text-white border-zinc-700 hover:bg-zinc-800 hover:text-white flex items-center gap-2 transition-all duration-300 ${isFirstTab ? 'opacity-0 pointer-events-none' : ''}`}
+        className={`text-white border-zinc-700 hover:bg-zinc-800 hover:text-white flex items-center gap-2 transition-opacity duration-300 ${
+          isFirstTab ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+        disabled={isGenerating || isCreating}
       >
         <ArrowLeft className="h-4 w-4" />
         Back
@@ -97,22 +108,17 @@ const NavigationFooter = () => {
         <div className="flex space-x-2">
           {visibleTabs.map((tab, i) => (
             <motion.div 
-              key={i}
-              className={`w-2 h-2 rounded-full ${
-                i === visibleTabs.indexOf(activeTab) 
-                  ? 'bg-blue-500' 
-                  : i < visibleTabs.indexOf(activeTab)
+              key={tab}
+              className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                i === currentTabIndex 
+                  ? 'bg-blue-500 scale-125' 
+                  : i < currentTabIndex
                     ? 'bg-blue-800'
                     : 'bg-zinc-700'
               }`}
               initial={false}
               animate={{ 
-                scale: i === visibleTabs.indexOf(activeTab) ? 1.2 : 1,
-                backgroundColor: i === visibleTabs.indexOf(activeTab) 
-                  ? 'rgb(59, 130, 246)' 
-                  : i < visibleTabs.indexOf(activeTab)
-                    ? 'rgb(30, 64, 175)'
-                    : 'rgb(63, 63, 70)'
+                scale: i === currentTabIndex ? 1.2 : 1,
               }}
               transition={{ duration: 0.3 }}
             />
@@ -127,7 +133,7 @@ const NavigationFooter = () => {
           isLastTab 
             ? 'bg-green-600 hover:bg-green-700 text-white' 
             : 'bg-blue-600 hover:bg-blue-700 text-white'
-        }`}
+        } disabled:opacity-50`}
       >
         {getNextButtonText()}
         {isGenerating || isCreating ? (

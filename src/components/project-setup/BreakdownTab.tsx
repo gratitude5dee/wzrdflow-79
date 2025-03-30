@@ -1,13 +1,14 @@
 
 import { type ProjectData } from './types';
 import { Button } from '@/components/ui/button';
-import { Plus, X, Info, Edit, Trash2 } from 'lucide-react';
+import { Plus, X, Info, Edit, Trash2, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { SceneEditDialog, type Scene } from './SceneEditDialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useProject } from './ProjectContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 
 interface BreakdownTabProps {
   projectData: ProjectData;
@@ -19,46 +20,63 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
   const [editingScene, setEditingScene] = useState<Scene | null>(null);
   const [showNoScenesAlert, setShowNoScenesAlert] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
-  const { projectId } = useProject();
+  const { projectId, isGenerating } = useProject();
 
-  // Fetch scenes from Supabase
-  useEffect(() => {
-    const fetchScenes = async () => {
-      if (!projectId) return;
-      
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('scenes')
-          .select('*')
-          .eq('project_id', projectId)
-          .order('scene_number', { ascending: true });
+  // Function to fetch scenes
+  const fetchScenes = async () => {
+    if (!projectId) {
+      setIsLoading(false);
+      setFetchedScenes([]);
+      setShowNoScenesAlert(true);
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      console.log(`Fetching scenes for project ID: ${projectId}`);
+      const { data, error } = await supabase
+        .from('scenes')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('scene_number', { ascending: true });
           
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          // Transform the data to match our Scene type
-          const mappedScenes: Scene[] = data.map(scene => ({
-            id: scene.id,
-            number: scene.scene_number,
-            title: scene.title || `Scene ${scene.scene_number}`,
-            description: scene.description || "",
-            location: scene.location || "",
-            lighting: scene.lighting || "",
-            weather: scene.weather || "",
-            voiceover: scene.voiceover || ""
-          }));
-          setFetchedScenes(mappedScenes);
-          setShowNoScenesAlert(false);
-        }
-      } catch (error) {
-        console.error('Error fetching scenes:', error);
-        toast.error('Failed to load scenes');
-      } finally {
-        setIsLoading(false);
+      if (error) {
+        console.error('Supabase fetch error:', error);
+        throw error;
       }
-    };
+      
+      console.log('Fetched scenes data:', data);
 
+      if (data && data.length > 0) {
+        // Transform the data to match our Scene type
+        const mappedScenes: Scene[] = data.map(scene => ({
+          id: scene.id,
+          number: scene.scene_number,
+          title: scene.title || `Scene ${scene.scene_number}`,
+          description: scene.description || "",
+          location: scene.location || "",
+          lighting: scene.lighting || "",
+          weather: scene.weather || "",
+          voiceover: scene.voiceover || ""
+        }));
+        setFetchedScenes(mappedScenes);
+        setShowNoScenesAlert(false);
+      } else {
+        setFetchedScenes([]);
+        setShowNoScenesAlert(true);
+      }
+    } catch (error) {
+      console.error('Error fetching scenes:', error);
+      toast.error('Failed to load scenes');
+      setFetchedScenes([]);
+      setShowNoScenesAlert(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch scenes when projectId changes
+  useEffect(() => {
     fetchScenes();
   }, [projectId]);
 
@@ -125,6 +143,9 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
       setFetchedScenes(fetchedScenes.filter(s => s.id !== sceneId));
       toast.success('Scene deleted');
       
+      if (fetchedScenes.length === 1) {
+        setShowNoScenesAlert(true);
+      }
     } catch (error) {
       console.error('Error deleting scene:', error);
       toast.error('Failed to delete scene');
@@ -163,9 +184,14 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
     setShowNoScenesAlert(false);
   };
 
-  // Render a scene card
+  // Render a scene card with animation
   const SceneCard = ({ scene }: { scene: Scene }) => (
-    <div className="bg-[#111319] rounded-lg border border-zinc-800 p-4 mb-4">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="bg-[#111319] rounded-lg border border-zinc-800 p-4 mb-4"
+    >
       <div className="flex justify-between items-start mb-3">
         <h3 className="text-lg font-bold">{scene.title}</h3>
         <div className="flex space-x-2">
@@ -174,6 +200,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
             size="sm" 
             className="h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-zinc-800"
             onClick={() => handleEditScene(scene)}
+            aria-label={`Edit ${scene.title}`}
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -182,6 +209,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
             size="sm" 
             className="h-8 w-8 p-0 text-zinc-400 hover:text-red-500 hover:bg-zinc-800"
             onClick={() => handleDeleteScene(scene.id)}
+            aria-label={`Delete ${scene.title}`}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -189,9 +217,8 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
       </div>
       
       {scene.description && (
-        <div className="text-sm text-zinc-400 mb-2">
-          {scene.description.substring(0, 150)}
-          {scene.description.length > 150 ? '...' : ''}
+        <div className="text-sm text-zinc-400 mb-2 line-clamp-3">
+          {scene.description}
         </div>
       )}
       
@@ -215,25 +242,40 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 
   return (
     <div className="min-h-full p-6">
       <h1 className="text-2xl font-bold mb-8">Breakdown</h1>
       
-      {isLoading ? (
-        <div className="flex justify-center items-center min-h-[200px]">
-          <div className="animate-pulse text-zinc-500">Loading scenes...</div>
+      {/* Show Generating state */}
+      {isGenerating && (
+        <div className="flex flex-col items-center justify-center min-h-[200px] text-center text-zinc-400">
+          <Loader2 className="h-8 w-8 animate-spin mb-4" />
+          <p>Generating storyline and scenes...</p>
+          <p className="text-sm text-zinc-500">This may take a moment.</p>
         </div>
-      ) : (
+      )}
+      
+      {/* Show Loading state (after generation, before data arrives) */}
+      {!isGenerating && isLoading && (
+        <div className="flex justify-center items-center min-h-[200px]">
+          <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+        </div>
+      )}
+      
+      {/* Show Content or Empty/Alert state */}
+      {!isGenerating && !isLoading && (
         <>
           {showNoScenesAlert && fetchedScenes.length === 0 && (
             <Alert className="mb-6 bg-[#080D20] border-none text-white">
               <div className="flex items-start">
-                <Info className="h-5 w-5 mr-2 text-blue-400 mt-0.5" />
+                <Info className="h-5 w-5 mr-2 text-blue-400 mt-0.5 flex-shrink-0" />
                 <AlertDescription className="text-zinc-300">
-                  No scenes yet. Add scenes to break down your story into filmable units. Provide location, lighting, and other details to better visualize each scene.
+                  {projectId
+                    ? "No scenes generated or added yet. Scenes from your selected storyline will appear here. You can also add scenes manually."
+                    : "Enter a concept and generate a storyline first. Scenes will appear here after generation."}
                 </AlertDescription>
               </div>
               <Button 
@@ -241,6 +283,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
                 size="sm" 
                 className="absolute right-2 top-2 h-6 w-6 p-0 rounded-full" 
                 onClick={handleDismissAlert}
+                aria-label="Dismiss alert"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -248,15 +291,18 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
           )}
           
           {fetchedScenes.length === 0 ? (
-            <div className="flex justify-center items-center min-h-[400px] bg-[#111319] rounded-lg border border-zinc-800">
-              <div 
-                onClick={handleNewScene}
-                className="flex flex-col items-center justify-center cursor-pointer text-zinc-400 hover:text-zinc-300 transition-colors"
-              >
-                <Plus className="h-10 w-10 mb-2" />
-                <p>Add a scene</p>
+            projectId && (
+              <div className="flex justify-center items-center min-h-[400px] bg-[#111319] rounded-lg border border-zinc-800 border-dashed">
+                <div 
+                  onClick={handleNewScene}
+                  className="flex flex-col items-center justify-center cursor-pointer text-zinc-500 hover:text-zinc-300 transition-colors p-10 text-center"
+                >
+                  <Plus className="h-10 w-10 mb-3" />
+                  <p className="font-medium">Add your first scene manually</p>
+                  <p className="text-sm">Or generate scenes from your storyline in the previous step.</p>
+                </div>
               </div>
-            </div>
+            )
           ) : (
             <div className="space-y-6">
               {fetchedScenes.map(scene => (
@@ -268,7 +314,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  New scene
+                  Add New Scene Manually
                 </Button>
               </div>
             </div>

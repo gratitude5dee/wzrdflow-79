@@ -156,21 +156,21 @@ Generate ONE storyline and its corresponding scene breakdown in the specified JS
                 'anthropic-version': '2023-06-01'
             },
             body: JSON.stringify({
-                model: 'claude-3-haiku-20240307', // Using the existing model for consistency
+                model: 'claude-3-5-sonnet-20240620',
                 max_tokens: 4000,
                 system: systemPrompt,
                 messages: [{ role: 'user', content: userPrompt }]
             })
         });
 
-        const responseBodyText = await response.text(); // Read body once
+        const responseBodyText = await response.text();
 
         if (!response.ok) {
             console.error('Claude API error:', response.status, responseBodyText);
             return errorResponse(`Failed to generate storyline (HTTP ${response.status})`, 500, responseBodyText);
         }
 
-        const claudeResponse = JSON.parse(responseBodyText); // Parse the read body
+        const claudeResponse = JSON.parse(responseBodyText);
         console.log('Claude response received, extracting content...');
 
         // Extract the content from Claude's response
@@ -224,7 +224,7 @@ Generate ONE storyline and its corresponding scene breakdown in the specified JS
                 full_story: responseData.primary_storyline.full_story,
                 tags: responseData.primary_storyline.tags,
                 is_selected: isSelected,
-                generated_by: 'claude-3-haiku' // Record the model used
+                generated_by: 'claude-3-5-sonnet' // Record the model used
             })
             .select()
             .single();
