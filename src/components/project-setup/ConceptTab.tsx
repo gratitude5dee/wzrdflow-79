@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -19,7 +18,6 @@ interface ExampleConcept {
 }
 
 const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
-  const [conceptOption, setConceptOption] = useState<'ai' | 'manual'>('ai');
   const [conceptCharCount, setConceptCharCount] = useState(0);
   const [showCommercialOptions, setShowCommercialOptions] = useState(false);
 
@@ -83,6 +81,10 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
     });
   };
 
+  const handleConceptOptionChange = (option: 'ai' | 'manual') => {
+    updateProjectData({ conceptOption: option });
+  };
+
   // Handle commercial-specific field changes
   const handleProductChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateProjectData({ product: e.target.value });
@@ -109,14 +111,14 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
           <div className="flex-1 grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Option cards */}
             <div 
-              className={`p-6 rounded-lg ${conceptOption === 'ai' ? 'bg-[#001036] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3`}
-              onClick={() => setConceptOption('ai')}
+              className={`p-6 rounded-lg ${projectData.conceptOption === 'ai' ? 'bg-[#001036] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3`}
+              onClick={() => handleConceptOptionChange('ai')}
             >
-              <div className={`p-2 ${conceptOption === 'ai' ? 'text-blue-400' : 'text-zinc-400'}`}>
+              <div className={`p-2 ${projectData.conceptOption === 'ai' ? 'text-blue-400' : 'text-zinc-400'}`}>
                 <RefreshCw className="h-5 w-5" />
               </div>
               <div>
-                <h3 className={`text-lg font-medium ${conceptOption === 'ai' ? 'text-blue-400' : 'text-white'}`}>
+                <h3 className={`text-lg font-medium ${projectData.conceptOption === 'ai' ? 'text-blue-400' : 'text-white'}`}>
                   Develop concept with AI
                 </h3>
                 <p className="text-sm text-zinc-400">AI involvement in script editing and writing</p>
@@ -124,14 +126,14 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
             </div>
             
             <div 
-              className={`p-6 rounded-lg ${conceptOption === 'manual' ? 'bg-[#001036] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3`}
-              onClick={() => setConceptOption('manual')}
+              className={`p-6 rounded-lg ${projectData.conceptOption === 'manual' ? 'bg-[#001036] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3`}
+              onClick={() => handleConceptOptionChange('manual')}
             >
-              <div className={`p-2 ${conceptOption === 'manual' ? 'text-blue-400' : 'text-zinc-400'}`}>
+              <div className={`p-2 ${projectData.conceptOption === 'manual' ? 'text-blue-400' : 'text-zinc-400'}`}>
                 <FileText className="h-5 w-5" />
               </div>
               <div>
-                <h3 className={`text-lg font-medium ${conceptOption === 'manual' ? 'text-blue-400' : 'text-white'}`}>
+                <h3 className={`text-lg font-medium ${projectData.conceptOption === 'manual' ? 'text-blue-400' : 'text-white'}`}>
                   Stick to the script
                 </h3>
                 <p className="text-sm text-zinc-400">Visualize your idea or script as written</p>
@@ -186,7 +188,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
         </div>
         
         {/* Optional settings (only shown for AI option) */}
-        {conceptOption === 'ai' && (
+        {projectData.conceptOption === 'ai' && (
           <div className="mb-8">
             <h2 className="text-xl font-medium mb-4 text-white">Optional settings</h2>
             

@@ -28,6 +28,8 @@ export interface ProjectData {
   targetAudience?: string;
   mainMessage?: string;
   callToAction?: string;
+  // Additional field to track AI or manual mode
+  conceptOption: 'ai' | 'manual';
 }
 
 const ProjectSetupWizard = () => {
@@ -49,7 +51,9 @@ const ProjectSetupWizard = () => {
     product: '',
     targetAudience: '',
     mainMessage: '',
-    callToAction: ''
+    callToAction: '',
+    // Default to AI mode
+    conceptOption: 'ai'
   });
 
   const handleUpdateProjectData = (data: Partial<ProjectData>) => {
@@ -57,7 +61,7 @@ const ProjectSetupWizard = () => {
   };
 
   const handleNext = () => {
-    const tabs: ProjectSetupTab[] = ['concept', 'storyline', 'settings', 'breakdown'];
+    const tabs = getVisibleTabs();
     const currentIndex = tabs.indexOf(activeTab);
     
     if (currentIndex < tabs.length - 1) {
@@ -68,11 +72,22 @@ const ProjectSetupWizard = () => {
   };
 
   const handleBack = () => {
-    const tabs: ProjectSetupTab[] = ['concept', 'storyline', 'settings', 'breakdown'];
+    const tabs = getVisibleTabs();
     const currentIndex = tabs.indexOf(activeTab);
     
     if (currentIndex > 0) {
       setActiveTab(tabs[currentIndex - 1]);
+    }
+  };
+
+  // Function to get visible tabs based on the conceptOption
+  const getVisibleTabs = (): ProjectSetupTab[] => {
+    if (projectData.conceptOption === 'manual') {
+      // Skip storyline tab for manual mode
+      return ['concept', 'settings', 'breakdown'];
+    } else {
+      // Show all tabs for AI mode
+      return ['concept', 'storyline', 'settings', 'breakdown'];
     }
   };
 
@@ -103,7 +118,9 @@ const ProjectSetupWizard = () => {
             product: projectData.product,
             targetAudience: projectData.targetAudience,
             mainMessage: projectData.mainMessage,
-            callToAction: projectData.callToAction
+            callToAction: projectData.callToAction,
+            // Include the conceptOption
+            conceptOption: projectData.conceptOption
           }
         })
         .select()
@@ -123,13 +140,8 @@ const ProjectSetupWizard = () => {
     }
   };
 
-  // Tab configuration with new 'storyline' tab
-  const tabs: Array<{ id: ProjectSetupTab; label: string }> = [
-    { id: 'concept', label: 'CONCEPT' },
-    { id: 'storyline', label: 'STORYLINE' },
-    { id: 'settings', label: 'SETTINGS & CAST' },
-    { id: 'breakdown', label: 'BREAKDOWN' }
-  ];
+  // Get the current visible tabs
+  const visibleTabs = getVisibleTabs();
 
   return (
     <div className="min-h-screen flex flex-col bg-[#111319]">
@@ -140,25 +152,27 @@ const ProjectSetupWizard = () => {
       <div className="border-b border-zinc-800 bg-[#0F1219]">
         <div className="container mx-auto">
           <div className="flex">
-            {tabs.map((tab, index) => (
+            {visibleTabs.map((tab, index) => (
               <div 
-                key={tab.id}
+                key={tab}
                 className={`relative ${
                   index > 0 ? 'flex-1' : ''
                 }`}
               >
                 <button
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => setActiveTab(tab)}
                   className={`py-4 px-6 w-full relative transition-all duration-200 flex items-center justify-center ${
-                    activeTab === tab.id
+                    activeTab === tab
                       ? 'text-white font-medium bg-[#0050E4]'
                       : 'text-zinc-400'
                   }`}
                 >
-                  {tab.label}
-                  {index < tabs.length - 1 && (
+                  {tab === 'concept' ? 'CONCEPT' : 
+                   tab === 'storyline' ? 'STORYLINE' :
+                   tab === 'settings' ? 'SETTINGS & CAST' : 'BREAKDOWN'}
+                  {index < visibleTabs.length - 1 && (
                     <ChevronRight className={`ml-2 h-4 w-4 ${
-                      activeTab === tab.id ? 'text-white' : 'text-zinc-600'
+                      activeTab === tab ? 'text-white' : 'text-zinc-600'
                     }`} />
                   )}
                 </button>
@@ -190,8 +204,8 @@ const ProjectSetupWizard = () => {
           disabled={isCreating}
           className="bg-blue-600 hover:bg-blue-700 text-white px-8 ml-auto"
         >
-          {isCreating ? 'Creating...' : activeTab === 'breakdown' ? 'Start' : 'Next'}
-          {activeTab !== 'breakdown' && <ArrowRight className="ml-2 h-4 w-4" />}
+          {isCreating ? 'Creating...' : activeTab === visibleTabs[visibleTabs.length - 1] ? 'Start' : 'Next'}
+          {activeTab !== visibleTabs[visibleTabs.length - 1] && <ArrowRight className="ml-2 h-4 w-4" />}
         </Button>
       </div>
     </div>
