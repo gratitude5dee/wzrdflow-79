@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, FileText, Info, Plus } from 'lucide-react';
-import { type ProjectData } from './ProjectSetupWizard';
+import { type ProjectData } from './types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { motion } from 'framer-motion';
 

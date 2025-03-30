@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { type ProjectData } from './ProjectSetupWizard';
+import { type ProjectData } from './types';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';

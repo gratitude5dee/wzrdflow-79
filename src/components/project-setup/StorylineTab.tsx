@@ -1,10 +1,9 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { RefreshCw } from 'lucide-react';
-import { type ProjectData } from './ProjectSetupWizard';
+import { type ProjectData } from './types';
 
 interface StorylineTabProps {
   projectData: ProjectData;

@@ -1,5 +1,5 @@
 
-import { type ProjectData } from './ProjectSetupWizard';
+import { type ProjectData } from './types';
 import { Button } from '@/components/ui/button';
 import { Plus, X, Info } from 'lucide-react';
 import { useState } from 'react';
