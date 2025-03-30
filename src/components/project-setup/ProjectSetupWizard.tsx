@@ -12,7 +12,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import ProjectSetupHeader from './ProjectSetupHeader';
 import { ArrowRight, ChevronRight } from 'lucide-react';
 
-type ProjectSetupTab = 'concept' | 'storyline' | 'settings' | 'breakdown';
+type ProjectSetupTab = 'concept' | 'settings' | 'breakdown';
 
 export interface ProjectData {
   title: string;
@@ -138,22 +138,23 @@ const ProjectSetupWizard = () => {
       {/* Tabs Navigation */}
       <div className="border-b border-zinc-800 bg-[#0F1219]">
         <div className="container mx-auto px-4">
-          <div className="flex">
+          <div className="flex justify-center">
             {tabs.map((tab, index) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-4 px-8 relative transition-all duration-200 flex items-center ${
                   activeTab === tab.id
-                    ? 'text-white bg-[#0B0D14]'
-                    : 'text-zinc-500 hover:text-zinc-300'
+                    ? 'text-white bg-[#0050E4]'
+                    : 'text-zinc-400'
                 }`}
               >
                 {tab.label}
-                {activeTab === tab.id && (
-                  <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600" />
+                {index < tabs.length - 1 && (
+                  <ChevronRight className={`ml-2 h-4 w-4 ${
+                    activeTab === tab.id ? 'text-white' : 'text-zinc-600'
+                  }`} />
                 )}
-                <ChevronRight className={`ml-2 h-4 w-4 ${activeTab === tab.id ? 'text-white' : 'text-zinc-600'}`} />
               </button>
             ))}
           </div>
@@ -163,31 +164,27 @@ const ProjectSetupWizard = () => {
       {/* Tab Content */}
       <div className="flex-1 overflow-auto bg-[#111319]">
         {activeTab === 'concept' && <ConceptTab projectData={projectData} updateProjectData={handleUpdateProjectData} />}
-        {activeTab === 'storyline' && <StorylineTab projectData={projectData} updateProjectData={handleUpdateProjectData} />}
         {activeTab === 'settings' && <SettingsTab projectData={projectData} updateProjectData={handleUpdateProjectData} />}
         {activeTab === 'breakdown' && <BreakdownTab projectData={projectData} updateProjectData={handleUpdateProjectData} />}
       </div>
 
       {/* Footer with navigation buttons */}
       <div className="border-t border-zinc-800 p-4 flex justify-between">
-        {activeTab !== 'concept' && (
-          <Button
-            onClick={handleBack}
-            className="bg-transparent hover:bg-zinc-800 text-white border border-zinc-700"
-          >
-            Back
-          </Button>
-        )}
-        <div className={activeTab === 'concept' ? 'ml-auto' : ''}>
-          <Button
-            onClick={handleNext}
-            disabled={isCreating}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8"
-          >
-            {isCreating ? 'Creating...' : activeTab === 'breakdown' ? 'Start' : 'Next'}
-            {activeTab !== 'breakdown' && <ArrowRight className="ml-2 h-4 w-4" />}
-          </Button>
-        </div>
+        <Button
+          onClick={handleBack}
+          variant="ghost"
+          className={`text-white hover:bg-zinc-800 ${activeTab === 'concept' ? 'invisible' : ''}`}
+        >
+          Back
+        </Button>
+        <Button
+          onClick={handleNext}
+          disabled={isCreating}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-8 ml-auto"
+        >
+          {isCreating ? 'Creating...' : activeTab === 'breakdown' ? 'Start' : 'Next'}
+          {activeTab !== 'breakdown' && <ArrowRight className="ml-2 h-4 w-4" />}
+        </Button>
       </div>
     </div>
   );
