@@ -5,6 +5,16 @@ import { StorylineResponseData, AnalysisResponseData } from './types.ts';
 /**
  * Database operations for storyline generation
  */
+
+interface SaveResult {
+  storyline_id: string;
+  scene_count: number;
+  character_count: number;
+  characters: any[]; 
+  updatedSettings: Record<string, any>;
+  inserted_shot_ids: string[];
+}
+
 export async function saveStorylineData(
   supabaseClient: any,
   project_id: string,

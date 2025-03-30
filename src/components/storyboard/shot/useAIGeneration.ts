@@ -1,6 +1,8 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { ImageStatus } from '@/types/storyboardTypes';
 
 interface UseAIGenerationProps {
   shotId: string;
@@ -8,7 +10,7 @@ interface UseAIGenerationProps {
   setIsGeneratingPrompt: (isGenerating: boolean) => void;
   setIsGeneratingImage: (isGenerating: boolean) => void;
   setLocalVisualPrompt: (prompt: string) => void;
-  setLocalImageStatus: (status: string) => void;
+  setLocalImageStatus: (status: ImageStatus) => void; // Changed from string to ImageStatus
   localVisualPrompt: string;
 }
 
