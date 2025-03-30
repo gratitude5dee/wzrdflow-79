@@ -4,6 +4,7 @@ import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CreditsDisplay from '@/components/CreditsDisplay';
 import { useAuth } from '@/providers/AuthProvider';
+import { Logo } from '@/components/ui/logo';
 
 export const Header = () => {
   const navigate = useNavigate();
@@ -19,10 +20,7 @@ export const Header = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-8">
             {/* Logo */}
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-yellow-300 tracking-tight mr-2 glow-text-gold">WZRD.STUDIO</h1>
-              <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">ALPHA</span>
-            </div>
+            <Logo />
 
             {/* Search */}
             <div className="relative hidden md:block">

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/providers/AuthProvider';
+import { Logo } from '@/components/ui/logo';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -74,7 +75,9 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
       <div className="w-full max-w-md p-8 bg-zinc-800 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold text-white mb-6 text-center">Welcome to WZRD.tech</h2>
+        <div className="flex justify-center mb-6">
+          <Logo size="lg" />
+        </div>
         
         <Tabs defaultValue="signin" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">

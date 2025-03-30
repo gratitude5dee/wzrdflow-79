@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { ViewModeSelector } from '@/components/home/ViewModeSelector';
 import CreditsDisplay from '@/components/CreditsDisplay';
+import { Logo } from '@/components/ui/logo';
 
 interface HeaderProps {
   viewMode: 'studio' | 'storyboard' | 'editor';
@@ -37,8 +38,7 @@ const Header = ({ viewMode, setViewMode }: HeaderProps) => {
     <header className="w-full glass-panel px-6 py-3 shadow-lg z-30 border-b">
       <div className="flex justify-between items-center">
         <div className="flex items-center cursor-pointer" onClick={() => navigate('/home')}>
-          <h1 className="text-xl font-bold text-yellow-300 tracking-tight mr-2 glow-text-gold">WZRD.STUDIO</h1>
-          <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">ALPHA</span>
+          <Logo />
         </div>
         
         <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />

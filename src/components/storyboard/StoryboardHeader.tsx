@@ -6,6 +6,7 @@ import { Settings, FileCode, Users, Music, Mic, Play, Share, Undo, Redo } from '
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import CreditsDisplay from '@/components/CreditsDisplay';
+import { Logo } from '@/components/ui/logo';
 
 interface StoryboardHeaderProps {
   viewMode: 'studio' | 'storyboard' | 'editor';
@@ -22,6 +23,10 @@ const StoryboardHeader = ({ viewMode, setViewMode }: StoryboardHeaderProps) => {
 
   return (
     <header className="w-full bg-gradient-to-b from-[#101420]/95 to-[#0A0D16]/80 backdrop-blur-lg border-b border-white/10 px-6 py-2 shadow-md sticky top-0 z-10">
+      <div className="flex items-center justify-between mb-2">
+        <Logo size="sm" showVersion={false} />
+      </div>
+      
       {/* Bottom row with other buttons */}
       <div className="flex items-center justify-between">
         {/* Left section with navigation buttons */}
