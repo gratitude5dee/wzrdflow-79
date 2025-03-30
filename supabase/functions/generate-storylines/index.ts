@@ -280,6 +280,7 @@ If no characters are found, return an empty array for "characters". If optional 
 
         // Insert characters if analysis provided them
         let characters = [];
+        let character_count = 0;
         if (!generate_alternative && analysisData?.characters && analysisData.characters.length > 0) {
             console.log(`Inserting ${analysisData.characters.length} characters from analysis...`);
             const charactersToInsert = analysisData.characters.map(char => ({
@@ -291,14 +292,39 @@ If no characters are found, return an empty array for "characters". If optional 
             const { data: insertedCharacters, error: charactersError } = await supabaseClient
                 .from('characters')
                 .insert(charactersToInsert)
-                .select();
+                .select('id, name');
 
             if (charactersError) {
                 console.error('Error inserting characters:', charactersError);
                 // Continue anyway, as this is an optional enhancement
             } else {
                 characters = insertedCharacters || [];
-                console.log(`${characters.length} characters inserted successfully.`);
+                character_count = characters.length;
+                console.log(`${character_count} characters inserted successfully.`);
+                
+                // Trigger character image generation for each character
+                if (characters.length > 0) {
+                    console.log(`Queueing image generation for ${characters.length} characters...`);
+                    for (const char of characters) {
+                        try {
+                            // Invoke the character image generation function asynchronously
+                            const { error: invokeError } = await supabaseClient.functions.invoke(
+                                'generate-character-image',
+                                {
+                                    body: { character_id: char.id, project_id: project_id }
+                                }
+                            );
+                            
+                            if (invokeError) {
+                                console.error(`Failed to invoke generate-character-image for ${char.name} (${char.id}):`, invokeError.message);
+                            } else {
+                                console.log(`Successfully invoked image generation for ${char.name} (${char.id}).`);
+                            }
+                        } catch (invocationError) {
+                            console.error(`Caught error during invocation for ${char.name} (${char.id}):`, invocationError.message);
+                        }
+                    }
+                }
             }
         }
 
@@ -332,7 +358,7 @@ If no characters are found, return an empty array for "characters". If optional 
             success: true,
             storyline_id: storyline.id,
             scene_count: scene_count,
-            character_count: characters.length,
+            character_count: character_count,
             is_alternative: generate_alternative,
             updated_settings: Object.keys(projectUpdates).filter(k => k !== 'selected_storyline_id'),
             potential_genre: analysisData?.potential_genre,
