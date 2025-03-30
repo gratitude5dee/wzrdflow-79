@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Loader2, AlertCircle, RefreshCw, ImageIcon, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { RefreshCw, Loader2, AlertCircle, Image, Wand2, Trash2 } from 'lucide-react';
 import { ImageStatus } from '@/types/storyboardTypes';
 
 interface ShotImageProps {
@@ -13,8 +13,8 @@ interface ShotImageProps {
   isGeneratingPrompt: boolean;
   isDeleting: boolean;
   hasVisualPrompt: boolean;
-  onGeneratePrompt: () => void;
-  onGenerateImage: () => void;
+  onGeneratePrompt: () => Promise<void>;
+  onGenerateImage: () => Promise<void>;
   onDelete: () => void;
 }
 
@@ -30,7 +30,6 @@ const ShotImage: React.FC<ShotImageProps> = ({
   onGenerateImage,
   onDelete
 }) => {
-
   const getImageStatusDisplay = () => {
     switch (imageStatus) {
       case 'generating':
@@ -66,12 +65,10 @@ const ShotImage: React.FC<ShotImageProps> = ({
         return null; // Image is shown
       case 'pending':
       default:
-        return (
-          !imageUrl && (
-            <div className="absolute inset-0 flex items-center justify-center bg-[#0F1219]">
-              <Image className="w-8 h-8 text-gray-700 opacity-50" />
-            </div>
-          )
+        return !imageUrl && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[#0F1219]">
+            <ImageIcon className="w-8 h-8 text-gray-700 opacity-50" />
+          </div>
         );
     }
   };
@@ -84,43 +81,24 @@ const ShotImage: React.FC<ShotImageProps> = ({
           #{shotNumber}
         </span>
       </div>
-      
+
       {/* Image */}
-      {imageUrl && imageStatus === 'completed' ? (
+      {imageUrl && imageStatus === 'completed' && (
         <img
           src={imageUrl}
           alt={`Shot ${shotNumber}`}
           className="w-full h-full object-cover transition-opacity duration-300"
         />
-      ) : null}
-      
+      )}
+
       {/* Status Overlay */}
       {getImageStatusDisplay()}
-      
+
       {/* Action Buttons Overlay - Shown on hover, but not during generation/failure */}
       {imageStatus !== 'generating' && imageStatus !== 'failed' && (
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex items-end justify-center p-2 opacity-0 group-hover/shotcard:opacity-100 transition-opacity duration-300 z-10">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex items-end justify-center p-2 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 z-10">
           <div className="flex gap-1 bg-black/50 backdrop-blur-sm p-1 rounded-lg">
-            {/* Generate/Regenerate Prompt Button */}
-            <TooltipProvider delayDuration={100}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-md bg-white/10 hover:bg-white/20 p-1.5 h-auto w-auto glow-icon-button"
-                    onClick={onGeneratePrompt}
-                    disabled={isGeneratingPrompt || isGeneratingImage}
-                  >
-                    {isGeneratingPrompt ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Wand2 className="w-4 h-4 text-white" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>{hasVisualPrompt ? 'Regenerate Visual Prompt' : 'Generate Visual Prompt'}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            {/* Generate/Regenerate Image Button */}
+            {/* Generate AI Image Button */}
             <TooltipProvider delayDuration={100}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -131,7 +109,11 @@ const ShotImage: React.FC<ShotImageProps> = ({
                     onClick={onGenerateImage}
                     disabled={!hasVisualPrompt || isGeneratingImage || isGeneratingPrompt}
                   >
-                    {isGeneratingImage ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <RefreshCw className="w-4 h-4 text-white" />}
+                    {isGeneratingImage ? (
+                      <Loader2 className="w-4 h-4 text-white animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4 text-white" />
+                    )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
@@ -139,6 +121,7 @@ const ShotImage: React.FC<ShotImageProps> = ({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+
             {/* Delete Button */}
             <TooltipProvider delayDuration={100}>
               <Tooltip>
@@ -150,10 +133,16 @@ const ShotImage: React.FC<ShotImageProps> = ({
                     onClick={(e) => { e.stopPropagation(); onDelete(); }}
                     disabled={isDeleting}
                   >
-                    {isDeleting ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Trash2 className="w-4 h-4 text-red-400" />}
+                    {isDeleting ? (
+                      <Loader2 className="w-4 h-4 text-white animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    )}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom"><p>Delete shot</p></TooltipContent>
+                <TooltipContent side="bottom">
+                  <p>Delete shot</p>
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>

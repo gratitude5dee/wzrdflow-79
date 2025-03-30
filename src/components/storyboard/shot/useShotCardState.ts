@@ -1,176 +1,91 @@
 
-import { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useRef, useEffect } from 'react';
 import { ShotDetails, ImageStatus } from '@/types/storyboardTypes';
-import { toast } from 'sonner';
+import { useDebounce } from '@/hooks/use-debounce';
 
-// Create a debounce function to prevent too many DB updates
-const useDebounce = (value: any, delay: number) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  
-  return debouncedValue;
-};
-
-export const useShotCardState = (
-  shot: ShotDetails, 
-  onUpdate: (updates: Partial<ShotDetails>) => Promise<void>
-) => {
-  // Local state for form fields
-  const [shotType, setShotType] = useState(shot.shot_type || '');
-  const [promptIdea, setPromptIdea] = useState(shot.prompt_idea || '');
-  const [dialogue, setDialogue] = useState(shot.dialogue || '');
-  const [soundEffects, setSoundEffects] = useState(shot.sound_effects || '');
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  // State for AI generation features
-  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
-  const [isGeneratingImage, setIsGeneratingImage] = useState(shot.image_status === 'generating');
+export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<ShotDetails>) => Promise<void>) => {
+  // Local state for form values
+  const [shotType, setShotType] = useState(shot.shot_type || null);
+  const [promptIdea, setPromptIdea] = useState(shot.prompt_idea || null);
+  const [dialogue, setDialogue] = useState(shot.dialogue || null);
+  const [soundEffects, setSoundEffects] = useState(shot.sound_effects || null);
   const [localVisualPrompt, setLocalVisualPrompt] = useState(shot.visual_prompt || '');
   const [localImageUrl, setLocalImageUrl] = useState(shot.image_url || null);
   const [localImageStatus, setLocalImageStatus] = useState<ImageStatus>(shot.image_status || 'pending');
   
-  // Ref to prevent unnecessary updates from realtime
-  const isGeneratingRef = useRef(false);
+  // UI state
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(shot.image_status === 'generating');
+  const isGeneratingRef = useRef<boolean>(false);
 
-  // Track the last saved values to avoid unnecessary updates
-  const lastSavedRef = useRef({
-    shotType: shot.shot_type,
-    promptIdea: shot.prompt_idea,
-    dialogue: shot.dialogue,
-    soundEffects: shot.sound_effects,
-    visualPrompt: shot.visual_prompt
-  });
-
-  // Debounced values
-  const debouncedPrompt = useDebounce(promptIdea, 750);
-  const debouncedDialogue = useDebounce(dialogue, 750);
-  const debouncedSoundEffects = useDebounce(soundEffects, 750);
-  const debouncedVisualPrompt = useDebounce(localVisualPrompt, 750);
-
-  // Effect to update local state when props change (e.g., initial load)
+  // Update local state when props change (e.g., initial load)
   useEffect(() => {
+    setShotType(shot.shot_type || null);
+    setPromptIdea(shot.prompt_idea || null);
+    setDialogue(shot.dialogue || null);
+    setSoundEffects(shot.sound_effects || null);
     setLocalVisualPrompt(shot.visual_prompt || '');
     setLocalImageUrl(shot.image_url || null);
     setLocalImageStatus(shot.image_status || 'pending');
     setIsGeneratingImage(shot.image_status === 'generating');
-  }, [shot.id, shot.visual_prompt, shot.image_url, shot.image_status]); // Depend on shot.id to reset for new shots
+  }, [shot.id, shot.shot_type, shot.prompt_idea, shot.dialogue, shot.sound_effects, 
+      shot.visual_prompt, shot.image_url, shot.image_status]);
 
-  // Update fields when shot prop changes
+  // Use debounce for field updates to reduce API calls
+  const debouncedShotType = useDebounce(shotType, 1000);
+  const debouncedPromptIdea = useDebounce(promptIdea, 1000);
+  const debouncedDialogue = useDebounce(dialogue, 1000);
+  const debouncedSoundEffects = useDebounce(soundEffects, 1000);
+
+  // Handle debounced updates
   useEffect(() => {
-    setShotType(shot.shot_type || '');
-    setPromptIdea(shot.prompt_idea || '');
-    setDialogue(shot.dialogue || '');
-    setSoundEffects(shot.sound_effects || '');
+    if (debouncedShotType !== shot.shot_type && debouncedShotType !== null) {
+      handleFieldUpdate({ shot_type: debouncedShotType });
+    }
+  }, [debouncedShotType]);
+
+  useEffect(() => {
+    if (debouncedPromptIdea !== shot.prompt_idea) {
+      handleFieldUpdate({ prompt_idea: debouncedPromptIdea });
+    }
+  }, [debouncedPromptIdea]);
+
+  useEffect(() => {
+    if (debouncedDialogue !== shot.dialogue) {
+      handleFieldUpdate({ dialogue: debouncedDialogue });
+    }
+  }, [debouncedDialogue]);
+
+  useEffect(() => {
+    if (debouncedSoundEffects !== shot.sound_effects) {
+      handleFieldUpdate({ sound_effects: debouncedSoundEffects });
+    }
+  }, [debouncedSoundEffects]);
+
+  // Helper to update shot fields
+  const handleFieldUpdate = async (updates: Partial<ShotDetails>) => {
+    if (isSaving) return;
     
-    lastSavedRef.current = {
-      shotType: shot.shot_type,
-      promptIdea: shot.prompt_idea,
-      dialogue: shot.dialogue,
-      soundEffects: shot.sound_effects,
-      visualPrompt: shot.visual_prompt
-    };
-  }, [shot.id]); // Only update if shot ID changes (new shot)
-
-  // Subscribe to Realtime updates for this specific shot
-  useEffect(() => {
-    if (!shot.id) return;
-
-    const channel = supabase
-      .channel(`shot-${shot.id}-updates`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'shots', filter: `id=eq.${shot.id}` },
-        (payload) => {
-          console.log(`Realtime update for shot ${shot.id}:`, payload.new);
-          const updatedShot = payload.new as ShotDetails;
-          // Only update if we aren't actively generating on the client side
-          if (!isGeneratingRef.current) {
-            setLocalVisualPrompt(updatedShot.visual_prompt || '');
-            setLocalImageUrl(updatedShot.image_url || null);
-            setLocalImageStatus(updatedShot.image_status || 'pending');
-            setIsGeneratingImage(updatedShot.image_status === 'generating');
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [shot.id]);
-
-  // Effect for debounced updates
-  useEffect(() => {
-    const updateIfChanged = async () => {
-      const updates: Partial<ShotDetails> = {};
-      let hasChanges = false;
-
-      if (debouncedPrompt !== lastSavedRef.current.promptIdea) {
-        updates.prompt_idea = debouncedPrompt;
-        hasChanges = true;
-      }
-      
-      if (debouncedDialogue !== lastSavedRef.current.dialogue) {
-        updates.dialogue = debouncedDialogue;
-        hasChanges = true;
-      }
-      
-      if (debouncedSoundEffects !== lastSavedRef.current.soundEffects) {
-        updates.sound_effects = debouncedSoundEffects;
-        hasChanges = true;
-      }
-      
-      if (debouncedVisualPrompt !== lastSavedRef.current.visualPrompt) {
-        updates.visual_prompt = debouncedVisualPrompt;
-        hasChanges = true;
-      }
-
-      if (hasChanges) {
-        setIsSaving(true);
-        try {
-          await onUpdate(updates);
-          lastSavedRef.current = {
-            ...lastSavedRef.current,
-            promptIdea: debouncedPrompt,
-            dialogue: debouncedDialogue,
-            soundEffects: debouncedSoundEffects,
-            visualPrompt: debouncedVisualPrompt
-          };
-        } finally {
-          setIsSaving(false);
-        }
-      }
-    };
-
-    updateIfChanged();
-  }, [debouncedPrompt, debouncedDialogue, debouncedSoundEffects, debouncedVisualPrompt, onUpdate]);
-
-  const handleShotTypeChange = async (value: string) => {
-    if (value !== lastSavedRef.current.shotType) {
-      setShotType(value);
-      setIsSaving(true);
-      try {
-        await onUpdate({ shot_type: value });
-        lastSavedRef.current.shotType = value;
-      } finally {
-        setIsSaving(false);
-      }
+    setIsSaving(true);
+    try {
+      await onUpdate(updates);
+    } catch (error) {
+      console.error('Error updating shot:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
+  // Shot type change handler (with immediate update)
+  const handleShotTypeChange = (value: string) => {
+    setShotType(value);
+    handleFieldUpdate({ shot_type: value });
+  };
+
   return {
-    // Form state
+    // State
     shotType,
     promptIdea,
     dialogue,
@@ -178,25 +93,24 @@ export const useShotCardState = (
     localVisualPrompt,
     localImageUrl,
     localImageStatus,
-    
-    // UI state
     isDeleting,
-    setIsDeleting,
     isSaving,
     isGeneratingPrompt,
-    setIsGeneratingPrompt,
     isGeneratingImage,
-    setIsGeneratingImage,
     isGeneratingRef,
     
-    // Actions
+    // Setters
     setShotType,
     setPromptIdea,
     setDialogue,
     setSoundEffects,
     setLocalVisualPrompt,
-    setLocalImageUrl,
     setLocalImageStatus,
-    handleShotTypeChange,
+    setIsDeleting,
+    setIsGeneratingPrompt,
+    setIsGeneratingImage,
+    
+    // Handlers
+    handleShotTypeChange
   };
 };

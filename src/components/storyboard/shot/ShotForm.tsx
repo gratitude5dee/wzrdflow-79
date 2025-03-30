@@ -7,19 +7,19 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Wand2 } from 'lucide-react';
 
 interface ShotFormProps {
-  shotType: string;
-  promptIdea: string;
-  dialogue: string;
-  soundEffects: string;
-  visualPrompt: string;
+  shotType: string | null;
+  promptIdea: string | null;
+  dialogue: string | null;
+  soundEffects: string | null;
+  visualPrompt: string | null;
   isGeneratingPrompt: boolean;
   isGeneratingImage: boolean;
   onShotTypeChange: (value: string) => void;
-  onPromptIdeaChange: (value: string) => void;
-  onDialogueChange: (value: string) => void;
-  onSoundEffectsChange: (value: string) => void;
+  onPromptIdeaChange: (value: string | null) => void;
+  onDialogueChange: (value: string | null) => void;
+  onSoundEffectsChange: (value: string | null) => void;
   onVisualPromptChange: (value: string) => void;
-  onGeneratePrompt: () => void;
+  onGeneratePrompt: () => Promise<void>;
 }
 
 const ShotForm: React.FC<ShotFormProps> = ({
@@ -54,23 +54,25 @@ const ShotForm: React.FC<ShotFormProps> = ({
                   <Wand2 className="w-3 h-3"/>
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="top"><p>Generate/Regenerate</p></TooltipContent>
+              <TooltipContent side="top">
+                <p>Generate/Regenerate</p>
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </p>
         <Textarea
           placeholder="AI generated visual prompt appears here..."
           className="bg-[#141824] border-[#2D3343] text-white min-h-[40px] rounded-md text-xs resize-none leading-snug"
-          value={visualPrompt}
+          value={visualPrompt || ''}
           onChange={(e) => onVisualPromptChange(e.target.value)}
           readOnly={isGeneratingPrompt}
         />
       </div>
-      
+
       {/* Shot Type */}
       <div>
         <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Shot Type</p>
-        <Select value={shotType} onValueChange={onShotTypeChange}>
+        <Select value={shotType || undefined} onValueChange={onShotTypeChange}>
           <SelectTrigger className="bg-[#141824] border-[#2D3343] text-white h-8 text-xs">
             <SelectValue placeholder="Select shot type" />
           </SelectTrigger>
@@ -91,36 +93,36 @@ const ShotForm: React.FC<ShotFormProps> = ({
           </SelectContent>
         </Select>
       </div>
-      
+
       {/* Prompt Idea */}
       <div>
         <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Description / Idea</p>
-        <Textarea 
-          placeholder="Describe the shot's content or purpose..." 
+        <Textarea
+          placeholder="Describe the shot's content or purpose..."
           className="bg-[#141824] border-[#2D3343] text-white min-h-[50px] rounded-md text-xs resize-none leading-snug"
-          value={promptIdea}
+          value={promptIdea || ''}
           onChange={(e) => onPromptIdeaChange(e.target.value)}
         />
       </div>
-      
+
       {/* Dialogue */}
       <div>
         <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Dialogue</p>
-        <Input 
-          placeholder="Character dialogue..." 
+        <Input
+          placeholder='Character dialogue...'
           className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-xs"
-          value={dialogue}
+          value={dialogue || ''}
           onChange={(e) => onDialogueChange(e.target.value)}
         />
       </div>
-      
+
       {/* Sound Effects */}
       <div>
         <p className="text-xs text-zinc-500 uppercase mb-1 font-medium">Sound Effects</p>
-        <Input 
-          placeholder='E.g., "Footsteps on gravel..."' 
+        <Input
+          placeholder='E.g., "Footsteps on gravel..."'
           className="bg-[#141824] border-[#2D3343] text-white rounded-md h-8 text-xs"
-          value={soundEffects}
+          value={soundEffects || ''}
           onChange={(e) => onSoundEffectsChange(e.target.value)}
         />
       </div>
