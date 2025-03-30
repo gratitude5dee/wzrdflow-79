@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -190,6 +191,7 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
             sceneDescription: nextScene.description ?? null,
             sceneLocation: nextScene.location ?? null,
             sceneLighting: nextScene.lighting ?? null,
+            sceneWeather: nextScene.weather ?? null, // Add the missing sceneWeather property
             videoStyle: projectDetails.video_style ?? null,
             characters: characters
           });
@@ -256,7 +258,7 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
                   <ShotsRow
                     sceneId={scene.id}
                     sceneNumber={scene.scene_number}
-                    projectId={projectId} // Add the missing projectId prop here
+                    projectId={projectId} // Add the missing projectId prop
                     onSceneDelete={handleDeleteScene} // Add scene deletion handler
                     isSelected={selectedScene?.id === scene.id}
                   />
