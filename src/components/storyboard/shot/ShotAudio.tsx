@@ -1,9 +1,7 @@
 
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Loader2, VolumeX, Volume2, Headphones } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { PlayCircle, PauseCircle, Loader2, Mic } from 'lucide-react';
 import { AudioStatus } from '@/types/storyboardTypes';
 
 interface ShotAudioProps {
@@ -11,142 +9,115 @@ interface ShotAudioProps {
   status: AudioStatus;
   isGenerating: boolean;
   hasDialogue: boolean;
-  onGenerateAudio: () => void;
+  onGenerateAudio: () => Promise<void>;
 }
 
-const ShotAudio: React.FC<ShotAudioProps> = ({ 
-  audioUrl, 
-  status, 
-  isGenerating, 
+const ShotAudio: React.FC<ShotAudioProps> = ({
+  audioUrl,
+  status,
+  isGenerating,
   hasDialogue,
-  onGenerateAudio 
+  onGenerateAudio
 }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  // Set up audio element if there's a URL
+  React.useEffect(() => {
+    if (audioUrl) {
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      
+      audio.addEventListener('ended', () => setIsPlaying(false));
+      
+      return () => {
+        audio.removeEventListener('ended', () => setIsPlaying(false));
+        audio.pause();
+        audioRef.current = null;
+      };
+    }
+  }, [audioUrl]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
     
     if (isPlaying) {
       audioRef.current.pause();
+      setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(err => {
-        console.error("Error playing audio:", err);
+      audioRef.current.play().catch(error => {
+        console.error('Error playing audio:', error);
       });
+      setIsPlaying(true);
     }
-    setIsPlaying(!isPlaying);
   };
 
-  const toggleMute = () => {
-    if (!audioRef.current) return;
-    audioRef.current.muted = !isMuted;
-    setIsMuted(!isMuted);
-  };
+  // No UI if no dialogue
+  if (!hasDialogue) {
+    return null;
+  }
 
-  const handleEnded = () => {
-    setIsPlaying(false);
-  };
-
-  if (status === 'failed') {
+  // Pending/failed states
+  if (!audioUrl || status === 'failed') {
     return (
-      <div className="flex items-center mt-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="text-red-400 border-red-400/30 hover:bg-red-400/10 hover:text-red-400 w-full" 
+      <div className="mt-1 flex justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-950/20 p-1 h-auto"
           onClick={onGenerateAudio}
+          disabled={isGenerating || !hasDialogue}
         >
-          <VolumeX className="h-4 w-4 mr-2" />
-          Retry Audio
-        </Button>
-      </div>
-    );
-  }
-
-  if (status === 'generating' || isGenerating) {
-    return (
-      <div className="flex items-center mt-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="text-blue-400 border-blue-400/30 hover:bg-blue-400/10 hover:text-blue-400 w-full"
-          disabled
-        >
-          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          Generating Audio...
-        </Button>
-      </div>
-    );
-  }
-
-  if (status === 'completed' && audioUrl) {
-    return (
-      <div className="flex items-center space-x-2 mt-2">
-        <audio 
-          ref={audioRef} 
-          src={audioUrl} 
-          onEnded={handleEnded} 
-          className="hidden" 
-        />
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className={cn(
-            "text-green-400 border-green-400/30 hover:bg-green-400/10 hover:text-green-400 flex-1",
-            isPlaying && "bg-green-400/10"
-          )}
-          onClick={togglePlay}
-        >
-          {isPlaying ? (
-            <Pause className="h-4 w-4 mr-2" />
+          {isGenerating ? (
+            <>
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              Generating Audio...
+            </>
           ) : (
-            <Play className="h-4 w-4 mr-2" />
-          )}
-          {isPlaying ? "Pause" : "Play Audio"}
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="text-zinc-400 border-zinc-700 p-0 w-9 h-9"
-          onClick={toggleMute}
-        >
-          {isMuted ? (
-            <VolumeX className="h-4 w-4" />
-          ) : (
-            <Volume2 className="h-4 w-4" />
+            <>
+              <Mic className="w-3 h-3 mr-1" />
+              {status === 'failed' ? 'Retry Audio Generation' : 'Generate Audio'}
+            </>
           )}
         </Button>
       </div>
     );
   }
 
+  // Completed state with audio player
   return (
-    <div className="flex items-center mt-2">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn(
-                "text-zinc-400 border-zinc-700 hover:bg-zinc-800 hover:text-zinc-300 w-full",
-                !hasDialogue && "opacity-50"
-              )}
-              onClick={onGenerateAudio}
-              disabled={!hasDialogue}
-            >
-              <Headphones className="h-4 w-4 mr-2" />
-              Generate Audio
-            </Button>
-          </TooltipTrigger>
-          {!hasDialogue && (
-            <TooltipContent side="top">
-              <p>Add dialogue to generate audio</p>
-            </TooltipContent>
-          )}
-        </Tooltip>
-      </TooltipProvider>
+    <div className="mt-1 flex justify-between items-center border-t border-zinc-700/30 pt-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-xs p-1 h-6 text-purple-300 hover:text-purple-200 hover:bg-purple-950/20"
+        onClick={togglePlay}
+      >
+        {isPlaying ? (
+          <>
+            <PauseCircle className="w-3 h-3 mr-1" />
+            Pause Audio
+          </>
+        ) : (
+          <>
+            <PlayCircle className="w-3 h-3 mr-1" />
+            Play Audio
+          </>
+        )}
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-xs text-zinc-400 hover:text-zinc-300 hover:bg-zinc-700/20 p-1 h-6"
+        onClick={onGenerateAudio}
+        disabled={isGenerating}
+      >
+        {isGenerating ? (
+          <Loader2 className="w-3 h-3 animate-spin" />
+        ) : (
+          <Mic className="w-3 h-3" />
+        )}
+      </Button>
     </div>
   );
 };

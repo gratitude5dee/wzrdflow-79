@@ -1,3 +1,4 @@
+
 // Image status to track generation progress
 export type ImageStatus = 'pending' | 'prompt_ready' | 'generating' | 'completed' | 'failed';
 

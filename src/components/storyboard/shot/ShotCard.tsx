@@ -174,7 +174,7 @@ export const ShotCard = ({ shot, onDelete, onUpdate }: ShotCardProps) => {
           onDialogueChange={(e) => setDialogue(e.target.value)}
           onSoundEffectsChange={(e) => setSoundEffects(e.target.value)}
           setLocalVisualPrompt={setLocalVisualPrompt}
-          setLocalImageStatus={(status) => setLocalImageStatus(status as ImageStatus)}
+          setLocalImageStatus={setLocalImageStatus}
           setIsGeneratingPrompt={setIsGeneratingPrompt}
           setIsGeneratingImage={setIsGeneratingImage}
           setLocalAudioUrl={setLocalAudioUrl}
