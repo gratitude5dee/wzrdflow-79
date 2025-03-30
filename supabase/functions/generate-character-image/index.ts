@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders, errorResponse, successResponse, handleCors } from '../_shared/response.ts';
+import { callClaudeApi } from '../_shared/claude.ts';
 
 // --- Interfaces ---
 interface RequestBody {
@@ -20,93 +21,115 @@ interface CharacterData {
     }
 }
 
-// --- Helper Functions ---
-async function callClaudeApi(apiKey: string, systemPrompt: string, userPrompt: string, maxTokens: number): Promise<string> {
-    console.log('Calling Claude API for Visual Prompt...');
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-        body: JSON.stringify({ model: 'claude-3-5-sonnet-20240620', max_tokens: maxTokens, system: systemPrompt, messages: [{ role: 'user', content: userPrompt }] })
-    });
-    const responseBodyText = await response.text();
-    if (!response.ok) throw new Error(`Claude API Error (${response.status}): ${responseBodyText}`);
-    const claudeResponse = JSON.parse(responseBodyText);
-    const content = claudeResponse.content?.[0]?.text;
-    if (!content) throw new Error('Empty response content from Claude API');
-    console.log('Claude API call successful (Visual Prompt).');
-    return content;
+interface LumaGenerationResponse {
+    id: string;
+    state: 'pending' | 'processing' | 'completed' | 'failed';
+    created_at: string;
 }
 
-async function callFalImageApi(supabaseClient: any, falApiKey: string, visualPrompt: string, aspectRatio: string = "3:4"): Promise<string> {
-    console.log('Calling Fal.ai Image API (Photon Flash)...');
-    const modelId = 'fal-ai/photon'; // Photon Flash model
-    const input = {
+interface LumaCompletedResponse extends LumaGenerationResponse {
+    state: 'completed';
+    assets: {
+        video: string | null;
+        image: string | null;
+    };
+}
+
+interface LumaFailedResponse extends LumaGenerationResponse {
+    state: 'failed';
+    failure_reason: string | null;
+}
+
+// --- Helper Functions ---
+async function callLumaApi(lumaApiKey: string, visualPrompt: string, aspectRatio: string = "3:4", model: string = "photon-flash-1"): Promise<string> {
+    console.log(`Calling Luma API (${model}) with prompt: ${visualPrompt.substring(0, 100)}...`);
+    const lumaApiUrl = "https://api.lumalabs.ai/dream-machine/v1/generations/image";
+
+    const payload = {
         prompt: visualPrompt,
-        negative_prompt: "text, signature, watermark, blurry, low quality, deformed, multiple people, ugly",
         aspect_ratio: aspectRatio,
-        num_inference_steps: 30,
-        guidance_scale: 5,
+        model: model,
     };
 
-    // Use the fal-proxy edge function
-    const { data: invokeData, error: invokeError } = await supabaseClient.functions.invoke('fal-proxy', {
-        body: {
-            endpoint: modelId,
-            input: input,
-            mode: 'queue'
-        }
+    const response = await fetch(lumaApiUrl, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${lumaApiKey}`,
+            'Content-Type': 'application/json',
+            'accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
     });
 
-    if (invokeError) {
-        console.error('Fal Proxy invoke error:', invokeError);
-        throw new Error(`Fal Proxy invoke failed: ${invokeError.message}`);
-    }
-    if (!invokeData || !invokeData.requestId) {
-        console.error('Fal Proxy did not return request ID:', invokeData);
-        throw new Error('Failed to get request ID from Fal Proxy');
+    const responseBodyText = await response.text();
+    if (!response.ok) {
+        console.error(`Luma API Error (${response.status}):`, responseBodyText);
+        throw new Error(`Luma API Error (${response.status}): ${responseBodyText}`);
     }
 
-    console.log(`Fal job queued. Request ID: ${invokeData.requestId}`);
+    const initialResponse: LumaGenerationResponse = JSON.parse(responseBodyText);
+    console.log(`Luma job submitted. Generation ID: ${initialResponse.id}, State: ${initialResponse.state}`);
 
-    // Poll for the result using the fal-poll function
-    const result = await pollFalResult(supabaseClient, invokeData.requestId);
-
-    // Extract image URL from result
-    const imageUrl = result?.images?.[0]?.url;
-
-    if (!imageUrl) {
-        console.error('Image URL not found in Fal result:', result);
-        throw new Error('Failed to retrieve image URL from Fal.ai result.');
+    if (!initialResponse.id) {
+        throw new Error("Luma API did not return a generation ID.");
     }
-    console.log('Fal.ai Image API call successful.');
-    return imageUrl;
+
+    // Start polling for the result
+    return await pollLumaResult(lumaApiKey, initialResponse.id);
 }
 
-async function pollFalResult(supabaseClient: any, requestId: string, maxAttempts = 45, delay = 2000): Promise<any> {
-    console.log(`Polling for Fal result (Request ID: ${requestId})...`);
+async function pollLumaResult(lumaApiKey: string, generationId: string, maxAttempts = 60, delay = 3000): Promise<string> {
+    console.log(`Polling Luma result (ID: ${generationId})...`);
+    const pollUrl = `https://api.lumalabs.ai/dream-machine/v1/generations/${generationId}`;
+
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        const { data: pollData, error: pollError } = await supabaseClient.functions.invoke('fal-poll', {
-            body: { requestId }
-        });
+        console.log(`Poll attempt ${attempt}/${maxAttempts} for ${generationId}`);
+        try {
+            const response = await fetch(pollUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${lumaApiKey}`,
+                    'accept': 'application/json'
+                }
+            });
 
-        if (pollError) throw new Error(`Polling failed: ${pollError.message}`);
-        if (!pollData) throw new Error('Polling returned no data');
+            const responseBodyText = await response.text();
+            if (!response.ok) {
+                console.warn(`Luma Poll Error (${response.status}):`, responseBodyText);
+                if (response.status === 401 || response.status === 404) {
+                    throw new Error(`Luma Poll Error (${response.status}): ${responseBodyText}`);
+                }
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+            }
 
-        console.log(`Poll attempt ${attempt}: Status - ${pollData.status}`);
+            const pollData: LumaGenerationResponse = JSON.parse(responseBodyText);
+            console.log(`Luma Poll Status (ID: ${generationId}): ${pollData.state}`);
 
-        if (pollData.status === 'COMPLETED') {
-            console.log('Polling complete. Result received.');
-            return pollData.result;
-        } else if (pollData.status === 'FAILED') {
-            console.error('Fal job failed:', pollData);
-            throw new Error('Fal.ai image generation job failed.');
-        } else if (pollData.status !== 'IN_PROGRESS' && pollData.status !== 'QUEUED'){
-            console.warn(`Unexpected Fal status: ${pollData.status}`);
+            if (pollData.state === 'completed') {
+                const completedData = pollData as LumaCompletedResponse;
+                if (completedData.assets?.image) {
+                    console.log(`Polling complete. Image URL found for ${generationId}.`);
+                    return completedData.assets.image;
+                } else {
+                    console.error('Luma generation completed but no image asset found:', completedData);
+                    throw new Error('Luma generation completed but the image URL is missing.');
+                }
+            } else if (pollData.state === 'failed') {
+                const failedData = pollData as LumaFailedResponse;
+                console.error('Luma generation failed:', failedData);
+                throw new Error(`Luma image generation failed: ${failedData.failure_reason || 'Unknown reason'}`);
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, delay));
+        } catch (pollError) {
+            console.error(`Error during Luma poll attempt ${attempt}:`, pollError);
+            if (attempt === maxAttempts) throw pollError;
+            await new Promise(resolve => setTimeout(resolve, delay));
         }
-
-        await new Promise(resolve => setTimeout(resolve, delay)); // Wait before next poll
     }
-    throw new Error(`Polling timed out after ${maxAttempts} attempts for request ID: ${requestId}`);
+
+    throw new Error(`Luma polling timed out after ${maxAttempts} attempts for generation ID: ${generationId}`);
 }
 
 // --- Main Function ---
@@ -168,11 +191,11 @@ Include:
         const visualPrompt = await callClaudeApi(claudeApiKey, visualPromptSystem, visualPromptUser, 300);
         console.log(`Generated Visual Prompt for ${charData.name}: ${visualPrompt}`);
 
-        // 3. Generate Image using Fal.ai (Photon Flash)
-        const falApiKey = Deno.env.get('FAL_KEY');
-        if (!falApiKey) return errorResponse('Server config error: Fal key missing', 500);
+        // 3. Generate Image using Luma API (instead of Fal.ai)
+        const lumaApiKey = Deno.env.get('LUMA_API_KEY');
+        if (!lumaApiKey) return errorResponse('Server config error: Luma key missing', 500);
 
-        const imageUrl = await callFalImageApi(supabaseClient, falApiKey, visualPrompt);
+        const imageUrl = await callLumaApi(lumaApiKey, visualPrompt);
         console.log(`Generated Image URL for ${charData.name}: ${imageUrl}`);
 
         // 4. Update Character Record in Database
