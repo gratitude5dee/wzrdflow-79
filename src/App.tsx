@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Credits from "./pages/Credits";
 import ProjectSetup from "./pages/ProjectSetup";
+import CustomCursor from "@/components/CustomCursor"; // Import the custom cursor
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => {
       <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>
+            <CustomCursor /> {/* Add custom cursor */}
             <Toaster />
             <Sonner />
             <Routes>
