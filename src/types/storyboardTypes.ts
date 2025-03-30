@@ -25,6 +25,21 @@ export interface CharacterDetails {
   image_url: string | null;
 }
 
+export interface ShotDetails {
+  id: string;
+  scene_id: string;
+  project_id: string;
+  shot_number: number;
+  shot_type: string | null;
+  prompt_idea: string | null;
+  visual_prompt: string | null;
+  dialogue: string | null;
+  sound_effects: string | null;
+  image_url: string | null;
+  image_status: 'pending' | 'generating' | 'completed' | 'failed';
+  luma_generation_id: string | null;
+}
+
 // Interface for data needed by StoryboardSidebar
 export interface SidebarData {
   projectTitle: string;

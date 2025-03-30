@@ -619,6 +619,72 @@ export type Database = {
           },
         ]
       }
+      shots: {
+        Row: {
+          created_at: string | null
+          dialogue: string | null
+          id: string
+          image_status: string | null
+          image_url: string | null
+          luma_generation_id: string | null
+          project_id: string
+          prompt_idea: string | null
+          scene_id: string
+          shot_number: number
+          shot_type: string | null
+          sound_effects: string | null
+          updated_at: string | null
+          visual_prompt: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dialogue?: string | null
+          id?: string
+          image_status?: string | null
+          image_url?: string | null
+          luma_generation_id?: string | null
+          project_id: string
+          prompt_idea?: string | null
+          scene_id: string
+          shot_number: number
+          shot_type?: string | null
+          sound_effects?: string | null
+          updated_at?: string | null
+          visual_prompt?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dialogue?: string | null
+          id?: string
+          image_status?: string | null
+          image_url?: string | null
+          luma_generation_id?: string | null
+          project_id?: string
+          prompt_idea?: string | null
+          scene_id?: string
+          shot_number?: number
+          shot_type?: string | null
+          sound_effects?: string | null
+          updated_at?: string | null
+          visual_prompt?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shots_scene_id_fkey"
+            columns: ["scene_id"]
+            isOneToOne: false
+            referencedRelation: "scenes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storylines: {
         Row: {
           created_at: string
