@@ -35,7 +35,7 @@ interface ShotFormProps {
   setLocalAudioUrl?: (url: string | null) => void;
   setLocalAudioStatus?: (status: AudioStatus) => void;
   setIsGeneratingAudio?: (isGenerating: boolean) => void;
-  onSave?: () => Promise<void>;
+  onSave?: () => void | Promise<void>; // Updated type to accept both void and Promise<void>
   onCancel?: () => void;
   isExpanded?: boolean;
 }
