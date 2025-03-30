@@ -16,40 +16,50 @@ import { Trash2, Move, Expand } from 'lucide-react';
 
 interface ShotCardProps {
   shot: ShotDetails;
-  onUpdate: (updates: Partial<ShotDetails>) => void;
+  onUpdate: (updates: Partial<ShotDetails>) => Promise<void>;
   onDelete: () => void;
 }
 
 export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) => {
   const {
-    isEditing,
+    // State
+    shotType,
+    promptIdea,
+    dialogue,
+    soundEffects,
+    localVisualPrompt,
+    localImageUrl,
+    localImageStatus,
+    localAudioUrl,
+    localAudioStatus,
     isDeleting,
-    isExpanded,
-    isGeneratingRef,
+    isSaving,
     isGeneratingPrompt,
     isGeneratingImage,
     isGeneratingAudio,
-    localVisualPrompt,
-    localDialogue,
-    localShotType,
-    localPromptIdea,
-    localImageStatus,
-    setIsEditing,
+    isGeneratingRef,
+    
+    // Setters
+    setShotType,
+    setPromptIdea,
+    setDialogue,
+    setSoundEffects,
+    setLocalVisualPrompt,
+    setLocalImageStatus,
+    setLocalAudioUrl,
+    setLocalAudioStatus,
     setIsDeleting,
-    setIsExpanded,
     setIsGeneratingPrompt,
     setIsGeneratingImage,
     setIsGeneratingAudio,
-    setLocalVisualPrompt,
-    setLocalDialogue,
-    setLocalShotType,
-    setLocalPromptIdea,
-    setLocalImageStatus,
-    handleSave,
-    handleCancel,
-    handleAddShotType,
-    validateAndDelete
-  } = useShotCardState({ shot, onUpdate, onDelete });
+    
+    // Handlers
+    handleShotTypeChange
+  } = useShotCardState(shot, onUpdate);
+
+  // Create additional state for expanded view and editing mode
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
 
   const { handleGenerateVisualPrompt, handleGenerateImage } = useAIGeneration({
     shotId: shot.id,
@@ -65,7 +75,8 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
     shotId: shot.id,
     isGeneratingRef,
     setIsGeneratingAudio,
-    dialogue: localDialogue || '',
+    setLocalAudioUrl,
+    setLocalAudioStatus
   });
 
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
@@ -75,6 +86,26 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+  };
+
+  // Handlers for edit form
+  const handleSave = async () => {
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+  };
+
+  const handleAddShotType = () => {
+    setIsEditing(true);
+  };
+
+  const validateAndDelete = () => {
+    if (window.confirm('Are you sure you want to delete this shot?')) {
+      setIsDeleting(true);
+      onDelete();
+    }
   };
 
   return (
@@ -142,14 +173,12 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
       <div className="flex-1 p-3 flex flex-col justify-between">
         {isEditing ? (
           <ShotForm
-            shotType={localShotType}
-            promptIdea={localPromptIdea}
-            visualPrompt={localVisualPrompt}
-            dialogue={localDialogue}
-            onShotTypeChange={setLocalShotType}
-            onPromptIdeaChange={setLocalPromptIdea}
-            onVisualPromptChange={setLocalVisualPrompt}
-            onDialogueChange={setLocalDialogue}
+            shotType={shotType}
+            promptIdea={promptIdea}
+            dialogue={dialogue}
+            onShotTypeChange={setShotType}
+            onPromptIdeaChange={setPromptIdea}
+            onDialogueChange={setDialogue}
             onSave={handleSave}
             onCancel={handleCancel}
             isExpanded={isExpanded}
@@ -157,7 +186,7 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
         ) : (
           <div className="flex flex-col h-full">
             <div className="flex-1 mb-2">
-              {!localShotType ? (
+              {!shotType ? (
                 <button 
                   onClick={handleAddShotType}
                   className="text-xs text-zinc-400 hover:text-zinc-300 mb-1 hover:underline"
@@ -166,12 +195,12 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
                 </button>
               ) : (
                 <div className="text-xs text-purple-300 mb-1">
-                  {localShotType.replace(/_/g, ' ')}
+                  {shotType.replace(/_/g, ' ')}
                 </div>
               )}
               
               <div className="text-xs text-zinc-400 line-clamp-3 mb-2">
-                {localPromptIdea || "No description"}
+                {promptIdea || "No description"}
               </div>
               
               {isExpanded && localVisualPrompt && (
@@ -183,10 +212,10 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
             </div>
 
             <div className="flex flex-col mt-auto">
-              {localDialogue && (
+              {dialogue && (
                 <div className="text-xs text-zinc-400 border-t border-zinc-700/50 pt-1 mb-1">
                   <span className="text-zinc-300 font-medium">Dialogue:</span>
-                  <p className="italic line-clamp-2">{localDialogue}</p>
+                  <p className="italic line-clamp-2">{dialogue}</p>
                 </div>
               )}
               
@@ -206,7 +235,7 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
                 audioUrl={shot.audio_url}
                 status={shot.audio_status}
                 isGenerating={isGeneratingAudio}
-                hasDialogue={!!localDialogue}
+                hasDialogue={!!dialogue}
                 onGenerateAudio={handleGenerateAudio}
               />
             </div>

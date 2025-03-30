@@ -1,88 +1,57 @@
-
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const LUMA_API_KEY = Deno.env.get("LUMA_API_KEY");
-const LUMA_API_URL = "https://api.lumalabs.ai/v0";
-
-// Types for the function parameters
-interface LumaImageGenerationParams {
-  supabase: ReturnType<typeof createClient>;
-  userId: string;
-  shotId: string;
-  projectId: string;
-  prompt: string;
-  aspectRatio: string;
-}
-
-interface LumaVideoGenerationParams {
-  supabase: ReturnType<typeof createClient>;
-  userId: string;
-  shotId: string;
-  projectId: string;
-  imageUrl: string;
-}
-
-// Function to initiate image generation with Luma
 export async function initiateLumaImageGeneration({
   supabase,
   userId,
   shotId,
   projectId,
   prompt,
-  aspectRatio = "16:9"
-}: LumaImageGenerationParams) {
-  if (!LUMA_API_KEY) {
-    throw new Error("Luma API key is not configured");
+  aspectRatio = '16:9'
+}: {
+  supabase: any;
+  userId: string;
+  shotId: string;
+  projectId: string;
+  prompt: string;
+  aspectRatio?: string;
+}) {
+  const lumaApiKey = Deno.env.get("LUMA_API_KEY");
+  if (!lumaApiKey) {
+    throw new Error("Missing Luma API key in environment variables");
   }
 
-  // Determine aspect ratio dimensions
-  let width = 1024;
-  let height = 576; // Default 16:9
-  
-  if (aspectRatio === "1:1") {
-    width = 1024;
-    height = 1024;
-  } else if (aspectRatio === "4:3") {
-    width = 1024;
-    height = 768;
-  } else if (aspectRatio === "9:16") {
-    width = 576;
-    height = 1024;
-  }
+  // Determine model to use based on configuration or defaults
+  const model = "photon-flash-1"; // Default model for image generation
+
+  // Log the initiation
+  console.log(`Calling Luma API (${model}, ${aspectRatio}) with prompt: ${prompt.substring(0, 75)}...`);
+  console.log(`  with user_id: ${userId}`);
+
+  // Prepare the request body for Luma API
+  const requestBody = {
+    prompt,
+    aspect_ratio: aspectRatio,
+    model,
+  };
 
   try {
-    console.log(`Calling Luma API (photon-flash-1, ${aspectRatio}) with prompt: ${prompt.substring(0, 80)}...`);
-    console.log(`  with user_id: ${userId}`);
-    
-    // Call Luma API to generate an image
-    const response = await fetch(`${LUMA_API_URL}/images/generations`, {
+    // Call Luma API
+    const response = await fetch("https://api.lumalabs.ai/photon", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${LUMA_API_KEY}`
+        "Authorization": `Bearer ${lumaApiKey}`
       },
-      body: JSON.stringify({
-        prompt: prompt,
-        model: "photon-flash-1", // Using the latest Photon model
-        width: width,
-        height: height,
-        num_images: 1
-      })
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Luma API Error (${response.status}): ${errorText}`);
+      const errorBody = await response.text();
+      throw new Error(`Luma API Error (${response.status}): ${errorBody}`);
     }
 
     const data = await response.json();
     
-    if (!data.id) {
-      throw new Error("Luma API did not return a generation ID");
-    }
-
     // Store the generation record in our database
-    const { data: generation, error } = await supabase
+    const { data: generation, error: insertError } = await supabase
       .from("generations")
       .insert({
         user_id: userId,
@@ -90,77 +59,78 @@ export async function initiateLumaImageGeneration({
         shot_id: shotId,
         api_provider: "luma_image",
         external_request_id: data.id,
-        request_payload: {
-          prompt,
-          model: "photon-flash-1",
-          width,
-          height
-        },
+        request_payload: requestBody,
         status: "submitted"
       })
-      .select()
+      .select('id')
       .single();
 
-    if (error) {
-      console.error(`Error storing generation record: ${error.message}`);
+    if (insertError) {
+      console.error(`Failed to record generation in database: ${insertError.message}`);
+      throw new Error(`Database error: ${insertError.message}`);
     }
 
     return {
-      generation_id: generation?.id || null,
-      luma_generation_id: data.id,
-      status: "submitted"
+      generation_id: generation.id,
+      luma_id: data.id,
+      message: "Image generation started successfully"
     };
   } catch (error) {
     throw error;
   }
 }
 
-// Function to initiate video generation with Luma
 export async function initiateLumaVideoGeneration({
   supabase,
   userId,
   shotId,
   projectId,
   imageUrl
-}: LumaVideoGenerationParams) {
-  if (!LUMA_API_KEY) {
-    throw new Error("Luma API key is not configured");
+}: {
+  supabase: any;
+  userId: string;
+  shotId: string;
+  projectId: string;
+  imageUrl: string;
+}) {
+  const lumaApiKey = Deno.env.get("LUMA_API_KEY");
+  if (!lumaApiKey) {
+    throw new Error("Missing Luma API key in environment variables");
   }
 
+  // Determine model to use
+  const model = "ray-2-flash"; // Default model for video generation from image
+  
+  // Log the initiation
+  console.log(`Initiating video generation with Luma Ray model (${model}) from image`);
+  console.log(`  with user_id: ${userId}, shot_id: ${shotId}`);
+
+  // Prepare the request body for Luma API
+  const requestBody = {
+    input_image_url: imageUrl,
+    model,
+  };
+
   try {
-    console.log(`Calling Luma API (Ray-2 Flash) to generate video from image: ${imageUrl.substring(0, 80)}...`);
-    console.log(`  for shot_id: ${shotId}, user_id: ${userId}`);
-    
-    // Call Luma API to generate a video from the image
-    const response = await fetch(`${LUMA_API_URL}/videos/generations`, {
+    // Call Luma API
+    const response = await fetch("https://api.lumalabs.ai/ray/video", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${LUMA_API_KEY}`
+        "Authorization": `Bearer ${lumaApiKey}`
       },
-      body: JSON.stringify({
-        model: "ray-2-flash",
-        input_image_url: imageUrl,
-        animation_settings: {
-          motion_strength: 0.6, // Use moderate motion strength
-          camera_motion: "subtle_panning" // Subtle camera motion
-        }
-      })
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Luma API Error (${response.status}): ${errorText}`);
+      const errorBody = await response.text();
+      throw new Error(`Luma API Error (${response.status}): ${errorBody}`);
     }
 
     const data = await response.json();
     
-    if (!data.id) {
-      throw new Error("Luma API did not return a generation ID");
-    }
-
     // Store the generation record in our database
-    const { data: generation, error } = await supabase
+    const { data: generation, error: insertError } = await supabase
       .from("generations")
       .insert({
         user_id: userId,
@@ -168,27 +138,21 @@ export async function initiateLumaVideoGeneration({
         shot_id: shotId,
         api_provider: "luma_video",
         external_request_id: data.id,
-        request_payload: {
-          model: "ray-2-flash",
-          input_image_url: imageUrl,
-          animation_settings: {
-            motion_strength: 0.6,
-            camera_motion: "subtle_panning"
-          }
-        },
+        request_payload: requestBody,
         status: "submitted"
       })
-      .select()
+      .select('id')
       .single();
 
-    if (error) {
-      console.error(`Error storing generation record: ${error.message}`);
+    if (insertError) {
+      console.error(`Failed to record video generation in database: ${insertError.message}`);
+      throw new Error(`Database error: ${insertError.message}`);
     }
 
     return {
-      generation_id: generation?.id || null,
-      luma_generation_id: data.id,
-      status: "submitted"
+      generation_id: generation.id,
+      luma_id: data.id,
+      message: "Video generation started successfully"
     };
   } catch (error) {
     throw error;
