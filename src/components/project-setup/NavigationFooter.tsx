@@ -14,9 +14,10 @@ const NavigationFooter = () => {
     setActiveTab, 
     isCreating,
     isGenerating,
+    isFinalizing,
     generateStoryline,
+    finalizeProjectSetup,
     projectData,
-    handleCreateProject,
     projectId
   } = useProject();
 
@@ -47,16 +48,16 @@ const NavigationFooter = () => {
         nextTab = visibleTabs[currentTabIndex + 1];
       }
     } else if (isLastTab) {
-      // If on the last tab, attempt to finalize the project
-      await handleCreateProject();
-      // Navigate only if project creation/final save was successful
-      const finalProjectId = await saveProjectData();
-      if (finalProjectId) {
-        navigate(`/editor/${finalProjectId}`);
+      // If on the last tab, finalize the project and navigate to storyboard
+      const setupInitiated = await finalizeProjectSetup();
+      if (setupInitiated && projectId) {
+        // Navigate to storyboard if successful
+        navigate(`/storyboard/${projectId}`);
       }
       return; // Exit after attempting to navigate
     } else {
-      // For other tabs, just move to the next one
+      // For other tabs, save data and move to the next one
+      await saveProjectData();
       if (currentTabIndex < visibleTabs.length - 1) {
         nextTab = visibleTabs[currentTabIndex + 1];
       }
@@ -74,16 +75,17 @@ const NavigationFooter = () => {
     }
   };
 
+  // Determine if any processing is happening
+  const isProcessing = isCreating || isGenerating || isFinalizing;
+  
   // Determine the button text based on various states
   const getNextButtonText = () => {
+    if (isFinalizing) return "Preparing Storyboard...";
     if (isGenerating) return "Generating...";
     if (isCreating) return "Saving...";
-    if (isLastTab) return "Go to Editor";
+    if (isLastTab) return "Go to Storyboard";
     return "Next";
   };
-
-  // Determine if the next button should be disabled
-  const isNextButtonDisabled = isCreating || isGenerating;
 
   return (
     <motion.div 
@@ -96,9 +98,9 @@ const NavigationFooter = () => {
         onClick={handleBack}
         variant="outline"
         className={`text-white border-zinc-700 hover:bg-zinc-800 hover:text-white flex items-center gap-2 transition-opacity duration-300 ${
-          isFirstTab ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          isFirstTab || isProcessing ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
-        disabled={isGenerating || isCreating}
+        disabled={isProcessing || isFirstTab}
       >
         <ArrowLeft className="h-4 w-4" />
         Back
@@ -128,7 +130,7 @@ const NavigationFooter = () => {
       
       <Button
         onClick={handleNext}
-        disabled={isNextButtonDisabled}
+        disabled={isProcessing}
         className={`px-8 flex items-center gap-2 transition-all duration-300 ${
           isLastTab 
             ? 'bg-green-600 hover:bg-green-700 text-white' 
@@ -136,7 +138,7 @@ const NavigationFooter = () => {
         } disabled:opacity-50`}
       >
         {getNextButtonText()}
-        {isGenerating || isCreating ? (
+        {isProcessing ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : !isLastTab ? (
           <ArrowRight className="h-4 w-4" />

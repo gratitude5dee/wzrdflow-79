@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ProjectData, ProjectSetupTab, Character } from './types';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,9 +17,11 @@ interface ProjectContextProps {
   setIsCreating: (creating: boolean) => void;
   isGenerating: boolean; 
   setIsGenerating: (generating: boolean) => void;
+  isFinalizing: boolean; // New state for finalization process
   generateStoryline: (projectId: string) => Promise<boolean>;
   handleCreateProject: () => Promise<void>;
-  generationCompletedSignal: number; // Add signal for character refresh
+  finalizeProjectSetup: () => Promise<boolean>; // New method to invoke the orchestrator
+  generationCompletedSignal: number;
 }
 
 const defaultProjectData: ProjectData = {
@@ -48,6 +49,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   const [activeTab, setActiveTab] = useState<ProjectSetupTab>('concept');
   const [isCreating, setIsCreating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false); // New state
   const [previousOption, setPreviousOption] = useState<'ai' | 'manual'>('ai');
   const [projectId, setProjectId] = useState<string | null>(null);
   const [projectData, setProjectData] = useState<ProjectData>(defaultProjectData);
@@ -248,6 +250,52 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // New function to finalize project setup
+  const finalizeProjectSetup = async (): Promise<boolean> => {
+    if (!user) {
+      toast.error("Please log in to create a project");
+      return false;
+    }
+
+    if (!projectId) {
+      toast.error("Project ID not found. Please save the project first.");
+      return false;
+    }
+
+    setIsFinalizing(true);
+    toast.info("Preparing your storyboard, please wait...", { duration: 10000 }); // Longer duration
+
+    try {
+      // Ensure latest data is saved before finalizing
+      const finalSaveId = await saveProjectData();
+      
+      if (!finalSaveId) {
+        throw new Error("Failed to save final project settings.");
+      }
+
+      console.log(`Invoking finalize-project-setup for project: ${projectId}`);
+      
+      const { data, error } = await supabase.functions.invoke('finalize-project-setup', {
+        body: { project_id: projectId }
+      });
+
+      if (error) {
+        console.error('Error invoking finalize-project-setup:', error);
+        throw new Error(error.message || "Failed to start storyboard preparation.");
+      }
+
+      console.log('Finalize project setup response:', data);
+      toast.success(data.message || "Storyboard preparation started!");
+      return true; // Indicate invocation success
+    } catch (error: any) {
+      console.error('Error finalizing project setup:', error);
+      toast.error(`Storyboard preparation failed: ${error.message}`);
+      return false;
+    } finally {
+      setIsFinalizing(false);
+    }
+  };
+
   return (
     <ProjectContext.Provider value={{
       projectData,
@@ -262,8 +310,10 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       setIsCreating,
       isGenerating,
       setIsGenerating,
+      isFinalizing,
       generateStoryline,
       handleCreateProject,
+      finalizeProjectSetup,
       generationCompletedSignal
     }}>
       {children}
