@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -114,6 +115,46 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
     fetchData();
   }, [fetchData]);
 
+  // Set up realtime subscriptions to scenes and shots
+  useEffect(() => {
+    if (!projectId) return;
+    
+    console.log(`StoryboardPage: Setting up realtime subscriptions for project: ${projectId}`);
+    
+    // Subscribe to scene changes
+    const scenesChannel = supabase
+      .channel('scenes_channel')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'scenes',
+          filter: `project_id=eq.${projectId}`
+        }, 
+        async (payload) => {
+          console.log('Scenes realtime update:', payload);
+          
+          // Refresh the entire scene list on any change
+          // This is simpler than trying to merge changes
+          await fetchData();
+          
+          // Show a toast based on the event type
+          if (payload.eventType === 'INSERT') {
+            toast.success('New scene added');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.success('Scene updated');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('Scene deleted');
+          }
+        })
+      .subscribe();
+      
+    // Clean up subscriptions
+    return () => {
+      supabase.removeChannel(scenesChannel);
+    };
+  }, [projectId, fetchData]);
+
   // Function to update scene details in the database
   const handleSceneUpdate = async (sceneId: string | undefined, updates: Partial<Omit<SceneDetails, 'id' | 'project_id' | 'scene_number'>>) => {
     if (!sceneId) {
@@ -211,7 +252,7 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
             sceneDescription: nextScene.description ?? null,
             sceneLocation: nextScene.location ?? null,
             sceneLighting: nextScene.lighting ?? null,
-            sceneWeather: nextScene.weather ?? null, // Add the missing sceneWeather property
+            sceneWeather: nextScene.weather ?? null,
             videoStyle: projectDetails.video_style ?? null,
             characters: characters
           });
@@ -269,7 +310,16 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
           <div className="p-6 h-full overflow-y-auto relative">
             {scenes.length === 0 ? (
               <div className="text-center text-zinc-500 mt-20">
-                No scenes found for this project. Add one below or generate them in Project Setup.
+                <AlertCircle className="mx-auto w-12 h-12 text-zinc-600 mb-4" />
+                <p className="text-xl mb-2">No scenes found</p>
+                <p className="text-sm mb-6">Add scenes manually or generate them in Project Setup.</p>
+                <Button 
+                  variant="outline" 
+                  className="border-purple-500/30 text-purple-300 hover:bg-purple-950/30"
+                  onClick={addScene}
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Add First Scene
+                </Button>
               </div>
             ) : (
               scenes.map(scene => (
@@ -281,8 +331,8 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
                   <ShotsRow
                     sceneId={scene.id}
                     sceneNumber={scene.scene_number}
-                    projectId={projectId} // Add the missing projectId prop
-                    onSceneDelete={handleDeleteScene} // Add scene deletion handler
+                    projectId={projectId} 
+                    onSceneDelete={handleDeleteScene}
                     isSelected={selectedScene?.id === scene.id}
                   />
                 </div>

@@ -140,7 +140,10 @@ Output *only* the comma-separated prompt string. No extra text or formatting.`;
         // 4. Update Shot Record in Database
         const { error: updateError } = await supabaseClient
             .from('shots')
-            .update({ visual_prompt: cleanedVisualPrompt })
+            .update({ 
+                visual_prompt: cleanedVisualPrompt,
+                image_status: 'prompt_ready' // Update status to indicate prompt is ready
+            })
             .eq('id', shot_id);
 
         if (updateError) {
@@ -152,6 +155,26 @@ Output *only* the comma-separated prompt string. No extra text or formatting.`;
         }
 
         console.log(`Successfully updated shot ${shot_id} with visual prompt.`);
+        
+        // 5. Trigger image generation asynchronously
+        console.log(`Triggering image generation for shot ${shot_id}`);
+        
+        try {
+            const { error: invokeError } = await supabaseClient.functions.invoke(
+                'generate-shot-image',
+                { body: { shot_id: shot_id } }
+            );
+            
+            if (invokeError) {
+                console.error(`Failed to invoke image generation for shot ${shot_id}:`, invokeError);
+                // We continue anyway as the prompt generation succeeded
+            } else {
+                console.log(`Successfully invoked image generation for shot ${shot_id}`);
+            }
+        } catch (invokeError) {
+            console.error(`Error invoking image generation for shot ${shot_id}:`, invokeError);
+            // We continue anyway as the prompt generation succeeded
+        }
 
         return new Response(
             JSON.stringify({ success: true, shot_id: shot_id, visual_prompt: cleanedVisualPrompt }),

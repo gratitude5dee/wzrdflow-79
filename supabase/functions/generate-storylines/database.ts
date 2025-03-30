@@ -18,7 +18,8 @@ export async function saveStorylineData(
     scene_count: 0,
     character_count: 0,
     characters: [],
-    updatedSettings: {} as Record<string, any>
+    updatedSettings: {} as Record<string, any>,
+    inserted_shot_ids: [] as string[] // Add this to track created shots
   };
 
   // If generating the initial selected storyline, deselect others first
@@ -77,7 +78,7 @@ export async function saveStorylineData(
     const { data: insertedScenes, error: scenesError } = await supabaseClient
       .from('scenes')
       .insert(scenesToInsert)
-      .select();
+      .select('id, scene_number, description, title');
 
     if (scenesError) {
       console.error('Error inserting scenes:', scenesError);
@@ -86,6 +87,41 @@ export async function saveStorylineData(
       scenes = insertedScenes || [];
       results.scene_count = scenes.length;
       console.log(`${results.scene_count} scenes inserted successfully.`);
+      
+      // Create default shots for each scene
+      if (scenes.length > 0) {
+        console.log(`Creating default shots for ${scenes.length} scenes...`);
+        const shotsToInsert = [];
+        
+        scenes.forEach(scene => {
+          // Create initial shot for each scene
+          shotsToInsert.push({
+            scene_id: scene.id,
+            project_id: project_id,
+            shot_number: 1,
+            shot_type: 'medium', // Default shot type
+            prompt_idea: `Scene ${scene.scene_number}: ${
+              scene.description ? scene.description.substring(0, 100) + '...' : 
+              scene.title || 'Initial shot'
+            }`,
+            image_status: 'pending'
+          });
+        });
+        
+        if (shotsToInsert.length > 0) {
+          const { data: newShots, error: shotsError } = await supabaseClient
+            .from('shots')
+            .insert(shotsToInsert)
+            .select('id');
+            
+          if (shotsError) {
+            console.error('Error inserting default shots:', shotsError);
+          } else if (newShots) {
+            results.inserted_shot_ids = newShots.map(s => s.id);
+            console.log(`Created ${results.inserted_shot_ids.length} default shots.`);
+          }
+        }
+      }
     }
   }
 
@@ -179,6 +215,31 @@ export async function triggerCharacterImageGeneration(
         }
       } catch (invocationError) {
         console.error(`Caught error during invocation for ${char.name} (${char.id}):`, invocationError.message);
+      }
+    }
+  }
+}
+
+export async function triggerShotVisualPromptGeneration(
+  supabaseClient: any,
+  shotIds: string[]
+) {
+  if (shotIds && shotIds.length > 0) {
+    console.log(`Triggering visual prompt generation for ${shotIds.length} shots...`);
+    
+    for (const shotId of shotIds) {
+      try {
+        const { error } = await supabaseClient.functions.invoke('generate-visual-prompt', {
+          body: { shot_id: shotId }
+        });
+        
+        if (error) {
+          console.error(`Error invoking visual prompt generation for shot ${shotId}:`, error.message);
+        } else {
+          console.log(`Visual prompt generation successfully invoked for shot ${shotId}.`);
+        }
+      } catch (invokeError) {
+        console.error(`Caught error during visual prompt invocation for shot ${shotId}:`, invokeError.message);
       }
     }
   }

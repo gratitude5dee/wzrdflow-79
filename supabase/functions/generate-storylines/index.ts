@@ -19,7 +19,8 @@ import {
 import { 
   saveStorylineData, 
   updateProjectSettings, 
-  triggerCharacterImageGeneration 
+  triggerCharacterImageGeneration,
+  triggerShotVisualPromptGeneration 
 } from './database.ts';
 
 /**
@@ -125,6 +126,11 @@ serve(async (req) => {
     if (dbResults.characters.length > 0) {
       await triggerCharacterImageGeneration(supabaseClient, project_id, dbResults.characters);
     }
+    
+    // Trigger visual prompt generation for created shots
+    if (dbResults.inserted_shot_ids && dbResults.inserted_shot_ids.length > 0) {
+      await triggerShotVisualPromptGeneration(supabaseClient, dbResults.inserted_shot_ids);
+    }
 
     // Return success response
     const result: StorylineGenerationResult = {
@@ -132,6 +138,7 @@ serve(async (req) => {
       storyline_id: dbResults.storyline_id,
       scene_count: dbResults.scene_count,
       character_count: dbResults.character_count,
+      shot_count: dbResults.inserted_shot_ids?.length || 0,
       is_alternative: generate_alternative,
       updated_settings: Object.keys(dbResults.updatedSettings).filter(k => k !== 'selected_storyline_id'),
       potential_genre: analysisData?.potential_genre,

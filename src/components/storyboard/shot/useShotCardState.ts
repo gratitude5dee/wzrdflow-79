@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ShotDetails, ImageStatus } from '@/types/storyboardTypes';
 import { useDebounce } from '@/hooks/use-debounce';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<ShotDetails>) => Promise<void>) => {
   // Local state for form values
@@ -32,6 +33,49 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
     setIsGeneratingImage(shot.image_status === 'generating');
   }, [shot.id, shot.shot_type, shot.prompt_idea, shot.dialogue, shot.sound_effects, 
       shot.visual_prompt, shot.image_url, shot.image_status]);
+
+  // Set up realtime subscription to receive updates for this shot
+  useEffect(() => {
+    // Skip if no shot id
+    if (!shot.id) return;
+    
+    console.log(`Setting up realtime subscription for shot: ${shot.id}`);
+    
+    const subscription = supabase
+      .channel(`shots:${shot.id}`)
+      .on('postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'shots',
+          filter: `id=eq.${shot.id}`
+        }, 
+        (payload) => {
+          console.log(`Received realtime update for shot ${shot.id}:`, payload);
+          const updatedShot = payload.new as ShotDetails;
+          
+          // Only update specific fields to avoid overwriting user's input
+          if (updatedShot.visual_prompt && updatedShot.visual_prompt !== localVisualPrompt) {
+            setLocalVisualPrompt(updatedShot.visual_prompt);
+          }
+          
+          if (updatedShot.image_url && updatedShot.image_url !== localImageUrl) {
+            setLocalImageUrl(updatedShot.image_url);
+          }
+          
+          if (updatedShot.image_status && updatedShot.image_status !== localImageStatus) {
+            setLocalImageStatus(updatedShot.image_status as ImageStatus);
+            setIsGeneratingImage(updatedShot.image_status === 'generating');
+          }
+        })
+      .subscribe();
+      
+    // Clean up subscription on unmount
+    return () => {
+      console.log(`Removing realtime subscription for shot: ${shot.id}`);
+      supabase.removeChannel(subscription);
+    };
+  }, [shot.id]);
 
   // Use debounce for field updates to reduce API calls
   const debouncedShotType = useDebounce(shotType, 1000);

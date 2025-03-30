@@ -1,37 +1,9 @@
 
-// Interfaces for request/response data
+// Types for the request body and response from the generate-storylines function
 
 export interface StorylineRequestBody {
   project_id: string;
   generate_alternative?: boolean;
-}
-
-// Interfaces for AI Responses
-export interface StorylineResponseData {
-  primary_storyline: {
-    title: string;
-    description: string;
-    tags: string[];
-    full_story: string;
-  };
-  scene_breakdown?: {
-    scene_number: number;
-    title: string;
-    description: string;
-    location?: string | null;
-    lighting?: string | null;
-    weather?: string | null;
-  }[];
-}
-
-export interface AnalysisResponseData {
-  characters: {
-    name: string;
-    description: string;
-  }[];
-  setting_keywords?: string[];
-  potential_genre?: string;
-  potential_tone?: string;
 }
 
 export interface StorylineGenerationResult {
@@ -39,9 +11,48 @@ export interface StorylineGenerationResult {
   storyline_id?: string;
   scene_count?: number;
   character_count?: number;
+  shot_count?: number; // Add shot count to the result
   is_alternative?: boolean;
   updated_settings?: string[];
   potential_genre?: string;
   potential_tone?: string;
   error?: string;
+}
+
+export interface StorylineInfo {
+  title: string;
+  description: string;
+  full_story: string;
+  tags: string[];
+}
+
+export interface SceneInfo {
+  scene_number: number;
+  title: string;
+  description: string;
+  location?: string;
+  lighting?: string;
+  weather?: string;
+}
+
+export interface CharacterInfo {
+  name: string;
+  description: string;
+}
+
+export interface StorylineResponseData {
+  primary_storyline: StorylineInfo;
+  alternative_storylines?: StorylineInfo[];
+  scene_breakdown?: SceneInfo[];
+}
+
+export interface AnalysisResponseData {
+  potential_genre?: string;
+  potential_tone?: string;
+  characters?: CharacterInfo[];
+  settings?: {
+    locations: string[];
+    time_period?: string;
+    weather_conditions?: string[];
+  };
 }
