@@ -8,7 +8,8 @@ import { type ProjectData } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/providers/AuthProvider';
 import { toast } from 'sonner';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useProject } from './ProjectContext';
 
 interface StorylineTabProps {
   projectData: ProjectData;
@@ -31,14 +32,17 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const { user } = useAuth();
-  const { id: projectId } = useParams();
+  const { projectId, saveProjectData } = useProject();
+  const navigate = useNavigate();
+  const params = useParams();
+  const id = params.id || projectId;
 
-  // Fetch storylines when component mounts
+  // Fetch storylines when component mounts or when projectId changes
   useEffect(() => {
-    if (projectId) {
+    if (id) {
       fetchStorylines();
     }
-  }, [projectId]);
+  }, [id]);
 
   const fetchStorylines = async () => {
     try {
@@ -46,7 +50,7 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
       const { data, error } = await supabase
         .from('storylines')
         .select('*')
-        .eq('project_id', projectId)
+        .eq('project_id', id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -103,7 +107,26 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
   };
 
   const handleGenerateMore = async () => {
-    if (!projectId || !user) {
+    // Ensure we have a project ID
+    let currentProjectId = id;
+    
+    // If no projectId, try to save the project first
+    if (!currentProjectId) {
+      try {
+        const savedId = await saveProjectData();
+        if (!savedId) {
+          toast.error("Cannot generate storylines: Failed to save project");
+          return;
+        }
+        currentProjectId = savedId;
+      } catch (error) {
+        console.error("Error saving project:", error);
+        toast.error("Cannot generate storylines: Failed to save project");
+        return;
+      }
+    }
+
+    if (!currentProjectId || !user) {
       toast.error("Cannot generate storylines: missing project ID or user not logged in");
       return;
     }
@@ -122,7 +145,7 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
         headers: {
           Authorization: `Bearer ${session.access_token}`
         },
-        body: { project_id: projectId }
+        body: { project_id: currentProjectId }
       });
       
       if (error) {

@@ -78,11 +78,11 @@ serve(async (req) => {
       );
     }
 
-    // Get Anthropic API key
-    const claudeApiKey = Deno.env.get('CLAUDE_API_KEY');
+    // Get Anthropic API key from environment
+    const claudeApiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!claudeApiKey) {
       return new Response(
-        JSON.stringify({ error: 'Claude API key not found' }),
+        JSON.stringify({ error: 'Anthropic API key not found' }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
