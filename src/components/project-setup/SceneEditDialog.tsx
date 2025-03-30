@@ -4,18 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
-import { Info } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 export interface Scene {
   id: string;
   number: number;
   title: string;
   description: string;
-  sceneDescription: string;
-  voiceover: string;
   location?: string;
   lighting?: string;
   weather?: string;
+  voiceover?: string;
 }
 
 interface SceneEditDialogProps {
@@ -37,7 +36,7 @@ export function SceneEditDialog({ scene, open, onOpenChange, onSave }: SceneEdit
         <div className="grid grid-cols-2 gap-6 py-4">
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium uppercase text-zinc-400">SCENE NAME</label>
+              <Label className="text-sm font-medium uppercase text-zinc-400">SCENE NAME</Label>
               <Input
                 value={editedScene.title}
                 onChange={(e) => setEditedScene({ ...editedScene, title: e.target.value })}
@@ -45,27 +44,27 @@ export function SceneEditDialog({ scene, open, onOpenChange, onSave }: SceneEdit
               />
             </div>
             <div>
-              <label className="text-sm font-medium uppercase text-zinc-400">LOCATION</label>
+              <Label className="text-sm font-medium uppercase text-zinc-400">LOCATION</Label>
               <Textarea
-                value={editedScene.location}
+                value={editedScene.location || ''}
                 onChange={(e) => setEditedScene({ ...editedScene, location: e.target.value })}
                 className="mt-1.5 bg-zinc-900 border-zinc-800 text-white h-32"
                 placeholder="E.g., 'Downtown café, interior, booth by the window...'"
               />
             </div>
             <div>
-              <label className="text-sm font-medium uppercase text-zinc-400">LIGHTING</label>
+              <Label className="text-sm font-medium uppercase text-zinc-400">LIGHTING</Label>
               <Input
-                value={editedScene.lighting}
+                value={editedScene.lighting || ''}
                 onChange={(e) => setEditedScene({ ...editedScene, lighting: e.target.value })}
                 className="mt-1.5 bg-zinc-900 border-zinc-800 text-white"
                 placeholder="E.g., 'Warm morning sunlight through café windows...'"
               />
             </div>
             <div>
-              <label className="text-sm font-medium uppercase text-zinc-400">WEATHER</label>
+              <Label className="text-sm font-medium uppercase text-zinc-400">WEATHER</Label>
               <Input
-                value={editedScene.weather}
+                value={editedScene.weather || ''}
                 onChange={(e) => setEditedScene({ ...editedScene, weather: e.target.value })}
                 className="mt-1.5 bg-zinc-900 border-zinc-800 text-white"
                 placeholder="E.g., 'Rainy day, water droplets on window...'"
@@ -74,20 +73,20 @@ export function SceneEditDialog({ scene, open, onOpenChange, onSave }: SceneEdit
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium uppercase text-zinc-400">SCENE DESCRIPTION*</label>
+              <Label className="text-sm font-medium uppercase text-zinc-400">SCENE DESCRIPTION*</Label>
               <Textarea
-                value={editedScene.sceneDescription}
-                onChange={(e) => setEditedScene({ ...editedScene, sceneDescription: e.target.value })}
-                className="mt-1.5 bg-zinc-900 border-zinc-800 text-white h-64"
+                value={editedScene.description}
+                onChange={(e) => setEditedScene({ ...editedScene, description: e.target.value })}
+                className="mt-1.5 bg-zinc-900 border-zinc-800 text-white h-56"
                 placeholder="Describe the action, mood, and visuals of this scene..."
               />
             </div>
             <div>
-              <label className="text-sm font-medium uppercase text-zinc-400">VOICEOVER</label>
-              <Input
-                value={editedScene.voiceover}
+              <Label className="text-sm font-medium uppercase text-zinc-400">VOICEOVER</Label>
+              <Textarea
+                value={editedScene.voiceover || ''}
                 onChange={(e) => setEditedScene({ ...editedScene, voiceover: e.target.value })}
-                className="mt-1.5 bg-zinc-900 border-zinc-800 text-white"
+                className="mt-1.5 bg-zinc-900 border-zinc-800 text-white h-24"
                 placeholder="Any narration or voiceover text for this scene..."
               />
             </div>

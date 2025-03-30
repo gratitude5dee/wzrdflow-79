@@ -43,11 +43,10 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
             number: scene.scene_number,
             title: scene.title || `Scene ${scene.scene_number}`,
             description: scene.description || "",
-            sceneDescription: scene.description || "",
-            voiceover: scene.voiceover || "",
             location: scene.location || "",
             lighting: scene.lighting || "",
-            weather: scene.weather || ""
+            weather: scene.weather || "",
+            voiceover: scene.voiceover || ""
           }));
           setScenes(mappedScenes);
           setShowNoScenesAlert(false);
@@ -70,7 +69,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
     }
 
     const newSceneNumber = scenes.length > 0 
-      ? Math.max(...scenes.map(s => (typeof s.number === 'number' ? s.number : 0))) + 1 
+      ? Math.max(...scenes.map(s => s.number)) + 1 
       : 1;
     
     try {
@@ -92,11 +91,10 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
         number: data.scene_number,
         title: data.title || `Scene ${data.scene_number}`,
         description: data.description || "",
-        sceneDescription: data.description || "",
-        voiceover: data.voiceover || "",
         location: data.location || "",
         lighting: data.lighting || "",
-        weather: data.weather || ""
+        weather: data.weather || "",
+        voiceover: data.voiceover || ""
       };
       
       setScenes([...scenes, newScene]);
@@ -140,7 +138,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
         .from('scenes')
         .update({
           title: updatedScene.title,
-          description: updatedScene.sceneDescription,
+          description: updatedScene.description,
           location: updatedScene.location,
           lighting: updatedScene.lighting,
           weather: updatedScene.weather,
@@ -190,10 +188,10 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
         </div>
       </div>
       
-      {scene.sceneDescription && (
+      {scene.description && (
         <div className="text-sm text-zinc-400 mb-2">
-          {scene.sceneDescription.substring(0, 150)}
-          {scene.sceneDescription.length > 150 ? '...' : ''}
+          {scene.description.substring(0, 150)}
+          {scene.description.length > 150 ? '...' : ''}
         </div>
       )}
       
