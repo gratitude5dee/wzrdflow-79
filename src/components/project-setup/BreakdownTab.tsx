@@ -15,7 +15,7 @@ interface BreakdownTabProps {
 }
 
 const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => {
-  const [scenes, setScenes] = useState<Scene[]>([]);
+  const [fetchedScenes, setFetchedScenes] = useState<Scene[]>([]);
   const [editingScene, setEditingScene] = useState<Scene | null>(null);
   const [showNoScenesAlert, setShowNoScenesAlert] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,7 +48,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
             weather: scene.weather || "",
             voiceover: scene.voiceover || ""
           }));
-          setScenes(mappedScenes);
+          setFetchedScenes(mappedScenes);
           setShowNoScenesAlert(false);
         }
       } catch (error) {
@@ -68,8 +68,8 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
       return;
     }
 
-    const newSceneNumber = scenes.length > 0 
-      ? Math.max(...scenes.map(s => s.number)) + 1 
+    const newSceneNumber = fetchedScenes.length > 0 
+      ? Math.max(...fetchedScenes.map(s => s.number)) + 1 
       : 1;
     
     try {
@@ -97,7 +97,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
         voiceover: data.voiceover || ""
       };
       
-      setScenes([...scenes, newScene]);
+      setFetchedScenes([...fetchedScenes, newScene]);
       setEditingScene(newScene);
       setShowNoScenesAlert(false);
       
@@ -122,7 +122,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
         
       if (error) throw error;
       
-      setScenes(scenes.filter(s => s.id !== sceneId));
+      setFetchedScenes(fetchedScenes.filter(s => s.id !== sceneId));
       toast.success('Scene deleted');
       
     } catch (error) {
@@ -149,7 +149,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
       if (error) throw error;
       
       // Update local state
-      setScenes(scenes.map(s => s.id === updatedScene.id ? updatedScene : s));
+      setFetchedScenes(fetchedScenes.map(s => s.id === updatedScene.id ? updatedScene : s));
       setEditingScene(null);
       toast.success('Scene updated');
       
@@ -228,7 +228,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
         </div>
       ) : (
         <>
-          {showNoScenesAlert && scenes.length === 0 && (
+          {showNoScenesAlert && fetchedScenes.length === 0 && (
             <Alert className="mb-6 bg-[#080D20] border-none text-white">
               <div className="flex items-start">
                 <Info className="h-5 w-5 mr-2 text-blue-400 mt-0.5" />
@@ -247,7 +247,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
             </Alert>
           )}
           
-          {scenes.length === 0 ? (
+          {fetchedScenes.length === 0 ? (
             <div className="flex justify-center items-center min-h-[400px] bg-[#111319] rounded-lg border border-zinc-800">
               <div 
                 onClick={handleNewScene}
@@ -259,7 +259,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
             </div>
           ) : (
             <div className="space-y-6">
-              {scenes.map(scene => (
+              {fetchedScenes.map(scene => (
                 <SceneCard key={scene.id} scene={scene} />
               ))}
               <div className="mt-6 flex justify-center">
