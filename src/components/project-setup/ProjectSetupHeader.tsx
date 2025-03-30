@@ -1,14 +1,18 @@
+
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
 const ProjectSetupHeader = () => {
   const navigate = useNavigate();
+  
   const handleBack = () => {
     navigate('/home');
   };
+  
   return <header className="w-full bg-[#0B0D14] border-b border-[#1D2130] px-6 py-3 shadow-lg">
       <div className="flex justify-between items-center">
-        <div className="flex items-center">
+        <div className="flex items-center cursor-pointer" onClick={handleBack}>
           <h1 className="text-xl font-bold text-white tracking-tight mr-2">WZRD</h1>
           <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">Studio</span>
           <span className="ml-6 text-zinc-400">Visualize your concept</span>
@@ -25,4 +29,5 @@ const ProjectSetupHeader = () => {
       </div>
     </header>;
 };
+
 export default ProjectSetupHeader;
