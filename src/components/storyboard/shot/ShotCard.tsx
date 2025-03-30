@@ -88,6 +88,19 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
     transition,
   };
 
+  // Create proper event handlers for text inputs that work with the state setters
+  const handlePromptIdeaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setPromptIdea(e.target.value);
+  };
+
+  const handleDialogueChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDialogue(e.target.value);
+  };
+
+  const handleSoundEffectsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setSoundEffects(e.target.value);
+  };
+
   // Handlers for edit form
   const handleSave = async () => {
     setIsEditing(false);
@@ -177,8 +190,8 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
             promptIdea={promptIdea}
             dialogue={dialogue}
             onShotTypeChange={setShotType}
-            onPromptIdeaChange={setPromptIdea}
-            onDialogueChange={setDialogue}
+            onPromptIdeaChange={handlePromptIdeaChange}
+            onDialogueChange={handleDialogueChange}
             onSave={handleSave}
             onCancel={handleCancel}
             isExpanded={isExpanded}
