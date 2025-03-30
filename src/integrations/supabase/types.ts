@@ -436,6 +436,66 @@ export type Database = {
           },
         ]
       }
+      scenes: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          lighting: string | null
+          location: string | null
+          project_id: string
+          scene_number: number
+          storyline_id: string | null
+          title: string | null
+          updated_at: string
+          voiceover: string | null
+          weather: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          lighting?: string | null
+          location?: string | null
+          project_id: string
+          scene_number: number
+          storyline_id?: string | null
+          title?: string | null
+          updated_at?: string
+          voiceover?: string | null
+          weather?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          lighting?: string | null
+          location?: string | null
+          project_id?: string
+          scene_number?: number
+          storyline_id?: string | null
+          title?: string | null
+          updated_at?: string
+          voiceover?: string | null
+          weather?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scenes_storyline_id_fkey"
+            columns: ["storyline_id"]
+            isOneToOne: false
+            referencedRelation: "storylines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shared_videos: {
         Row: {
           created_at: string

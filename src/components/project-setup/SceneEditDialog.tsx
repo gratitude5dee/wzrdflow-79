@@ -7,7 +7,8 @@ import { useState } from "react";
 import { Info } from "lucide-react";
 
 export interface Scene {
-  id: number;
+  id: string;
+  number: number;
   title: string;
   description: string;
   sceneDescription: string;
@@ -31,7 +32,7 @@ export function SceneEditDialog({ scene, open, onOpenChange, onSave }: SceneEdit
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-zinc-900/95 border border-zinc-800 max-w-4xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-medium text-white">Edit Scene {scene.id}</DialogTitle>
+          <DialogTitle className="text-xl font-medium text-white">Edit Scene {scene.number}</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-6 py-4">
           <div className="space-y-4">
@@ -49,6 +50,7 @@ export function SceneEditDialog({ scene, open, onOpenChange, onSave }: SceneEdit
                 value={editedScene.location}
                 onChange={(e) => setEditedScene({ ...editedScene, location: e.target.value })}
                 className="mt-1.5 bg-zinc-900 border-zinc-800 text-white h-32"
+                placeholder="E.g., 'Downtown café, interior, booth by the window...'"
               />
             </div>
             <div>
@@ -57,7 +59,7 @@ export function SceneEditDialog({ scene, open, onOpenChange, onSave }: SceneEdit
                 value={editedScene.lighting}
                 onChange={(e) => setEditedScene({ ...editedScene, lighting: e.target.value })}
                 className="mt-1.5 bg-zinc-900 border-zinc-800 text-white"
-                placeholder="E.g., 'November, 11:00 PM, harsh artificial lighting...'"
+                placeholder="E.g., 'Warm morning sunlight through café windows...'"
               />
             </div>
             <div>
@@ -66,17 +68,18 @@ export function SceneEditDialog({ scene, open, onOpenChange, onSave }: SceneEdit
                 value={editedScene.weather}
                 onChange={(e) => setEditedScene({ ...editedScene, weather: e.target.value })}
                 className="mt-1.5 bg-zinc-900 border-zinc-800 text-white"
-                placeholder="E.g., 'Crystal clear skies, calm atmosphere...'"
+                placeholder="E.g., 'Rainy day, water droplets on window...'"
               />
             </div>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium uppercase text-zinc-400">SCENE*</label>
+              <label className="text-sm font-medium uppercase text-zinc-400">SCENE DESCRIPTION*</label>
               <Textarea
                 value={editedScene.sceneDescription}
                 onChange={(e) => setEditedScene({ ...editedScene, sceneDescription: e.target.value })}
                 className="mt-1.5 bg-zinc-900 border-zinc-800 text-white h-64"
+                placeholder="Describe the action, mood, and visuals of this scene..."
               />
             </div>
             <div>
@@ -85,7 +88,7 @@ export function SceneEditDialog({ scene, open, onOpenChange, onSave }: SceneEdit
                 value={editedScene.voiceover}
                 onChange={(e) => setEditedScene({ ...editedScene, voiceover: e.target.value })}
                 className="mt-1.5 bg-zinc-900 border-zinc-800 text-white"
-                placeholder="E.g., 'Somewhere over the Rainbow...'"
+                placeholder="Any narration or voiceover text for this scene..."
               />
             </div>
           </div>
