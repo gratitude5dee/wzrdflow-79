@@ -1,8 +1,15 @@
 
 import React, { useState } from 'react';
 import { HelpCircle, History, Image, Clock, Plus } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useDragControls } from 'framer-motion';
 import { cn } from '@/lib/utils';
+
+export interface ConnectionPoint {
+  id: string;
+  type: 'input' | 'output';
+  label: string;
+  position: 'top' | 'right' | 'bottom' | 'left';
+}
 
 export interface BlockProps {
   id: string;
@@ -13,13 +20,12 @@ export interface BlockProps {
   isSelected: boolean;
   generationTime?: string;
   supportsConnections?: boolean;
-  connectionPoints?: Array<{
-    id: string;
-    type: 'input' | 'output';
-    label: string;
-    position: 'top' | 'right' | 'bottom' | 'left';
-  }>;
+  connectionPoints?: ConnectionPoint[];
   onShowHistory?: () => void;
+  onStartConnection?: (blockId: string, pointId: string, e: React.MouseEvent) => void;
+  onFinishConnection?: (blockId: string, pointId: string) => void;
+  position?: { x: number, y: number };
+  onDragEnd?: (position: { x: number, y: number }) => void;
 }
 
 const BlockBase: React.FC<BlockProps> = ({ 
@@ -32,9 +38,27 @@ const BlockBase: React.FC<BlockProps> = ({
   generationTime,
   supportsConnections = false,
   connectionPoints = [],
-  onShowHistory
+  onShowHistory,
+  onStartConnection,
+  onFinishConnection,
+  position = { x: 0, y: 0 },
+  onDragEnd
 }) => {
   const [showConnections, setShowConnections] = useState(false);
+  const dragControls = useDragControls();
+
+  const handleConnectionStart = (pointId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onStartConnection) {
+      onStartConnection(id, pointId, e);
+    }
+  };
+
+  const handleConnectionEnd = (pointId: string) => {
+    if (onFinishConnection) {
+      onFinishConnection(id, pointId);
+    }
+  };
 
   return (
     <motion.div
@@ -45,10 +69,26 @@ const BlockBase: React.FC<BlockProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       layout
+      drag
+      dragControls={dragControls}
+      dragMomentum={false}
+      dragElastic={0.1}
+      onDragEnd={(e, info) => {
+        if (onDragEnd) {
+          onDragEnd({ x: info.point.x, y: info.point.y });
+        }
+      }}
+      dragConstraints={{ left: -500, right: 500, top: -500, bottom: 500 }}
       onMouseEnter={() => supportsConnections && setShowConnections(true)}
       onMouseLeave={() => supportsConnections && setShowConnections(false)}
     >
-      <div className="bg-zinc-800 px-4 py-2 flex items-center justify-between">
+      <div 
+        className="bg-zinc-800 px-4 py-2 flex items-center justify-between cursor-move"
+        onPointerDown={(e) => {
+          dragControls.start(e);
+          e.stopPropagation();
+        }}
+      >
         <div className="flex items-center">
           <h3 className="text-xs font-semibold text-zinc-400">{title}</h3>
           {generationTime && (
@@ -110,6 +150,8 @@ const BlockBase: React.FC<BlockProps> = ({
               point.type === 'input' ? 'bg-[#9b87f5] hover:bg-[#a597f7]' : 'bg-[#d487f5] hover:bg-[#dc9ff8]'
             )}
             title={point.label}
+            onMouseDown={(e) => point.type === 'output' && handleConnectionStart(point.id, e)}
+            onClick={() => point.type === 'input' && handleConnectionEnd(point.id)}
           >
             <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-xs font-bold">
               {point.type === 'input' ? '+' : '→'}

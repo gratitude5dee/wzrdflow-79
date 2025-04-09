@@ -1,14 +1,16 @@
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import TextBlock from './blocks/TextBlock';
 import ImageBlock from './blocks/ImageBlock';
 import VideoBlock from './blocks/VideoBlock';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { ConnectionPoint } from './blocks/BlockBase';
 
 interface Block {
   id: string;
   type: 'text' | 'image' | 'video';
+  position?: { x: number, y: number };
 }
 
 interface Connection {
@@ -17,6 +19,7 @@ interface Connection {
   sourcePointId: string;
   targetBlockId: string;
   targetPointId: string;
+  path?: string;
 }
 
 interface StudioCanvasProps {
@@ -33,6 +36,7 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
   const [isDraggingConnection, setIsDraggingConnection] = useState(false);
   const [connectionStart, setConnectionStart] = useState<{blockId: string, pointId: string, x: number, y: number} | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [blockPositions, setBlockPositions] = useState<Record<string, { x: number, y: number }>>({});
   const canvasRef = useRef<HTMLDivElement>(null);
   
   // Function to get the column span based on view mode
@@ -94,6 +98,31 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
     setIsDraggingConnection(false);
     setConnectionStart(null);
   };
+
+  const handleBlockDragEnd = (blockId: string, position: { x: number, y: number }) => {
+    setBlockPositions(prev => ({
+      ...prev,
+      [blockId]: position
+    }));
+  };
+
+  // Define connection points for each block type
+  const textBlockConnectionPoints: ConnectionPoint[] = [
+    { id: 'output', type: 'output', label: 'Text Output', position: 'right' },
+    { id: 'input', type: 'input', label: 'Text Input', position: 'left' }
+  ];
+
+  const imageBlockConnectionPoints: ConnectionPoint[] = [
+    { id: 'image-output', type: 'output', label: 'Image Output', position: 'right' },
+    { id: 'prompt-input', type: 'input', label: 'Prompt Input', position: 'left' },
+    { id: 'style-input', type: 'input', label: 'Style Input', position: 'top' }
+  ];
+
+  const videoBlockConnectionPoints: ConnectionPoint[] = [
+    { id: 'video-output', type: 'output', label: 'Video Output', position: 'right' },
+    { id: 'image-input', type: 'input', label: 'Image Input', position: 'left' },
+    { id: 'prompt-input', type: 'input', label: 'Prompt Input', position: 'top' }
+  ];
 
   return (
     <div 
@@ -183,12 +212,10 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
                   onSelect={() => onSelectBlock(block.id)}
                   isSelected={selectedBlockId === block.id}
                   supportsConnections={true}
-                  connectionPoints={[
-                    { id: 'output', type: 'output', label: 'Text Output', position: 'right' },
-                    { id: 'input', type: 'input', label: 'Text Input', position: 'left' }
-                  ]}
+                  connectionPoints={textBlockConnectionPoints}
                   onStartConnection={handleStartConnection}
                   onFinishConnection={handleFinishConnection}
+                  onDragEnd={(position) => handleBlockDragEnd(block.id, position)}
                 />
               </motion.div>
             );
@@ -205,13 +232,10 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
                   onSelect={() => onSelectBlock(block.id)}
                   isSelected={selectedBlockId === block.id}
                   supportsConnections={true}
-                  connectionPoints={[
-                    { id: 'image-output', type: 'output', label: 'Image Output', position: 'right' },
-                    { id: 'prompt-input', type: 'input', label: 'Prompt Input', position: 'left' },
-                    { id: 'style-input', type: 'input', label: 'Style Input', position: 'top' }
-                  ]}
+                  connectionPoints={imageBlockConnectionPoints}
                   onStartConnection={handleStartConnection}
                   onFinishConnection={handleFinishConnection}
+                  onDragEnd={(position) => handleBlockDragEnd(block.id, position)}
                 />
               </motion.div>
             );
@@ -228,13 +252,10 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
                   onSelect={() => onSelectBlock(block.id)}
                   isSelected={selectedBlockId === block.id}
                   supportsConnections={true}
-                  connectionPoints={[
-                    { id: 'video-output', type: 'output', label: 'Video Output', position: 'right' },
-                    { id: 'image-input', type: 'input', label: 'Image Input', position: 'left' },
-                    { id: 'prompt-input', type: 'input', label: 'Prompt Input', position: 'top' }
-                  ]}
+                  connectionPoints={videoBlockConnectionPoints}
                   onStartConnection={handleStartConnection}
                   onFinishConnection={handleFinishConnection}
+                  onDragEnd={(position) => handleBlockDragEnd(block.id, position)}
                 />
               </motion.div>
             );

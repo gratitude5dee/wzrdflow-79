@@ -1,49 +1,35 @@
 
-import { useState } from 'react';
-import BlockBase from './BlockBase';
-import { IconButton } from '../StudioUtils';
-import { Upload, GitBranch, Video, MessageCircle, CircleDashed } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import HistoryPanel from '../HistoryPanel';
+import React, { useState } from 'react';
+import { Upload, Play, Pause } from 'lucide-react';
+import BlockBase, { ConnectionPoint } from './BlockBase';
 
-interface VideoBlockProps {
+export interface VideoBlockProps {
   id: string;
   onSelect: () => void;
   isSelected: boolean;
+  supportsConnections?: boolean;
+  connectionPoints?: ConnectionPoint[];
+  onStartConnection?: (blockId: string, pointId: string, e: React.MouseEvent) => void;
+  onFinishConnection?: (blockId: string, pointId: string) => void;
+  onShowHistory?: () => void;
+  onDragEnd?: (position: { x: number, y: number }) => void;
 }
 
-const VideoBlock = ({ id, onSelect, isSelected }: VideoBlockProps) => {
-  const [prompt, setPrompt] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
+const VideoBlock: React.FC<VideoBlockProps> = ({ 
+  id, 
+  onSelect, 
+  isSelected,
+  supportsConnections,
+  connectionPoints,
+  onStartConnection,
+  onFinishConnection,
+  onShowHistory,
+  onDragEnd
+}) => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
-  
-  // Mock history data
-  const historyItems = [];
+  const [prompt, setPrompt] = useState<string>("");
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
-  // Example connection points
-  const connectionPoints = [
-    { id: 'video-out', type: 'output' as const, label: 'Video Output', position: 'right' as const },
-    { id: 'prompt-in', type: 'input' as const, label: 'Prompt Input', position: 'left' as const },
-    { id: 'image-in', type: 'input' as const, label: 'Image Input', position: 'left' as const },
-  ];
-
-  const handleGenerate = () => {
-    if (!prompt.trim()) return;
-    setIsGenerating(true);
-    
-    // Simulate generation
-    setTimeout(() => {
-      setIsGenerating(false);
-      setVideoUrl('https://placehold.co/600x400/333/white?text=Generated+Video');
-    }, 2000);
-  };
-
-  const handleShowHistory = () => {
-    setShowHistory(!showHistory);
-  };
-  
   return (
     <BlockBase
       id={id}
@@ -51,68 +37,60 @@ const VideoBlock = ({ id, onSelect, isSelected }: VideoBlockProps) => {
       title="VIDEO"
       onSelect={onSelect}
       isSelected={isSelected}
-      generationTime="~4m"
-      supportsConnections={true}
+      generationTime="~3m"
+      supportsConnections={supportsConnections}
       connectionPoints={connectionPoints}
-      onShowHistory={handleShowHistory}
+      onShowHistory={onShowHistory}
+      onStartConnection={onStartConnection}
+      onFinishConnection={onFinishConnection}
+      onDragEnd={onDragEnd}
     >
-      {showHistory ? (
-        <HistoryPanel 
-          items={historyItems}
-          onSelectItem={(item) => {
-            setPrompt(item.prompt);
-            setShowHistory(false);
-          }}
-          blockType="video"
-        />
-      ) : (
-        <div className="space-y-4">
-          <div>
-            <h4 className="text-xs font-medium text-zinc-500 mb-2">Try to...</h4>
-            <div className="grid grid-cols-1 gap-1">
-              <IconButton icon={<Upload className="h-3.5 w-3.5" />} label="Upload a video" />
-              <IconButton icon={<GitBranch className="h-3.5 w-3.5" />} label="Combine images into a video" />
-              <IconButton icon={<Video className="h-3.5 w-3.5" />} label="Turn an image into a video" />
+      <div className="space-y-4">
+        <div className="flex items-center justify-between text-xs text-zinc-500 mb-1">
+          <div>Try to...</div>
+          <div className="text-amber-400">Model: Pika</div>
+        </div>
+        
+        {!videoUrl ? (
+          <div className="border-2 border-dashed border-zinc-700 rounded-lg p-8 flex flex-col items-center justify-center gap-4 min-h-[150px] bg-zinc-800/20">
+            <div className="flex flex-wrap gap-2 justify-center">
+              <button className="flex items-center gap-1 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-xs">
+                <Upload size={12} />
+                Upload video
+              </button>
+              <button className="flex items-center gap-1 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-xs">
+                Generate from image
+              </button>
+            </div>
+            
+            <input
+              type="text"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-amber-500"
+              placeholder="Try 'A whimsical animated clip about dreams'"
+            />
+          </div>
+        ) : (
+          <div className="relative group">
+            <video
+              src={videoUrl}
+              className="w-full h-auto rounded-lg"
+              loop
+              autoPlay={isPlaying}
+              muted
+            />
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              <button 
+                className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded"
+                onClick={() => setIsPlaying(!isPlaying)}
+              >
+                {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+              </button>
             </div>
           </div>
-
-          {videoUrl ? (
-            <div className="relative aspect-video bg-zinc-800 rounded overflow-hidden group">
-              <video 
-                src={videoUrl} 
-                className="w-full h-full object-cover" 
-                controls
-              />
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                <Button variant="secondary" size="sm">Regenerate</Button>
-              </div>
-            </div>
-          ) : (
-            <div className="relative">
-              <Textarea
-                placeholder='Try "A whimsical animated clip about dreams"'
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="min-h-[80px] bg-zinc-800/50 border-zinc-700 resize-none text-sm"
-              />
-              <Button 
-                className="absolute bottom-2 right-2 bg-zinc-700 hover:bg-zinc-600 h-8 px-3"
-                onClick={handleGenerate}
-                disabled={isGenerating || !prompt.trim()}
-              >
-                {isGenerating ? (
-                  <>
-                    <CircleDashed className="h-4 w-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  "Generate"
-                )}
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </BlockBase>
   );
 };

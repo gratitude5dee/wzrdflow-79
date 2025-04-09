@@ -14,6 +14,7 @@ import ReactFlow, {
   NodeTypes,
   Handle,
   Position,
+  ConnectionLineComponentProps,
 } from 'reactflow';
 import CustomEdge from './CustomEdge';
 import RightSidebar from './RightSidebar';
@@ -110,26 +111,20 @@ const Canvas = () => {
             opacity: 0.7,
             strokeDasharray: '5,5'
           }}
-          connectionLineComponent={(props) => (
+          connectionLineComponent={(props: ConnectionLineComponentProps) => (
             <g>
               <path
                 {...props}
-                style={{
-                  ...props.style,
-                  strokeWidth: 3,
-                  stroke: '#9b87f5',
-                  opacity: 0.8,
-                }}
+                strokeWidth={3}
+                stroke="#9b87f5"
+                opacity={0.8}
               />
               <path
                 {...props}
-                style={{
-                  ...props.style,
-                  strokeWidth: 10,
-                  stroke: '#9b87f5',
-                  opacity: 0.1,
-                  filter: 'blur(3px)',
-                }}
+                strokeWidth={10}
+                stroke="#9b87f5"
+                opacity={0.1}
+                filter="blur(3px)"
               />
             </g>
           )}
