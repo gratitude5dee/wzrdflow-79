@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import TextBlock from './blocks/TextBlock';
 import ImageBlock from './blocks/ImageBlock';
 import VideoBlock from './blocks/VideoBlock';
@@ -9,6 +9,14 @@ import { motion } from 'framer-motion';
 interface Block {
   id: string;
   type: 'text' | 'image' | 'video';
+}
+
+interface Connection {
+  id: string;
+  sourceBlockId: string;
+  sourcePointId: string;
+  targetBlockId: string;
+  targetPointId: string;
 }
 
 interface StudioCanvasProps {
@@ -21,7 +29,12 @@ type ViewMode = 'normal' | 'compact' | 'grid';
 
 const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
-
+  const [connections, setConnections] = useState<Connection[]>([]);
+  const [isDraggingConnection, setIsDraggingConnection] = useState(false);
+  const [connectionStart, setConnectionStart] = useState<{blockId: string, pointId: string, x: number, y: number} | null>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const canvasRef = useRef<HTMLDivElement>(null);
+  
   // Function to get the column span based on view mode
   const getColSpan = (blockType: string, index: number): string => {
     if (viewMode === 'normal') {
@@ -43,8 +56,48 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
     }
   };
 
+  const handleStartConnection = (blockId: string, pointId: string, e: React.MouseEvent) => {
+    if (canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      setConnectionStart({ blockId, pointId, x, y });
+      setIsDraggingConnection(true);
+      setMousePosition({ x, y });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDraggingConnection && canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      setMousePosition({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+    }
+  };
+
+  const handleFinishConnection = (blockId: string, pointId: string) => {
+    if (connectionStart && blockId !== connectionStart.blockId) {
+      const newConnection = {
+        id: `${connectionStart.blockId}-${connectionStart.pointId}--${blockId}-${pointId}`,
+        sourceBlockId: connectionStart.blockId,
+        sourcePointId: connectionStart.pointId,
+        targetBlockId: blockId,
+        targetPointId: pointId
+      };
+      
+      setConnections([...connections, newConnection]);
+    }
+    
+    setIsDraggingConnection(false);
+    setConnectionStart(null);
+  };
+
   return (
     <div 
+      ref={canvasRef}
       className="flex-1 bg-black overflow-auto p-6"
       style={{ 
         backgroundImage: 'radial-gradient(#333 1px, transparent 0)',
@@ -52,7 +105,59 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
         backgroundPosition: '-12px -12px'
       }}
       onClick={handleCanvasClick}
+      onMouseMove={handleMouseMove}
     >
+      {/* Connection lines */}
+      <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
+        {/* Static connections */}
+        {connections.map((conn) => (
+          <g key={conn.id}>
+            {/* Glow effect */}
+            <path 
+              d={`M100,100 C150,150 250,250 300,300`} 
+              stroke="#9b87f5"
+              strokeWidth="10"
+              fill="none"
+              opacity="0.1"
+              filter="blur(3px)"
+            />
+            {/* Main line */}
+            <path 
+              d={`M100,100 C150,150 250,250 300,300`} 
+              stroke="#9b87f5"
+              strokeWidth="3"
+              fill="none"
+              strokeDasharray="none"
+              opacity="0.8"
+            />
+          </g>
+        ))}
+        
+        {/* Active dragging connection */}
+        {isDraggingConnection && connectionStart && (
+          <g>
+            {/* Glow effect */}
+            <path 
+              d={`M${connectionStart.x},${connectionStart.y} C${(connectionStart.x + mousePosition.x)/2},${connectionStart.y} ${(connectionStart.x + mousePosition.x)/2},${mousePosition.y} ${mousePosition.x},${mousePosition.y}`} 
+              stroke="#9b87f5"
+              strokeWidth="10"
+              fill="none"
+              opacity="0.1"
+              filter="blur(3px)"
+            />
+            {/* Main line */}
+            <path 
+              d={`M${connectionStart.x},${connectionStart.y} C${(connectionStart.x + mousePosition.x)/2},${connectionStart.y} ${(connectionStart.x + mousePosition.x)/2},${mousePosition.y} ${mousePosition.x},${mousePosition.y}`} 
+              stroke="#9b87f5"
+              strokeWidth="3"
+              fill="none"
+              strokeDasharray="5,5"
+              opacity="0.8"
+            />
+          </g>
+        )}
+      </svg>
+
       <div 
         className={cn(
           "max-w-6xl mx-auto py-4 grid grid-cols-3 gap-6",
@@ -77,6 +182,13 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
                   id={block.id}
                   onSelect={() => onSelectBlock(block.id)}
                   isSelected={selectedBlockId === block.id}
+                  supportsConnections={true}
+                  connectionPoints={[
+                    { id: 'output', type: 'output', label: 'Text Output', position: 'right' },
+                    { id: 'input', type: 'input', label: 'Text Input', position: 'left' }
+                  ]}
+                  onStartConnection={handleStartConnection}
+                  onFinishConnection={handleFinishConnection}
                 />
               </motion.div>
             );
@@ -92,6 +204,14 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
                   id={block.id}
                   onSelect={() => onSelectBlock(block.id)}
                   isSelected={selectedBlockId === block.id}
+                  supportsConnections={true}
+                  connectionPoints={[
+                    { id: 'image-output', type: 'output', label: 'Image Output', position: 'right' },
+                    { id: 'prompt-input', type: 'input', label: 'Prompt Input', position: 'left' },
+                    { id: 'style-input', type: 'input', label: 'Style Input', position: 'top' }
+                  ]}
+                  onStartConnection={handleStartConnection}
+                  onFinishConnection={handleFinishConnection}
                 />
               </motion.div>
             );
@@ -107,6 +227,14 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
                   id={block.id}
                   onSelect={() => onSelectBlock(block.id)}
                   isSelected={selectedBlockId === block.id}
+                  supportsConnections={true}
+                  connectionPoints={[
+                    { id: 'video-output', type: 'output', label: 'Video Output', position: 'right' },
+                    { id: 'image-input', type: 'input', label: 'Image Input', position: 'left' },
+                    { id: 'prompt-input', type: 'input', label: 'Prompt Input', position: 'top' }
+                  ]}
+                  onStartConnection={handleStartConnection}
+                  onFinishConnection={handleFinishConnection}
                 />
               </motion.div>
             );

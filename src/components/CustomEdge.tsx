@@ -15,9 +15,10 @@ const CustomEdge = ({
     sourceX,
     sourceY,
     sourcePosition,
+    targetPosition,
     targetX,
     targetY,
-    targetPosition,
+    curvature: 0.8,
   });
 
   return (
@@ -26,9 +27,20 @@ const CustomEdge = ({
         path={edgePath}
         style={{
           ...style,
-          strokeWidth: 2,
-          stroke: '#2DD4BF',
+          strokeWidth: 3,
+          stroke: data?.color || '#9b87f5',
           strokeDasharray: data?.dashed ? '5,5' : 'none',
+          opacity: 0.8,
+        }}
+      />
+      {/* Glow effect for edges */}
+      <BaseEdge 
+        path={edgePath}
+        style={{
+          strokeWidth: 10,
+          stroke: data?.color || '#9b87f5',
+          opacity: 0.1,
+          filter: 'blur(3px)',
         }}
       />
     </>

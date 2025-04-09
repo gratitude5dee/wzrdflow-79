@@ -81,8 +81,9 @@ const BlockBase: React.FC<BlockProps> = ({
       </div>
       
       {/* Connection Points */}
-      {supportsConnections && showConnections && connectionPoints.map(point => {
+      {(supportsConnections || showConnections) && connectionPoints.map(point => {
         let positionClasses = '';
+        let glowColor = point.type === 'input' ? 'shadow-[0_0_10px_rgba(155,135,245,0.5)]' : 'shadow-[0_0_10px_rgba(212,135,245,0.5)]';
         
         switch(point.position) {
           case 'top':
@@ -103,12 +104,17 @@ const BlockBase: React.FC<BlockProps> = ({
           <div 
             key={point.id}
             className={cn(
-              "absolute w-3 h-3 bg-zinc-700 border border-zinc-600 rounded-full z-10 cursor-pointer",
+              "absolute w-4 h-4 rounded-full z-10 cursor-pointer transition-all duration-300",
               positionClasses,
-              point.type === 'input' ? 'hover:bg-blue-500' : 'hover:bg-green-500'
+              glowColor,
+              point.type === 'input' ? 'bg-[#9b87f5] hover:bg-[#a597f7]' : 'bg-[#d487f5] hover:bg-[#dc9ff8]'
             )}
             title={point.label}
-          />
+          >
+            <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-xs font-bold">
+              {point.type === 'input' ? '+' : '→'}
+            </span>
+          </div>
         );
       })}
     </motion.div>
