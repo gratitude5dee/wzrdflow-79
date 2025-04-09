@@ -1,57 +1,67 @@
-
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
-import { ViewModeSelector } from '@/components/home/ViewModeSelector';
-import CreditsDisplay from '@/components/CreditsDisplay';
 import { Logo } from '@/components/ui/logo';
+import CreditsDisplay from '@/components/CreditsDisplay';
+import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
-interface HeaderProps {
-  viewMode: 'studio' | 'storyboard' | 'editor';
-  setViewMode: (mode: 'studio' | 'storyboard' | 'editor') => void;
-}
-
-const Header = ({ viewMode, setViewMode }: HeaderProps) => {
+const Header = ({ viewMode, setViewMode }) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const location = useLocation();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      navigate('/login');
-    } catch (error: any) {
-      toast({
-        title: "Error signing out",
-        description: error.message,
-        variant: "destructive"
-      });
+  const handleStudioClick = () => {
+    setViewMode('studio');
+    
+    // If we're not already on the studio route, navigate to it
+    if (!location.pathname.includes('/studio')) {
+      navigate('/studio');
     }
   };
 
-  const handleBack = () => {
-    navigate('/home');
+  const handleStoryboardClick = () => {
+    setViewMode('storyboard');
+  };
+
+  const handleEditorClick = () => {
+    setViewMode('editor');
   };
 
   return (
-    <header className="w-full glass-panel px-6 py-3 shadow-lg z-30 border-b">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center cursor-pointer" onClick={() => navigate('/home')}>
-          <Logo />
-        </div>
+    <header className="bg-[#0F1117] border-b border-[#1D2130] h-16 flex items-center px-6 justify-between">
+      <div className="flex items-center">
+        <div className="text-white font-bold text-xl mr-8">WZRD</div>
         
-        <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
-
-        <div className="flex items-center gap-3">
-          <CreditsDisplay showButton={true} />
-          <Button 
-            variant="ghost" 
-            className="bg-[#1D2130] hover:bg-[#262B3D] text-white transition-all-std glow-button-subtle"
-            onClick={handleBack}
+        <div className="flex space-x-1">
+          <Button
+            variant={viewMode === 'studio' ? 'default' : 'ghost'}
+            className={viewMode === 'studio' ? 'bg-purple-700 hover:bg-purple-800' : 'text-zinc-400'}
+            onClick={handleStudioClick}
           >
-            Back to Projects
+            Studio
           </Button>
+          
+          <Button
+            variant={viewMode === 'storyboard' ? 'default' : 'ghost'}
+            className={viewMode === 'storyboard' ? 'bg-purple-700 hover:bg-purple-800' : 'text-zinc-400'}
+            onClick={handleStoryboardClick}
+          >
+            Storyboard
+          </Button>
+          
+          <Button
+            variant={viewMode === 'editor' ? 'default' : 'ghost'}
+            className={viewMode === 'editor' ? 'bg-purple-700 hover:bg-purple-800' : 'text-zinc-400'}
+            onClick={handleEditorClick}
+          >
+            Editor
+          </Button>
+        </div>
+      </div>
+      
+      <div className="flex items-center space-x-4">
+        <CreditsDisplay showTooltip={true} />
+        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+          G
         </div>
       </div>
     </header>
