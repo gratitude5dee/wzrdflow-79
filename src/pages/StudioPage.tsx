@@ -1,11 +1,12 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import StudioHeader from '@/components/studio/StudioHeader';
 import StudioSidebar from '@/components/studio/StudioSidebar';
 import StudioCanvas from '@/components/studio/StudioCanvas';
 import StudioBottomBar from '@/components/studio/StudioBottomBar';
 import { StudioRightPanel } from '@/components/studio/StudioSidePanels';
+import { useParams } from 'react-router-dom';
 
 interface Block {
   id: string;
@@ -13,6 +14,7 @@ interface Block {
 }
 
 const StudioPage = () => {
+  const { projectId } = useParams<{ projectId?: string }>();
   const [blocks, setBlocks] = useState<Block[]>([
     { id: uuidv4(), type: 'text' },
     { id: uuidv4(), type: 'image' },
@@ -35,7 +37,7 @@ const StudioPage = () => {
   
   return (
     <div className="h-screen flex flex-col bg-black text-white">
-      <StudioHeader />
+      <StudioHeader viewMode="studio" />
       
       <div className="flex-1 flex overflow-hidden">
         <StudioSidebar onAddBlock={handleAddBlock} />

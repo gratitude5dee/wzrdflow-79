@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
 import { ViewModeSelector } from '@/components/home/ViewModeSelector';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface StudioHeaderProps {
   viewMode?: 'studio' | 'storyboard' | 'editor';
@@ -12,7 +15,47 @@ interface StudioHeaderProps {
 
 const StudioHeader = ({ viewMode = 'studio', setViewMode }: StudioHeaderProps) => {
   const navigate = useNavigate();
-  const { projectId } = useParams();
+  const { projectId: urlProjectId } = useParams();
+  const [projectId, setProjectId] = useState<string | null>(urlProjectId || null);
+  
+  // If we're on studio page without a projectId, fetch the most recent project
+  useEffect(() => {
+    const fetchMostRecentProject = async () => {
+      if (!urlProjectId && viewMode === 'studio') {
+        try {
+          // Get the user's ID
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (!user) {
+            console.warn('No authenticated user found');
+            return;
+          }
+          
+          // Fetch the most recent project for this user
+          const { data: projects, error } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('user_id', user.id)
+            .order('updated_at', { ascending: false })
+            .limit(1);
+            
+          if (error) {
+            console.error('Error fetching recent project:', error);
+            return;
+          }
+          
+          if (projects && projects.length > 0) {
+            setProjectId(projects[0].id);
+            console.log('Found recent project ID:', projects[0].id);
+          }
+        } catch (error) {
+          console.error('Error in fetchMostRecentProject:', error);
+        }
+      }
+    };
+    
+    fetchMostRecentProject();
+  }, [urlProjectId, viewMode]);
 
   const handleViewModeChange = (mode: 'studio' | 'storyboard' | 'editor') => {
     if (setViewMode) {
@@ -24,16 +67,16 @@ const StudioHeader = ({ viewMode = 'studio', setViewMode }: StudioHeaderProps) =
         if (projectId) {
           navigate(`/storyboard/${projectId}`);
         } else {
-          console.warn('No project ID available for navigation');
-          navigate('/storyboard');
+          toast.warning('No project available. Please create a project first.');
+          navigate('/home');
         }
         break;
       case 'editor':
         if (projectId) {
           navigate(`/editor/${projectId}`);
         } else {
-          console.warn('No project ID available for navigation');
-          navigate('/editor');
+          toast.warning('No project available. Please create a project first.');
+          navigate('/home');
         }
         break;
       case 'studio':
