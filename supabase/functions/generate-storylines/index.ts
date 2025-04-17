@@ -67,6 +67,7 @@ serve(async (req) => {
     // Call Groq via the groq-chat Edge Function with internal request header
     const { data: groqResponse, error: groqError } = await supabaseClient.functions.invoke('groq-chat', {
       body: {
+        systemPrompt: storylineSystemPrompt,
         prompt: storylineUserPrompt,
         model: 'llama3-70b-8192', // Using the more powerful model for complex structured output
         temperature: 0.7,
@@ -102,7 +103,8 @@ serve(async (req) => {
         // Call Groq again for analysis with internal request header
         const { data: analysisResponse, error: analysisError } = await supabaseClient.functions.invoke('groq-chat', {
           body: {
-            prompt: analysisSystemPrompt + '\n\n' + analysisUserPrompt,
+            systemPrompt: analysisSystemPrompt,
+            prompt: analysisUserPrompt,
             model: 'llama3-70b-8192',
             temperature: 0.5, // Lower temperature for more consistent structured output
             maxTokens: 1000

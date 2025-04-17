@@ -30,7 +30,7 @@ serve(async (req) => {
     }
 
     // Parse the request body
-    const { prompt, model, temperature = 0.7, maxTokens = 1024 } = await req.json();
+    const { prompt, model, temperature = 0.7, maxTokens = 1024, systemPrompt } = await req.json();
 
     if (!prompt) {
       return errorResponse('prompt is required', 400);
@@ -41,6 +41,12 @@ serve(async (req) => {
     }
 
     console.log('Making request to Groq API with model:', model);
+    
+    // Prepare messages array
+    const messages = [
+      { role: 'system', content: systemPrompt || 'You are a helpful assistant.' },
+      { role: 'user', content: prompt }
+    ];
 
     // Make request to Groq API
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -51,12 +57,10 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model,
-        messages: [
-          { role: 'system', content: 'You are a helpful assistant.' },
-          { role: 'user', content: prompt }
-        ],
+        messages,
         temperature,
-        max_tokens: maxTokens
+        max_tokens: maxTokens,
+        response_format: { type: "json_object" } // Request JSON format when possible
       }),
     });
 

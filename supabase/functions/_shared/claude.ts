@@ -1,28 +1,15 @@
 
 /**
- * Shared helper functions for Claude API interactions
+ * Helper functions for interacting with Claude API
  */
 
-// Helper to safely parse JSON
-export function safeParseJson<T>(jsonString: string): T | null {
-  try {
-    const cleanedString = jsonString.replace(/^```(?:json)?\s*|\s*```$/g, '').trim();
-    return JSON.parse(cleanedString);
-  } catch (error1) {
-    console.warn('Failed to parse JSON after cleaning markdown:', error1.message);
-    try {
-      return JSON.parse(jsonString);
-    } catch (error2) {
-      console.error('Failed to parse JSON directly:', error2.message);
-      console.error('Original content being parsed:', jsonString);
-      return null;
-    }
-  }
-}
-
-// Helper to call Claude API
-export async function callClaudeApi(apiKey: string, systemPrompt: string, userPrompt: string, maxTokens: number): Promise<string> {
-  console.log('Calling Claude API...');
+export async function callClaudeApi(
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  maxTokens: number = 1024,
+  temperature: number = 0.7
+) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -31,25 +18,56 @@ export async function callClaudeApi(apiKey: string, systemPrompt: string, userPr
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model: 'claude-3-5-sonnet-20240620',
+      model: 'claude-3-haiku-20240307',
       max_tokens: maxTokens,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }]
+      temperature,
+      messages: [
+        { role: 'user', content: `${systemPrompt}\n\n${userPrompt}` }
+      ]
     })
   });
 
-  const responseBodyText = await response.text();
   if (!response.ok) {
-    console.error('Claude API error:', response.status, responseBodyText);
-    throw new Error(`Claude API Error (${response.status}): ${responseBodyText}`);
+    const error = await response.json();
+    console.error('Claude API error:', error);
+    throw new Error(error.error?.message || 'Failed to generate text with Claude');
   }
+
+  const data = await response.json();
+  return data.content[0].text;
+}
+
+/**
+ * Safely parse JSON from a text string with improved robustness
+ */
+export function safeParseJson<T>(text: string): T | null {
+  if (!text) return null;
   
-  const claudeResponse = JSON.parse(responseBodyText);
-  const content = claudeResponse.content?.[0]?.text;
-  if (!content) {
-    console.error('Empty content in Claude response:', claudeResponse);
-    throw new Error('Empty response content from Claude API');
+  try {
+    // First attempt: direct JSON parsing
+    return JSON.parse(text);
+  } catch (directError) {
+    console.error('Failed to parse JSON directly:', directError.message);
+    
+    try {
+      // Second attempt: try to clean markdown formatting
+      const cleanedText = text.replace(/```json\s+/g, '').replace(/```\s*$/g, '');
+      return JSON.parse(cleanedText);
+    } catch (markdownError) {
+      console.error('Failed to parse JSON after cleaning markdown:', markdownError.message);
+      
+      try {
+        // Third attempt: Try to extract JSON from a text block
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch && jsonMatch[0]) {
+          return JSON.parse(jsonMatch[0]);
+        }
+      } catch (extractError) {
+        console.error('Failed to extract and parse JSON:', extractError.message);
+      }
+
+      console.error('Original content being parsed:', text);
+      return null;
+    }
   }
-  console.log('Claude API call successful.');
-  return content;
 }
