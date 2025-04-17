@@ -280,6 +280,65 @@ export type Database = {
           },
         ]
       }
+      job_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          locked_by: string | null
+          locked_until: string | null
+          payload: Json
+          priority: number
+          project_id: string | null
+          scheduled_for: string
+          status: string
+          task_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          locked_by?: string | null
+          locked_until?: string | null
+          payload?: Json
+          priority?: number
+          project_id?: string | null
+          scheduled_for?: string
+          status?: string
+          task_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          locked_by?: string | null
+          locked_until?: string | null
+          payload?: Json
+          priority?: number
+          project_id?: string | null
+          scheduled_for?: string
+          status?: string
+          task_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_queue_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       keyframes: {
         Row: {
           created_at: string | null
