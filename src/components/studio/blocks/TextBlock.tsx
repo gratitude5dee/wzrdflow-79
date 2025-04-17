@@ -28,6 +28,10 @@ const TextBlock: React.FC<TextBlockProps> = ({
 }) => {
   const [text, setText] = useState<string>("Enter your prompt here...");
 
+  const handleClear = () => {
+    setText("");
+  };
+
   return (
     <BlockBase
       id={id}
@@ -58,12 +62,13 @@ const TextBlock: React.FC<TextBlockProps> = ({
         
         <div className="flex justify-end space-x-2">
           <button
+            onClick={handleClear}
             className="px-3 py-1 text-xs bg-zinc-800 hover:bg-zinc-700 text-white rounded"
           >
             Clear
           </button>
           <button
-            className="px-3 py-1 text-xs bg-violet-700 hover:bg-violet-600 text-white rounded"
+            className="px-3 py-1 text-xs bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 text-white rounded shadow-glow-purple-sm hover:shadow-glow-purple-md transition-all-std"
           >
             Generate
           </button>
