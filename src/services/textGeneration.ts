@@ -44,7 +44,26 @@ export const generateText = async (prompt: string, selectedModel: ModelType) => 
   try {
     console.log('Making request with:', { prompt, selectedModel });
 
-    // Call our secure edge function instead of direct API
+    // For Groq models, use the groq-chat function directly
+    if (selectedModel.startsWith('groq/')) {
+      const { data, error } = await supabase.functions.invoke('groq-chat', {
+        body: {
+          prompt,
+          model: selectedModel.replace('groq/', ''), // Remove the 'groq/' prefix
+          temperature: 0.7,
+          maxTokens: 1024
+        }
+      });
+
+      if (error) {
+        console.error('Groq request failed:', error);
+        throw new Error(error.message || 'Failed to generate text');
+      }
+
+      return data;
+    }
+
+    // For other models, use the existing fal-proxy logic
     const { data, error } = await supabase.functions.invoke('fal-proxy', {
       body: {
         endpoint: 'fal-ai/ideogram/v2',
