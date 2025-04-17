@@ -97,13 +97,19 @@ export const AppHeader = ({
     );
   };
 
+  const handleLogoClick = () => {
+    navigate('/home');
+  };
+
   return (
     <header className={cn(
       "w-full bg-black border-b border-zinc-800/50 px-6 py-3 flex items-center justify-between",
       className
     )}>
       <div className="flex items-center gap-4">
-        <Logo size="sm" showVersion={false} />
+        <div onClick={handleLogoClick} className="cursor-pointer">
+          <Logo size="sm" showVersion={false} />
+        </div>
         <h1 className="text-lg font-medium text-white">
           {activeProjectName || 'Untitled'}
         </h1>
