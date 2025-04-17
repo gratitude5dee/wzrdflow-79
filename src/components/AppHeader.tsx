@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { useAppStore } from '@/store/appStore';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import CreditsDisplay from '@/components/CreditsDisplay';
+import { supabase } from '@/integrations/supabase/client'; // Add this import
 
 type ViewMode = 'studio' | 'storyboard' | 'editor';
 
