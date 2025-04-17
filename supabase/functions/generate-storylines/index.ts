@@ -64,13 +64,16 @@ serve(async (req) => {
     const storylineSystemPrompt = getStorylineSystemPrompt(generate_alternative);
     const storylineUserPrompt = getStorylineUserPrompt(project, generate_alternative);
     
-    // Call Groq via the groq-chat Edge Function
+    // Call Groq via the groq-chat Edge Function with internal request header
     const { data: groqResponse, error: groqError } = await supabaseClient.functions.invoke('groq-chat', {
       body: {
         prompt: storylineUserPrompt,
         model: 'llama3-70b-8192', // Using the more powerful model for complex structured output
         temperature: 0.7,
         maxTokens: generate_alternative ? 1500 : 4000
+      },
+      headers: {
+        'x-internal-request': 'true'
       }
     });
 
@@ -96,13 +99,16 @@ serve(async (req) => {
         const analysisSystemPrompt = getAnalysisSystemPrompt();
         const analysisUserPrompt = getAnalysisUserPrompt(fullStoryText);
 
-        // Call Groq again for analysis
+        // Call Groq again for analysis with internal request header
         const { data: analysisResponse, error: analysisError } = await supabaseClient.functions.invoke('groq-chat', {
           body: {
             prompt: analysisSystemPrompt + '\n\n' + analysisUserPrompt,
             model: 'llama3-70b-8192',
             temperature: 0.5, // Lower temperature for more consistent structured output
             maxTokens: 1000
+          },
+          headers: {
+            'x-internal-request': 'true'
           }
         });
 

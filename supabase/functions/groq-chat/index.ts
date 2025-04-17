@@ -10,8 +10,18 @@ serve(async (req) => {
   }
 
   try {
-    // Authenticate the request
-    await authenticateRequest(req.headers);
+    // Check if request is coming from another Edge Function
+    const isInternalRequest = req.headers.get('x-internal-request') === 'true';
+    
+    // Only authenticate external requests (not from other Edge Functions)
+    if (!isInternalRequest) {
+      try {
+        await authenticateRequest(req.headers);
+      } catch (authError) {
+        console.error('Authentication error:', authError.message);
+        return errorResponse(authError.message, 401);
+      }
+    }
 
     // Get the GROQ API key from environment
     const groqApiKey = Deno.env.get('GROQ_API_KEY');

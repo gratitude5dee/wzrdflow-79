@@ -1,3 +1,4 @@
+
 project_id = "ixkkrousepsiorwlaycp"
 
 [api]
@@ -35,4 +36,7 @@ enabled = true
 verify_jwt = true
 
 [functions.generate-text-generic]
+verify_jwt = true
+
+[functions.groq-chat]
 verify_jwt = true
