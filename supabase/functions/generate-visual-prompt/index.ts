@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getVisualPromptSystemPrompt, getVisualPromptUserPrompt } from '../_shared/prompts.ts';
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
@@ -51,8 +52,10 @@ serve(async (req) => {
           weather
         ),
         projects!inner(
+          genre,
+          tone,
           video_style,
-          aspect_ratio
+          cinematic_inspiration
         )
       `)
       .eq("id", shotId)
@@ -68,81 +71,48 @@ serve(async (req) => {
 
     console.log(`[generate-visual-prompt][Shot ${shotId}] Data fetched successfully.`);
 
-    // Create a visual prompt based on the shot details and scene context
-    const scene = shot.scenes;
-    const project = shot.projects;
-    
-    // Log the data being used to create the prompt
-    console.log(`[generate-visual-prompt][Shot ${shotId}] Prompt components:`, {
-      shot_type: shot.shot_type,
-      prompt_idea: shot.prompt_idea,
-      scene_description: scene.description,
-      scene_location: scene.location,
-      scene_lighting: scene.lighting,
-      scene_weather: scene.weather,
-      video_style: project.video_style
-    });
-    
-    // Start with shot type
-    let shotTypeDesc = "";
-    if (shot.shot_type) {
-      if (shot.shot_type === "close_up" || shot.shot_type === "close-up" || shot.shot_type === "close") {
-        shotTypeDesc = "close-up";
-      } else if (shot.shot_type === "medium") {
-        shotTypeDesc = "medium shot";
-      } else if (shot.shot_type === "wide") {
-        shotTypeDesc = "wide shot";
-      } else if (shot.shot_type === "extreme_close_up" || shot.shot_type === "extreme-close-up") {
-        shotTypeDesc = "extreme close-up";
-      } else if (shot.shot_type === "establishing") {
-        shotTypeDesc = "establishing shot";
-      } else {
-        shotTypeDesc = shot.shot_type;
+    // Generate visual prompt using Groq
+    const systemPrompt = getVisualPromptSystemPrompt();
+    const userPrompt = getVisualPromptUserPrompt(
+      shot.prompt_idea,
+      shot.shot_type,
+      {
+        description: shot.scenes.description,
+        location: shot.scenes.location,
+        lighting: shot.scenes.lighting,
+        weather: shot.scenes.weather
+      },
+      {
+        genre: shot.projects.genre,
+        tone: shot.projects.tone,
+        video_style: shot.projects.video_style,
+        cinematic_inspiration: shot.projects.cinematic_inspiration
       }
-    } else {
-      shotTypeDesc = "medium shot";
+    );
+
+    console.log(`[generate-visual-prompt][Shot ${shotId}] Calling Groq for visual prompt generation...`);
+    
+    // Call Groq via the groq-chat Edge Function
+    const { data: groqResponse, error: groqError } = await supabase.functions.invoke('groq-chat', {
+      body: {
+        prompt: `${systemPrompt}\n\n${userPrompt}`,
+        model: 'llama3-8b-8192', // Using the faster model since this is a simpler task
+        temperature: 0.7,
+        maxTokens: 200 // Visual prompts should be concise
+      }
+    });
+
+    if (groqError) {
+      console.error(`[generate-visual-prompt][Shot ${shotId}] Groq API error:`, groqError);
+      throw groqError;
     }
 
-    // Build the prompt components
-    const promptParts = [];
-    
-    // Start with the shot type
-    promptParts.push(shotTypeDesc);
-    
-    // Add prompt idea if available
-    if (shot.prompt_idea && shot.prompt_idea.trim() !== "") {
-      promptParts.push(shot.prompt_idea.trim());
-    }
-    
-    // Add scene context
-    if (scene.location && scene.location.trim() !== "") {
-      promptParts.push(scene.location.trim());
-    }
-    
-    if (scene.lighting && scene.lighting.trim() !== "") {
-      promptParts.push(scene.lighting.trim());
-    }
-    
-    if (scene.weather && scene.weather.trim() !== "") {
-      promptParts.push(scene.weather.trim());
-    }
-    
-    // Add video style from project
-    if (project.video_style && project.video_style.trim() !== "") {
-      promptParts.push(project.video_style.trim() + " style");
-    }
-    
-    // Combine the prompt parts, making sure no part is too dominant
-    let visualPrompt = promptParts.join(", ");
-    
-    // Add scene description at the end if available
-    if (scene.description && scene.description.trim() !== "") {
-      // Only take a portion of the description to keep the prompt concise
-      const shortenedDesc = scene.description.trim().split('.')[0];
-      visualPrompt += ". " + shortenedDesc;
+    if (!groqResponse?.text) {
+      throw new Error('No response text received from Groq');
     }
 
-    console.log(`[generate-visual-prompt][Shot ${shotId}] Generated visual prompt: "${visualPrompt}"`);
+    const visualPrompt = groqResponse.text.trim();
+    console.log(`[generate-visual-prompt][Shot ${shotId}] Generated visual prompt:`, visualPrompt);
 
     // Update the shot with the generated visual prompt
     console.log(`[generate-visual-prompt][Shot ${shotId}] Updating shot with visual prompt and status 'prompt_ready'...`);
