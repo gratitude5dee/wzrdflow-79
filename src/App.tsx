@@ -6,13 +6,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/providers/AuthProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
 import Home from "./pages/Home";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Credits from "./pages/Credits";
 import ProjectSetup from "./pages/ProjectSetup";
+import StudioPage from "./pages/StudioPage";
+import StoryboardPage from "./pages/StoryboardPage";
+import EditorPage from "./pages/EditorPage";
 import CustomCursor from "@/components/CustomCursor";
 
 const queryClient = new QueryClient();
@@ -39,36 +41,37 @@ const App = () => {
                   <ProjectSetup />
                 </ProtectedRoute>
               } />
+              
+              {/* Studio Routes */}
               <Route path="/studio" element={
                 <ProtectedRoute>
-                  <Index viewMode="studio" />
+                  <StudioPage />
                 </ProtectedRoute>
               } />
               <Route path="/studio/:projectId" element={
                 <ProtectedRoute>
-                  <Index viewMode="studio" />
+                  <StudioPage />
                 </ProtectedRoute>
               } />
-              <Route path="/editor" element={
-                <ProtectedRoute>
-                  <Index viewMode="editor" />
-                </ProtectedRoute>
-              } />
-              <Route path="/editor/:projectId" element={
-                <ProtectedRoute>
-                  <Index viewMode="editor" />
-                </ProtectedRoute>
-              } />
+              
+              {/* Storyboard Routes - always requires projectId */}
               <Route path="/storyboard/:projectId" element={
                 <ProtectedRoute>
-                  <Index viewMode="storyboard" />
+                  <StoryboardPage />
                 </ProtectedRoute>
               } />
-              <Route path="/shot-editor" element={
+              
+              {/* Editor Routes - always requires projectId */}
+              <Route path="/editor/:projectId" element={
                 <ProtectedRoute>
-                  <Index viewMode="editor" />
+                  <EditorPage />
                 </ProtectedRoute>
               } />
+              
+              {/* Redirect legacy routes */}
+              <Route path="/storyboard" element={<Navigate to="/home" replace />} />
+              <Route path="/editor" element={<Navigate to="/home" replace />} />
+              
               <Route path="/credits" element={
                 <ProtectedRoute>
                   <Credits />
