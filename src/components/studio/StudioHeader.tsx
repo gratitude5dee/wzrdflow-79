@@ -2,8 +2,14 @@
 import { Share, User, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
+import { ViewModeSelector } from '@/components/home/ViewModeSelector';
 
-const StudioHeader = () => {
+interface StudioHeaderProps {
+  viewMode?: 'studio' | 'storyboard' | 'editor';
+  setViewMode?: (mode: 'studio' | 'storyboard' | 'editor') => void;
+}
+
+const StudioHeader = ({ viewMode = 'studio', setViewMode }: StudioHeaderProps) => {
   return (
     <header className="w-full bg-black border-b border-zinc-800/50 px-6 py-3 flex items-center justify-between">
       <div className="flex items-center gap-4">
@@ -12,6 +18,10 @@ const StudioHeader = () => {
         <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
           <MoreVertical className="h-5 w-5" />
         </Button>
+      </div>
+
+      <div className="flex-1 flex justify-center">
+        <ViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
       </div>
 
       <div className="flex items-center gap-3">
