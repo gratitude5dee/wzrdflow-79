@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { authenticateRequest, AuthError } from '../_shared/auth.ts';
 import { corsHeaders, errorResponse, successResponse, handleCors } from '../_shared/response.ts';
-import { safeParseJson, callClaudeApi } from '../_shared/claude.ts';
+import { safeParseJson } from '../_shared/claude.ts';
 import { 
   StorylineRequestBody, 
   StorylineResponseData, 
@@ -23,9 +23,6 @@ import {
   triggerShotVisualPromptGeneration 
 } from './database.ts';
 
-/**
- * Main Edge Function to generate storylines and related content
- */
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -62,32 +59,33 @@ serve(async (req) => {
       return errorResponse('Project not found or access denied', 404, projectError?.message);
     }
 
-    // Get Anthropic API key
-    const claudeApiKey = Deno.env.get('ANTHROPIC_API_KEY');
-    if (!claudeApiKey) {
-      console.error('ANTHROPIC_API_KEY not set.');
-      return errorResponse('Server configuration error: Anthropic API key not found', 500);
-    }
-
-    // Step 1: Generate storyline and scenes
-    console.log('Sending request to Anthropic API for storyline generation...');
+    // Step 1: Generate storyline and scenes using Groq
+    console.log('Sending request to Groq API for storyline generation...');
     const storylineSystemPrompt = getStorylineSystemPrompt(generate_alternative);
     const storylineUserPrompt = getStorylineUserPrompt(project, generate_alternative);
     
-    const storylineContent = await callClaudeApi(
-      claudeApiKey, 
-      storylineSystemPrompt, 
-      storylineUserPrompt, 
-      generate_alternative ? 1500 : 4000
-    );
-    
-    const storylineData = safeParseJson<StorylineResponseData>(storylineContent);
-    if (!storylineData || !storylineData.primary_storyline) {
-      console.error('Failed to parse valid response from Claude:', { raw_content: storylineContent });
-      return errorResponse('Failed to parse valid storyline from Claude', 500, { raw_content: storylineContent });
+    // Call Groq via the groq-chat Edge Function
+    const { data: groqResponse, error: groqError } = await supabaseClient.functions.invoke('groq-chat', {
+      body: {
+        prompt: storylineUserPrompt,
+        model: 'llama3-70b-8192', // Using the more powerful model for complex structured output
+        temperature: 0.7,
+        maxTokens: generate_alternative ? 1500 : 4000
+      }
+    });
+
+    if (groqError) {
+      console.error('Groq API error:', groqError);
+      return errorResponse('Failed to generate storyline', 500, groqError);
     }
 
-    console.log('Successfully parsed storyline from Claude response');
+    const storylineData = safeParseJson<StorylineResponseData>(groqResponse.text);
+    if (!storylineData || !storylineData.primary_storyline) {
+      console.error('Failed to parse valid response from Groq:', { raw_content: groqResponse.text });
+      return errorResponse('Failed to parse valid storyline from Groq', 500, { raw_content: groqResponse.text });
+    }
+
+    console.log('Successfully parsed storyline from Groq response');
     const fullStoryText = storylineData.primary_storyline.full_story;
 
     // Step 2: Analyze storyline for characters and settings (only for main storyline, not alternatives)
@@ -98,8 +96,19 @@ serve(async (req) => {
         const analysisSystemPrompt = getAnalysisSystemPrompt();
         const analysisUserPrompt = getAnalysisUserPrompt(fullStoryText);
 
-        const analysisContent = await callClaudeApi(claudeApiKey, analysisSystemPrompt, analysisUserPrompt, 1000);
-        analysisData = safeParseJson<AnalysisResponseData>(analysisContent);
+        // Call Groq again for analysis
+        const { data: analysisResponse, error: analysisError } = await supabaseClient.functions.invoke('groq-chat', {
+          body: {
+            prompt: analysisSystemPrompt + '\n\n' + analysisUserPrompt,
+            model: 'llama3-70b-8192',
+            temperature: 0.5, // Lower temperature for more consistent structured output
+            maxTokens: 1000
+          }
+        });
+
+        if (analysisError) throw analysisError;
+        
+        analysisData = safeParseJson<AnalysisResponseData>(analysisResponse.text);
         console.log('Analysis complete.', analysisData ? 'Parsed successfully.' : 'Parsing failed.');
       } catch (analysisError) {
         console.warn('Failed to analyze storyline:', analysisError.message);
