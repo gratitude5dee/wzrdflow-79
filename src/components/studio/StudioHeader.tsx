@@ -3,7 +3,7 @@ import { Share, User, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
 import { ViewModeSelector } from '@/components/home/ViewModeSelector';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 interface StudioHeaderProps {
   viewMode?: 'studio' | 'storyboard' | 'editor';
@@ -12,6 +12,7 @@ interface StudioHeaderProps {
 
 const StudioHeader = ({ viewMode = 'studio', setViewMode }: StudioHeaderProps) => {
   const navigate = useNavigate();
+  const { projectId } = useParams();
 
   const handleViewModeChange = (mode: 'studio' | 'storyboard' | 'editor') => {
     if (setViewMode) {
@@ -20,10 +21,20 @@ const StudioHeader = ({ viewMode = 'studio', setViewMode }: StudioHeaderProps) =
     
     switch (mode) {
       case 'storyboard':
-        navigate('/storyboard');
+        if (projectId) {
+          navigate(`/storyboard/${projectId}`);
+        } else {
+          console.warn('No project ID available for navigation');
+          navigate('/storyboard');
+        }
         break;
       case 'editor':
-        navigate('/editor');
+        if (projectId) {
+          navigate(`/editor/${projectId}`);
+        } else {
+          console.warn('No project ID available for navigation');
+          navigate('/editor');
+        }
         break;
       case 'studio':
         navigate('/studio');
