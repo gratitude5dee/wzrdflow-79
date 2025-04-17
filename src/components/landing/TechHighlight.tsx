@@ -10,13 +10,13 @@ interface TechHighlightProps {
 export const TechHighlight = ({ name }: TechHighlightProps) => {
   const getIconAndColor = () => {
     switch (name) {
-      case 'Anthropic':
+      case 'Kling AI':
         return { icon: <Sparkles className="w-4 h-4" />, color: 'bg-purple-400/20 text-purple-400' };
-      case 'Lovable':
+      case 'Luma':
         return { icon: <MessageSquare className="w-4 h-4" />, color: 'bg-rose-400/20 text-rose-400' };
-      case 'Supabase':
+      case 'Hailou AI':
         return { icon: <Database className="w-4 h-4" />, color: 'bg-emerald-400/20 text-emerald-400' };
-      case 'ElevenLabs':
+      case 'Runway':
         return { icon: <Mic className="w-4 h-4" />, color: 'bg-blue-400/20 text-blue-400' };
       default:
         return { icon: <Sparkles className="w-4 h-4" />, color: 'bg-gray-400/20 text-gray-400' };

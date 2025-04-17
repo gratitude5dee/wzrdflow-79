@@ -9,16 +9,26 @@ interface TechBadgeProps {
   color: string;
 }
 
-export const TechBadge = ({ icon, name, description, color }: TechBadgeProps) => {
+export const TechBadge = ({ 
+  icon, 
+  name, 
+  description, 
+  color 
+}: TechBadgeProps) => {
+  const updatedName = (() => {
+    switch (name) {
+      case 'Anthropic': return 'Kling AI';
+      case 'Lovable': return 'Luma';
+      case 'Supabase': return 'Hailou AI';
+      case 'ElevenLabs': return 'Runway';
+      default: return name;
+    }
+  })();
+
   return (
-    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-4 py-2 flex items-center gap-2 hover:bg-white/10 transition-colors">
-      <div className={cn("flex items-center justify-center", color)}>
-        {icon}
-      </div>
-      <div className="flex flex-col">
-        <span className="text-sm font-medium text-white">{name}</span>
-        <span className="text-xs text-zinc-400">{description}</span>
-      </div>
+    <div className={cn("inline-flex items-center gap-2 bg-white/5 px-3 py-1 rounded-full", color)}>
+      {icon}
+      <span className="text-sm font-medium text-white">{updatedName}</span>
     </div>
   );
 };

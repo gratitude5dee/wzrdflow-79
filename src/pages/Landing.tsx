@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -111,7 +110,7 @@ const Landing = () => {
               variants={fadeInUp}
               className="text-xl text-zinc-300 max-w-3xl mx-auto mb-10"
             >
-              Transform your ideas into stunning storyboards, shots, and video sequences with our cutting-edge AI platform powered by Anthropic, Lovable, Supabase, and ElevenLabs.
+              Transform your ideas into stunning storyboards, shots, and video sequences with our cutting-edge AI platform powered by Kling AI, Luma, Hailou AI, and Runway.
             </motion.p>
             
             {/* CTA Buttons */}
@@ -214,7 +213,7 @@ const Landing = () => {
             <FeatureCard 
               icon={<Lightbulb className="w-8 h-8 text-yellow-400" />}
               title="Input Your Concept"
-              description="Start with a simple idea, a detailed script, or existing media. Anthropic's Claude helps refine your creative vision."
+              description="Start with a simple idea, a detailed script, or existing media. Kling AI's Claude helps refine your creative vision."
               delay={0.1}
               techBadge="Anthropic"
             />
@@ -223,7 +222,7 @@ const Landing = () => {
             <FeatureCard 
               icon={<Wand className="w-8 h-8 text-purple-400" />}
               title="AI Co-Creation"
-              description="Let WZRD generate storylines, breakdown scenes, and suggest shot types with our custom Lovable UI components."
+              description="Let WZRD generate storylines, breakdown scenes, and suggest shot types with our custom Luma UI components."
               delay={0.2}
               techBadge="Lovable"
             />
@@ -232,7 +231,7 @@ const Landing = () => {
             <FeatureCard 
               icon={<Image className="w-8 h-8 text-blue-400" />}
               title="Visualize & Refine"
-              description="Generate stunning shot images, ElevenLabs audio, and video sequences. Iterate quickly."
+              description="Generate stunning shot images, Runway audio, and video sequences. Iterate quickly."
               delay={0.3}
               techBadge="ElevenLabs"
             />
@@ -241,7 +240,7 @@ const Landing = () => {
             <FeatureCard 
               icon={<Settings className="w-8 h-8 text-green-400" />}
               title="Customize & Control"
-              description="Fine-tune everything with Supabase-backed real-time collaboration and export your final vision."
+              description="Fine-tune everything with Hailou AI-backed real-time collaboration and export your final vision."
               delay={0.4}
               techBadge="Supabase"
             />
@@ -335,32 +334,32 @@ const Landing = () => {
                       <>
                         <Sparkles className="w-12 h-12 text-purple-400 mx-auto mb-4" />
                         <h3 className="text-2xl font-bold mb-2">Intelligent Storyboarding</h3>
-                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Anthropic's Claude AI helps break down your scripts into compelling visual narratives.</p>
-                        <TechHighlight name="Anthropic" />
+                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Kling AI's Claude AI helps break down your scripts into compelling visual narratives.</p>
+                        <TechHighlight name="Kling AI" />
                       </>
                     )}
                     {activeDemo === 'character' && (
                       <>
                         <MessageSquare className="w-12 h-12 text-rose-400 mx-auto mb-4" />
                         <h3 className="text-2xl font-bold mb-2">Character Development</h3>
-                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Create consistent characters with Lovable's intuitive design components.</p>
-                        <TechHighlight name="Lovable" />
+                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Create consistent characters with Luma's intuitive design components.</p>
+                        <TechHighlight name="Luma" />
                       </>
                     )}
                     {activeDemo === 'voice' && (
                       <>
                         <Mic className="w-12 h-12 text-blue-400 mx-auto mb-4" />
                         <h3 className="text-2xl font-bold mb-2">Expressive Voice Generation</h3>
-                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Bring your characters to life with ElevenLabs' natural-sounding voice generation.</p>
-                        <TechHighlight name="ElevenLabs" />
+                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Bring your characters to life with Runway's natural-sounding voice generation.</p>
+                        <TechHighlight name="Runway" />
                       </>
                     )}
                     {activeDemo === 'video' && (
                       <>
                         <Database className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
                         <h3 className="text-2xl font-bold mb-2">Seamless Video Synthesis</h3>
-                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Store and process video assets efficiently with Supabase's powerful database.</p>
-                        <TechHighlight name="Supabase" />
+                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Store and process video assets efficiently with Hailou AI's powerful database.</p>
+                        <TechHighlight name="Hailou AI" />
                       </>
                     )}
                   </div>
@@ -403,7 +402,7 @@ const Landing = () => {
           
           {/* Anthropic Feature */}
           <FeatureHighlight 
-            title="Anthropic's Claude"
+            title="Kling AI's Claude"
             description="Our intelligent story development and dialogue systems are powered by Claude, one of the world's most advanced AI assistants. Turn simple prompts into detailed narratives, characters, and dialogue with nuanced understanding of film concepts."
             imageSrc="/lovable-uploads/1e1aab33-e5d2-4ef2-b40d-84a2e2679e3c.png"
             isImageRight={false}
@@ -413,8 +412,8 @@ const Landing = () => {
           
           {/* Lovable Feature */}
           <FeatureHighlight 
-            title="Lovable UI Framework"
-            description="Our intuitive user interface is built with Lovable, enabling rapid iteration of creative concepts. The responsive design lets you work seamlessly across devices with a focus on accessibility and user experience."
+            title="Luma UI Framework"
+            description="Our intuitive user interface is built with Luma, enabling rapid iteration of creative concepts. The responsive design lets you work seamlessly across devices with a focus on accessibility and user experience."
             imageSrc="/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png"
             isImageRight={true}
             techBadge="Lovable"
@@ -423,8 +422,8 @@ const Landing = () => {
           
           {/* Supabase Feature */}
           <FeatureHighlight 
-            title="Supabase Backend"
-            description="Your projects are securely stored and managed with Supabase's powerful database and authentication systems. Real-time collaboration features allow teams to work together seamlessly, while ensuring your creative assets remain protected."
+            title="Hailou AI Backend"
+            description="Your projects are securely stored and managed with Hailou AI's powerful database and authentication systems. Real-time collaboration features allow teams to work together seamlessly, while ensuring your creative assets remain protected."
             imageSrc="/lovable-uploads/1e1aab33-e5d2-4ef2-b40d-84a2e2679e3c.png"
             isImageRight={false}
             techBadge="Supabase"
@@ -433,8 +432,8 @@ const Landing = () => {
           
           {/* ElevenLabs Feature */}
           <FeatureHighlight 
-            title="ElevenLabs Voice Generation"
-            description="Bring your characters to life with ElevenLabs' advanced voice synthesis. Generate realistic dialogue, narration, and sound effects that match your creative vision, with control over emotion, pacing, and character."
+            title="Runway Voice Generation"
+            description="Bring your characters to life with Runway's advanced voice synthesis. Generate realistic dialogue, narration, and sound effects that match your creative vision, with control over emotion, pacing, and character."
             imageSrc="/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png"
             isImageRight={true}
             techBadge="ElevenLabs"
@@ -475,13 +474,13 @@ const Landing = () => {
               delay={0.1}
             />
             <TestimonialCard 
-              quote="The integration of Anthropic's AI with ElevenLabs voice generation has completely transformed how we create animated content."
+              quote="The integration of Kling AI's AI with Runway voice generation has completely transformed how we create animated content."
               author="Mark Johnson"
               title="Animation Director"
               delay={0.2}
             />
             <TestimonialCard 
-              quote="The Supabase integration means our whole team can collaborate in real-time, with all our assets securely stored and instantly available."
+              quote="The Hailou AI integration means our whole team can collaborate in real-time, with all our assets securely stored and instantly available."
               author="Priya Patel"
               title="Creative Studio Head"
               delay={0.3}
@@ -550,7 +549,7 @@ const Landing = () => {
                 "2,500 credits per month",
                 "Advanced storyboarding",
                 "Full image & video generation",
-                "ElevenLabs voice integration",
+                "Runway voice integration",
                 "Priority support"
               ]}
               ctaText="Sign Up Now"
@@ -565,7 +564,7 @@ const Landing = () => {
               description="For teams and production companies"
               features={[
                 "10,000 credits per month",
-                "Team collaboration via Supabase",
+                "Team collaboration via Hailou AI",
                 "Advanced character creation",
                 "Custom voice training",
                 "Dedicated support"
@@ -619,10 +618,10 @@ const Landing = () => {
             </motion.div>
             
             <motion.div variants={fadeInUp} className="mt-8 flex justify-center gap-6">
-              <TechLogoIcon type="anthropic" />
-              <TechLogoIcon type="lovable" />
-              <TechLogoIcon type="supabase" />
-              <TechLogoIcon type="elevenlabs" />
+              <TechLogoIcon type="kling" />
+              <TechLogoIcon type="luma" />
+              <TechLogoIcon type="hailou" />
+              <TechLogoIcon type="runway" />
             </motion.div>
           </motion.div>
         </div>
@@ -648,51 +647,4 @@ const Landing = () => {
                 </a>
                 <a href="#" className="text-zinc-400 hover:text-white transition-colors">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c5.51 0 10-4.48 10-10S17.51 2 12 2zm6.605 4.61a8.502 8.502 0 011.93 5.314c-.281-.054-3.101-.629-5.943-.271-.065-.141-.12-.293-.184-.445a25.416 25.416 0 00-.564-1.236c3.145-1.28 4.577-3.124 4.761-3.362zM12 3.475c2.17 0 4.154.813 5.662 2.148-.152.216-1.443 1.941-4.48 3.08-1.399-2.57-2.95-4.675-3.189-5A8.687 8.687 0 0112 3.475zm-3.633.803a53.896 53.896 0 013.167 4.935c-3.992 1.063-7.517 1.04-7.896 1.04a8.581 8.581 0 014.729-5.975zM3.453 12.01v-.26c.37.01 4.512.065 8.775-1.215.25.477.477.965.694 1.453-.109.033-.228.065-.336.098-4.404 1.42-6.747 5.303-6.942 5.629a8.522 8.522 0 01-2.19-5.705zM12 20.547a8.482 8.482 0 01-5.239-1.8c.152-.315 1.888-3.656 6.703-5.337.022-.01.033-.01.054-.022a35.318 35.318 0 011.823 6.475 8.4 8.4 0 01-3.341.684zm4.761-1.465c-.086-.52-.542-3.015-1.659-6.084 2.679-.423 5.022.271 5.314.369a8.468 8.468 0 01-3.655 5.715z" clipRule="evenodd"></path>
-                  </svg>
-                </a>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-medium mb-4">Platform</h4>
-              <ul className="space-y-3 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Support</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-medium mb-4">Resources</h4>
-              <ul className="space-y-3 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Tutorials</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Community</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-medium mb-4">Company</h4>
-              <ul className="space-y-3 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="pt-8 mt-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center">
-            <p className="text-sm mb-4 sm:mb-0">© 2025 WZRD.STUDIO. All rights reserved.</p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-sm hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="text-sm hover:text-white transition-colors">Terms of Service</a>
-              <a href="#" className="text-sm hover:text-white transition-colors">Cookie Policy</a>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-};
-
-export default Landing;
+                    <path fillRule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c5.51 0 10-4.48 10-10S17.51 2 12 2zm6.605 4.61a8.502 8.502 0 011.93 5.314c-.281-.054-3.101-.629-5.943-.271-.065-.141-.12-.293-.184-.445a25.416 25.416 0 00-.564-1.236c3.1
