@@ -87,9 +87,7 @@ const Landing = () => {
             <motion.h2 variants={fadeInUp} className="text-4xl md:text-6xl font-bold mb-6 leading-tight bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">Generative Creative Studio for Brands and Creators</motion.h2>
             
             {/* Sub-headline */}
-            <motion.p variants={fadeInUp} className="text-xl text-zinc-300 max-w-3xl mx-auto mb-10">
-              Transform your ideas into stunning storyboards, shots, and video sequences with our cutting-edge AI platform powered by Kling AI, Luma, Hailou AI, and Runway.
-            </motion.p>
+            <motion.p variants={fadeInUp} className="text-xl text-zinc-300 max-w-3xl mx-auto mb-10">Transform your products into stunning storyboards, shots, and video sequences with our cutting-edge AI platform powered by Kling AI, Luma, Hailou AI, and Runway.</motion.p>
             
             {/* CTA Buttons */}
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
