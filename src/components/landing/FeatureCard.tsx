@@ -2,6 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { TechHighlight } from './TechHighlight';
+import { cn } from '@/lib/utils';
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -19,7 +20,8 @@ export const FeatureCard = ({ icon, title, description, delay = 0, techBadge }: 
       y: 0, 
       transition: { 
         duration: 0.6,
-        delay 
+        delay,
+        ease: "easeOut" 
       } 
     }
   };
@@ -28,15 +30,22 @@ export const FeatureCard = ({ icon, title, description, delay = 0, techBadge }: 
     <motion.div
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: "-100px" }}
+      viewport={{ once: true, amount: 0.3 }}
       variants={fadeInUp}
-      className="perspective-1000"
+      className="perspective-1000 h-full"
     >
-      <div className="glass-card p-6 rounded-xl transform-style-3d hover:rotateX-3 hover:rotateY-3 hover:-translate-y-2 transition-all-std shadow-lg h-full">
-        <div className="mb-4">{icon}</div>
-        <h3 className="text-xl font-bold mb-2 text-white">{title}</h3>
-        <p className="text-zinc-400 mb-4">{description}</p>
-        {techBadge && <TechHighlight name={techBadge} />}
+      <div className={cn(
+        "glass-card p-6 rounded-xl transform-style-3d hover:rotateX-3 hover:rotateY-3 hover:-translate-y-2 transition-all-std h-full flex flex-col",
+        "hover:shadow-glow-purple-sm"
+      )}>
+        <div className="mb-5">{icon}</div>
+        <h3 className="text-xl font-bold mb-3 text-white">{title}</h3>
+        <p className="text-zinc-300 mb-5 flex-grow">{description}</p>
+        {techBadge && (
+          <div className="mt-auto">
+            <TechHighlight name={techBadge} />
+          </div>
+        )}
       </div>
     </motion.div>
   );

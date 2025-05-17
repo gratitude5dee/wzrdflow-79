@@ -1,17 +1,18 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
  
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
  
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
  
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 226 71% 9%;
+    --popover-foreground: 210 40% 98%;
  
     --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
@@ -165,33 +166,34 @@ body::after {
 }
 
 .shadow-glow-purple {
-  box-shadow: 0 0 10px rgba(147, 51, 234, 0.3), 0 0 20px rgba(147, 51, 234, 0.1);
+  box-shadow: 0 0 15px rgba(147, 51, 234, 0.4), 0 0 25px rgba(147, 51, 234, 0.2);
 }
 
 .shadow-glow-purple-sm {
-  box-shadow: 0 0 5px rgba(147, 51, 234, 0.3), 0 0 10px rgba(147, 51, 234, 0.1);
+  box-shadow: 0 0 8px rgba(147, 51, 234, 0.4), 0 0 15px rgba(147, 51, 234, 0.2);
 }
 
 .shadow-glow-blue-sm {
-  box-shadow: 0 0 5px rgba(47, 123, 188, 0.3), 0 0 10px rgba(47, 123, 188, 0.1);
+  box-shadow: 0 0 8px rgba(47, 123, 188, 0.4), 0 0 15px rgba(47, 123, 188, 0.2);
 }
 
 .glow-button:hover {
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2), 0 0 20px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.25), 0 0 25px rgba(255, 255, 255, 0.15);
 }
 
 .glow-button-subtle:hover {
-  box-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
 }
 
 .glow-icon-button:hover {
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.35);
 }
 
 .sidebar-content-glow {
   animation: fadeIn 0.3s ease-out;
 }
 
+/* Enhanced animation keyframes */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -249,6 +251,15 @@ body::after {
 
 .react-flow__controls button:hover {
   @apply !bg-zinc-700/50;
+}
+
+/* Text glow effects */
+.text-glow-white {
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3), 0 0 12px rgba(255, 255, 255, 0.2);
+}
+
+.transition-all-fast {
+  transition: all 200ms ease-out;
 }
 
 @layer base {

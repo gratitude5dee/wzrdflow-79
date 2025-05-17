@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -189,19 +190,52 @@ export default {
 					'transition': 'all 200ms ease-out',
 				},
 				'.glass-panel': {
-					'background-color': 'rgba(10, 13, 22, 0.8)',
-					'backdrop-filter': 'blur(12px)',
-					'border-color': 'rgba(255, 255, 255, 0.1)',
+					'background-color': 'rgba(10, 13, 22, 0.75)',
+					'backdrop-filter': 'blur(14px)',
+					'border': '1px solid rgba(255, 255, 255, 0.1)',
+					'box-shadow': '0 10px 30px rgba(0, 0, 0, 0.3)',
 				},
 				'.glass-card': {
-					'background-color': 'rgba(24, 24, 27, 0.6)',
-					'backdrop-filter': 'blur(8px)',
-					'border-color': 'rgba(255, 255, 255, 0.1)',
+					'background-color': 'rgba(24, 24, 27, 0.65)',
+					'backdrop-filter': 'blur(12px)',
+					'border': '1px solid rgba(255, 255, 255, 0.1)',
+					'box-shadow': '0 10px 25px rgba(0, 0, 0, 0.3)',
 				},
 				'.glass-input': {
-					'background-color': 'rgba(0, 0, 0, 0.3)',
-					'backdrop-filter': 'blur(4px)',
-					'border-color': 'rgba(255, 255, 255, 0.1)',
+					'background-color': 'rgba(0, 0, 0, 0.35)',
+					'backdrop-filter': 'blur(5px)',
+					'border': '1px solid rgba(255, 255, 255, 0.1)',
+				},
+				'.hover-lift': {
+					'transition': 'transform 300ms ease-out, box-shadow 300ms ease-out', 
+					'&:hover': {
+						'transform': 'translateY(-5px)',
+						'box-shadow': '0 10px 25px rgba(0, 0, 0, 0.3)',
+					}
+				},
+				'.rotateX-2': {
+					'transform': 'rotateX(2deg)',
+				},
+				'.rotateX-3': {
+					'transform': 'rotateX(3deg)',
+				},
+				'.rotateY-2': {
+					'transform': 'rotateY(2deg)',
+				},
+				'.rotateY-3': {
+					'transform': 'rotateY(3deg)',
+				},
+				'.hover-rotateX-2:hover': {
+					'transform': 'rotateX(2deg)',
+				},
+				'.hover-rotateX-3:hover': {
+					'transform': 'rotateX(3deg)',
+				},
+				'.hover-rotateY-2:hover': {
+					'transform': 'rotateY(2deg)',
+				},
+				'.hover-rotateY-3:hover': {
+					'transform': 'rotateY(3deg)',
 				},
 			};
 			addUtilities(newUtilities);

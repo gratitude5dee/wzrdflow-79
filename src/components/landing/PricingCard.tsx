@@ -44,19 +44,19 @@ export const PricingCard = ({
       whileInView="visible"
       viewport={{ once: true, margin: "-100px" }}
       variants={fadeInUp}
-      className="relative z-10"
+      className="relative z-10 perspective-1000"
     >
       {popular && (
         <div className="absolute -top-4 left-0 right-0 flex justify-center">
-          <div className="bg-purple-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-glow-purple-sm">
             Most Popular
           </div>
         </div>
       )}
       
       <div className={cn(
-        "glass-card p-6 rounded-xl shadow-lg flex flex-col h-full border",
-        popular ? "border-purple-500/50" : "border-white/10"
+        "glass-card p-6 rounded-xl shadow-lg flex flex-col h-full border transform-style-3d hover:rotateX-3 hover:rotateY-3 hover:-translate-y-2 transition-all-std",
+        popular ? "border-purple-500/50 shadow-glow-purple-sm" : "border-white/10"
       )}>
         <h3 className="text-2xl font-bold mb-2 text-white">{title}</h3>
         <div className="mb-4">

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Sparkles, MessageSquare, Database, Mic } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface TechLogoIconProps {
   type: 'kling' | 'luma' | 'hailou' | 'runway';
@@ -35,7 +36,10 @@ export const TechLogoIcon = ({ type }: TechLogoIconProps) => {
 
   return (
     <div className="flex flex-col items-center">
-      <div className="bg-white/5 rounded-full p-3 mb-2">
+      <div className={cn(
+        "bg-white/5 rounded-full p-4 mb-2 border border-white/10 backdrop-blur-sm",
+        "hover:bg-white/10 transition-all-fast"
+      )}>
         {getIcon()}
       </div>
       <span className="text-xs text-zinc-500">{getName()}</span>
